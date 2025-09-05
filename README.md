@@ -205,53 +205,53 @@ InfraGen sigue convenciones estrictas y consistentes para garantizar nombres ún
 ### 🏷️ Formato General
 
 ```text
-{tipo}{shortName}_{location}_{nombreApp}
+{prefijo}{shortLocation}{appName}
 ```
 
 ### 📋 Convenciones por Recurso
 
 | Recurso | Prefijo | Ejemplo | Formato Completo |
 |---------|---------|---------|------------------|
-| **Resource Group** | `rg` | `rgprod_eastus_myapp` | `rg{environment}_{location}_{appName}` |
-| **Storage Account** | `st` | `stprodeastusMyapp` | `st{environment}{location}{appName}` (sin guiones) |
-| **App Service** | `app` | `appprod_eastus_myapp` | `app{environment}_{location}_{appName}` |
-| **App Service Plan** | `asp` | `aspprod_eastus_myapp` | `asp{environment}_{location}_{appName}` |
-| **SQL Server** | `sql` | `sqlprod_eastus_myapp` | `sql{environment}_{location}_{appName}` |
-| **SQL Database** | `sqldb` | `sqldbprod_eastus_myapp` | `sqldb{environment}_{location}_{appName}` |
-| **Function App** | `func` | `funcprod_eastus_myapp` | `func{environment}_{location}_{appName}` |
-| **Cognitive Service** | `cog` | `cogprod_eastus_myapp` | `cog{environment}_{location}_{appName}` |
-| **Log Analytics** | `log` | `logprod_eastus_myapp` | `log{environment}_{location}_{appName}` |
+| **Resource Group** | `rg` | `rgeusmyapp` | `rg{shortLocation}{appName}` |
+| **Storage Account** | `st` | `steusmyapp` | `st{shortLocation}{appName}` (sin guiones) |
+| **App Service** | `app` | `appeusmyapp` | `app{shortLocation}{appName}` |
+| **App Service Plan** | `asp` | `aspeusmyapp` | `asp{shortLocation}{appName}` |
+| **SQL Server** | `sql` | `sqleusmyapp` | `sql{shortLocation}{appName}` |
+| **SQL Database** | `sqldb` | `sqldbeusmyapp` | `sqldb{shortLocation}{appName}` |
+| **Function App** | `func` | `funceusmyapp` | `func{shortLocation}{appName}` |
+| **Cognitive Service** | `cog` | `cogeusmyapp` | `cog{shortLocation}{appName}` |
+| **Log Analytics** | `log` | `logeusmyapp` | `log{shortLocation}{appName}` |
 
 ### 🔤 Reglas de Nomenclatura
 
-1. **Environments**: Se usan short names automáticos
-   - `development` → `dev`
-   - `testing` → `test`
-   - `staging` → `stage`
-   - `production` → `prod`
+1. **Locations**: Se usan short names de 3 caracteres
+   - `East US` → `eus`
+   - `West Europe` → `weu`
+   - `Southeast Asia` → `sea`
+   - `Mexico Central` → `mxc`
 
-2. **Locations**: Se convierten automáticamente
-   - `East US` → `eastus`
-   - `West Europe` → `westeurope`
-   - `Southeast Asia` → `southeastasia`
+2. **App Names**: Se limpian automáticamente
+   - Solo letras y números (sin espacios ni caracteres especiales)
+   - Se convierte a minúsculas
+   - Ejemplo: `"My Web App"` → `mywebapp`
 
 3. **Casos Especiales**:
-   - **Storage Account**: Sin guiones ni guiones bajos (limitación Azure)
+   - **Storage Account**: Solo letras minúsculas y números (limitación Azure)
    - **Resource Group**: Creación automática si no existe (targetScope = 'subscription')
    - **SQL Database**: Incluye referencia automática al SQL Server
 
 ### 📐 Ejemplo Completo
 
-Para una aplicación llamada `"MyWebApp"` en environment `"Production"` y ubicación `"East US"`:
+Para una aplicación llamada `"MyWebApp"` en ubicación `"East US"`:
 
 ```text
-Resource Group:     rgprod_eastus_MyWebApp
-Storage Account:    stprodeastusMyWebApp
-App Service Plan:   aspprod_eastus_MyWebApp
-App Service:        appprod_eastus_MyWebApp
-SQL Server:         sqlprod_eastus_MyWebApp
-SQL Database:       sqldbprod_eastus_MyWebApp
-Function App:       funcprod_eastus_MyWebApp
+Resource Group:     rgeusmywebapp
+Storage Account:    steusmywebapp
+App Service Plan:   aspeusmywebapp
+App Service:        appeusmywebapp
+SQL Server:         sqleusmywebapp
+SQL Database:       sqldbeusmywebapp
+Function App:       funceusmywebapp
 ```
 
 ## 📋 Recursos Soportados
