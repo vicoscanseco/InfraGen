@@ -160,6 +160,9 @@
             </v-list>
           </v-col>
         </v-row>
+
+        <!-- Estimador de costos -->
+        <CostEstimator :components="configuredComponents" />
         
         <!-- Botón para generar -->
         <v-row class="mt-4">
@@ -255,6 +258,7 @@ import SqlDatabaseConfig from './SqlDatabaseConfig.vue'
 import CognitiveServiceConfig from './CognitiveServiceConfig.vue'
 import SQLServerConfig from './SQLServerConfig.vue'
 import MonitoringAlertsConfig from './MonitoringAlertsConfig.vue'
+import CostEstimator from './CostEstimator.vue'
 
 // Mapeo de componentes
 const componentMapping = {
