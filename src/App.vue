@@ -5,11 +5,17 @@ import AzureSelector from './components/AzureSelector.vue'
 
 <template>
   <v-app>
-    <AzureSelector />
+    <v-main class="d-flex flex-column min-height-screen">
+      <AzureSelector />
+    </v-main>
   </v-app>
 </template>
 
 <style scoped>
+.min-height-screen {
+  min-height: 100vh;
+}
+
 .logo {
   height: 6em;
   padding: 1.5em;

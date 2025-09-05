@@ -234,6 +234,15 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+    
+    <!-- Footer -->
+    <v-footer class="text-center d-flex flex-column mt-8">
+      <div>
+        <span class="text-body-2 text-grey-darken-2">
+          © {{ new Date().getFullYear() }} CodeLand. Todos los derechos reservados.
+        </span>
+      </div>
+    </v-footer>
   </v-container>
 </template>
 
@@ -745,5 +754,9 @@ const copyToClipboard = () => {
   color: inherit;
   font-family: inherit;
   font-size: inherit;
+}
+
+.v-footer {
+  margin-top: auto;
 }
 </style>

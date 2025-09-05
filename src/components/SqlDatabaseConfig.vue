@@ -5,7 +5,7 @@
       SQL Database Configuration
     </v-card-title>
     <v-card-text class="pa-6">
-      <v-row class="mb-2">
+      <v-row class="mb-2 mt-3">
         <v-col cols="12" md="6">
           <v-text-field 
             v-model="localDatabaseBaseName" 

@@ -5,7 +5,7 @@
       SQL Server Configuration
     </v-card-title>
     <v-card-text>
-      <v-row dense>
+      <v-row dense class="mt-3">
         <v-col cols="12" md="6">
           <v-text-field 
             v-model="localConfig.name" 
