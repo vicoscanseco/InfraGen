@@ -216,7 +216,7 @@ InfraGen sigue convenciones estrictas y consistentes para garantizar nombres ún
 | **Storage Account** | `st` | `stmyappdev` | `st{appName}{environment}` (sin guiones) |
 | **App Service** | - | `myapp-dev` | `{appName}-{environment}` |
 | **App Service Plan** | `-asp` | `myappdev-asp` | `{appName}{environment}-asp` |
-| **SQL Server** | `sqls` | `sqlsmyappdev` / `sqlsmyapp` (prod) | `sqls{appName}{environment}` (prod sin env) |
+| **SQL Server** | `sqls` | `sqls-myapp-dev` / `sqls-myapp` (prod) | `sqls-{appName}-{environment}` (prod sin env) |
 | **SQL Database** | `db-` | `db-myapp-dev` / `db-myapp` (prod) | `db-{appName}-{environment}` (prod sin env) |
 | **Function App** | `func` | `funceusmyappdev` | `func{shortLocation}{appName}{environment}` |
 | **Cognitive Service** | `cog` | `cogeusmyappdev` | `cog{shortLocation}{appName}{environment}` |
@@ -245,6 +245,7 @@ InfraGen sigue convenciones estrictas y consistentes para garantizar nombres ún
    - **Storage Account**: Solo incluye appName + environment (sin location)
    - **App Service**: Formato simple con guión: `{appName}-{environment}`
    - **App Service Plan**: Environment concatenado + sufijo: `{appName}{environment}-asp`
+   - **SQL Server**: Formato con guiones: `sqls-{appName}-{environment}`
    - **SQL Server/Database (Production)**: Sin environment para recursos de producción
    - **Resource Group**: Mantiene formato completo con location
 
@@ -262,14 +263,14 @@ Resource Group:     rgeusmywebappdev
 Storage Account:    stmywebappdev
 App Service Plan:   mywebappdev-asp
 App Service:        mywebapp-dev
-SQL Server:         sqlsmywebappdev
+SQL Server:         sqls-mywebapp-dev
 SQL Database:       db-mywebapp-dev
 Function App:       funceusmywebappdev
 ```
 
 **Caso especial para Production:**
 ```text
-SQL Server:         sqlsmywebapp (sin environment)
+SQL Server:         sqls-mywebapp (sin environment)
 SQL Database:       db-mywebapp (sin environment)
 ```
 

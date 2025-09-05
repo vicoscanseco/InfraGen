@@ -11,18 +11,49 @@
             <template v-slot:activator="{ props }">
               <v-text-field 
                 v-bind="props"
-                v-model="localConfig.name" 
-                label="Nombre del SQL Server" 
-                placeholder="Ej: my-sql-server" 
+                v-model="localConfig.baseName" 
+                label="Nombre Base del Servidor" 
+                placeholder="Ej: myserver" 
                 density="compact" 
                 variant="outlined" 
                 :rules="[rules.required]"
                 @input="updateConfig"
               />
             </template>
-            <span>Nombre único global para el servidor SQL. Debe ser único en Azure, solo letras minúsculas, números y guiones. Será la base de la URL de conexión (nombreservidor.database.windows.net)</span>
+            <span>Nombre base para el servidor SQL. Se combinará automáticamente con el formato: sqls-{nombre}-{environment}. Solo para producción se omite el environment.</span>
           </v-tooltip>
         </v-col>
+        <v-col cols="12" md="6">
+          <v-tooltip location="top">
+            <template v-slot:activator="{ props }">
+              <v-text-field 
+                v-bind="props"
+                v-model="localConfig.name" 
+                label="Nombre Final del SQL Server" 
+                placeholder="Se genera automáticamente" 
+                density="compact" 
+                variant="outlined" 
+                readonly
+                append-inner-icon="mdi-lock"
+                hint="Se genera automáticamente: sqls-{nombre}-{environment}"
+                persistent-hint
+                :rules="[rules.required]"
+              />
+            </template>
+            <span>Nombre final único global para el servidor SQL. Se genera automáticamente basado en el nombre base y ambiente. Será la URL de conexión (nombreservidor.database.windows.net)</span>
+          </v-tooltip>
+          
+          <!-- Chip de preview del nombre del SQL Server -->
+          <div class="mt-2" v-if="computedSqlServerName">
+            <v-chip color="blue" variant="outlined" size="small">
+              <v-icon left>mdi-eye</v-icon>
+              Preview: {{ computedSqlServerName }}
+            </v-chip>
+          </div>
+        </v-col>
+      </v-row>
+      
+      <v-row dense>
         <v-col cols="12" md="6">
           <v-tooltip location="top">
             <template v-slot:activator="{ props }">
@@ -118,25 +149,49 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 
 const props = defineProps({
   config: {
     type: Object,
     default: () => ({})
+  },
+  appName: {
+    type: String,
+    default: ''
+  },
+  environment: {
+    type: String,
+    default: ''
   }
 })
 
 const emit = defineEmits(['update:config', 'update'])
 
 const localConfig = ref({
-  name: 'my-sql-server',
+  name: '',
+  baseName: '', // Nombre base editable por el usuario
   adminUsername: 'sqladmin',
   adminPassword: 'P@ssw0rd123!',
   version: '12.0',
   minimalTlsVersion: '1.2',
   publicNetworkAccess: 'Enabled',
   ...props.config
+})
+
+// Computed property para generar el nombre automáticamente
+const computedSqlServerName = computed(() => {
+  if (!localConfig.value.baseName) return 'sqls-myserver-dev'
+  
+  const cleanBaseName = localConfig.value.baseName.toLowerCase().replace(/[^a-z0-9]/g, '')
+  const env = props.environment || 'dev'
+  
+  // Para producción, no incluir environment
+  if (env === 'prod') {
+    return `sqls-${cleanBaseName}`
+  } else {
+    return `sqls-${cleanBaseName}-${env}`
+  }
 })
 
 const versionOptions = [
@@ -166,14 +221,28 @@ const rules = {
   }
 }
 
+// Función updateConfig debe declararse antes de los watchers
 const updateConfig = () => {
   emit('update:config', { ...localConfig.value })
   emit('update', { ...localConfig.value })
 }
 
+// Watch para actualizar el nombre cuando cambien baseName o environment
+watch([() => localConfig.value.baseName, () => props.environment], () => {
+  localConfig.value.name = computedSqlServerName.value
+  updateConfig()
+})
+
+// Watch para cambios en localConfig
 watch(localConfig, updateConfig, { deep: true })
 
 onMounted(() => {
+  // Inicializar baseName si no existe
+  if (!localConfig.value.baseName && props.appName) {
+    localConfig.value.baseName = props.appName.toLowerCase().replace(/[^a-z0-9]/g, '')
+  }
+  // Inicializar con el nombre generado automáticamente
+  localConfig.value.name = computedSqlServerName.value
   updateConfig()
 })
 </script>
