@@ -126,10 +126,21 @@
         <div v-if="bicepContent && !errorMsg" class="bicep-output mt-4">
           <v-divider class="mb-3" />
           <div class="text-h6 mb-2">Archivo Bicep generado:</div>
-          <v-sheet color="#f0f4f8" rounded elevation="1" class="pa-3 mb-2">
-            <pre style="white-space: pre-wrap; word-break: break-all;">{{ bicepContent }}</pre>
-          </v-sheet>
-          <v-btn color="primary" @click="downloadBicep">Descargar Bicep</v-btn>
+          <v-card variant="outlined" class="mb-2">
+            <v-card-text class="pa-0">
+              <div class="code-container">
+                <pre class="code-block"><code>{{ bicepContent }}</code></pre>
+              </div>
+            </v-card-text>
+          </v-card>
+          <div class="d-flex gap-2">
+            <v-btn color="primary" @click="downloadBicep" prepend-icon="mdi-download">
+              Descargar Bicep
+            </v-btn>
+            <v-btn color="secondary" variant="outlined" @click="copyToClipboard" prepend-icon="mdi-content-copy">
+              Copiar
+            </v-btn>
+          </div>
         </div>
       </v-card-text>
     </v-card>
@@ -264,8 +275,8 @@ function removeComponent(index) {
 }
 
 function saveConfig() {
-  if (!currentConfig.value.name || !currentConfig.value.resourceGroup) {
-    errorMsg.value = 'Todos los campos son obligatorios.'
+  if (!currentConfig.value.name) {
+    errorMsg.value = 'El nombre del componente es obligatorio.'
     return
   }
 
@@ -329,6 +340,13 @@ param location string = '${location.value}'
 @description('Grupo de recursos donde se crearán los componentes')
 param resourceGroupName string = '${resourceGroup.value}'
 
+@description('Tags comunes para todos los recursos')
+param tags object = {
+  Environment: environment
+  Application: appName
+  ManagedBy: '©CodeLand - Bicep Generator'
+}
+
 // Recursos
 `
 
@@ -348,10 +366,7 @@ param resourceGroupName string = '${resourceGroup.value}'
     allowBlobPublicAccess: ${cfg.enableBlobPublicAccess === true}
     minimumTlsVersion: 'TLS1_2'
   }
-  tags: {
-    Environment: environment
-    Application: appName
-  }
+  tags: tags
 }
 
 `
@@ -363,10 +378,7 @@ param resourceGroupName string = '${resourceGroup.value}'
   properties: {
     serverFarmId: '${cfg.name}plan'
   }
-  tags: {
-    Environment: environment
-    Application: appName
-  }
+  tags: tags
 }
 
 `
@@ -378,10 +390,7 @@ param resourceGroupName string = '${resourceGroup.value}'
   properties: {
     edition: 'Basic'
   }
-  tags: {
-    Environment: environment
-    Application: appName
-  }
+  tags: tags
 }
 
 `
@@ -394,10 +403,7 @@ param resourceGroupName string = '${resourceGroup.value}'
   properties: {
     serverFarmId: '${cfg.name}plan'
   }
-  tags: {
-    Environment: environment
-    Application: appName
-  }
+  tags: tags
 }
 
 `
@@ -413,4 +419,42 @@ function downloadBicep() {
   link.download = 'infra.bicep'
   link.click()
 }
+
+function copyToClipboard() {
+  navigator.clipboard.writeText(bicepContent.value).then(() => {
+    // Aquí podrías agregar un toast o notificación
+    console.log('Código copiado al portapapeles')
+  }).catch(err => {
+    console.error('Error al copiar:', err)
+  })
+}
 </script>
+
+<style scoped>
+.code-container {
+  background-color: #1e1e1e;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.code-block {
+  background-color: #1e1e1e;
+  color: #d4d4d4;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.4;
+  margin: 0;
+  padding: 16px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-x: auto;
+  text-align: left;
+}
+
+.code-block code {
+  background: none;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+}
+</style>
