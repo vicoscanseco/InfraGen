@@ -4,6 +4,7 @@
 
 - [InfraGen - Generador de Infraestructura Azure](#infragen---generador-de-infraestructura-azure)
   - [📋 Tabla de Contenidos](#-tabla-de-contenidos)
+  - [📝 Descripción](#-descripción)
   - [🚀 Características](#-características)
   - [💰 Estimador de Costos](#-estimador-de-costos)
     - [🌍 Precios por Región](#-precios-por-región)
@@ -45,6 +46,22 @@
     - [Estructura para Nuevos Componentes](#estructura-para-nuevos-componentes)
   - [📝 Licencia](#-licencia)
   - [👨‍💻 Autor](#-autor)
+
+## 📝 Descripción 
+InfraGen es una aplicación web avanzada diseñada para facilitar la creación, configuración y estimación de costos de infraestructuras en Microsoft Azure de manera visual, rápida y sin necesidad de escribir código manualmente. Su objetivo principal es permitir a desarrolladores, arquitectos y equipos de TI seleccionar, personalizar y validar recursos Azure siguiendo las mejores prácticas, generando automáticamente código Bicep listo para despliegue.
+
+La plataforma integra un sistema inteligente de validaciones y dependencias, asegurando configuraciones correctas y nomenclatura consistente para todos los recursos. Además, InfraGen ofrece un estimador de costos en tiempo real basado en precios oficiales de Azure, con análisis detallado por región y recomendaciones de optimización.
+
+Entre sus principales funcionalidades destacan:
+- Interfaz intuitiva basada en Vuetify 3 y Material Design.
+- Selección visual de recursos Azure (Storage, App Service, SQL, Functions, Cognitive Services, Monitoring, etc.).
+- Generación automática de código Bicep modular y optimizado.
+- Sistema de nomenclatura automática y validaciones reactivas.
+- Estimación de costos mensual con desglose por categorías y regiones.
+- Exportación de reportes en múltiples formatos (CSV, Excel, JSON, impresión).
+- Arquitectura modular y escalable, ideal para equipos y proyectos de cualquier tamaño.
+
+InfraGen está pensado para acelerar la adopción de infraestructura como código en Azure, reducir errores de configuración y mejorar la transparencia en la estimación de costos y dependencias técnicas.
 
 Aplicación web moderna construida con Vue.js 3 y Vuetify 3 que permite seleccionar y configurar recursos de Azure para generar código Bicep de manera visual e intuitiva, incluyendo **estimación de costos en tiempo real** y **análisis por región**.
 
