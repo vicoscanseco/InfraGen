@@ -1,29 +1,42 @@
 <template>
-  <v-card class="mb-4" flat>
-    <v-card-title class="text-subtitle-1 py-2">Configurar App Service</v-card-title>
-    <v-card-text class="pt-2">
+  <v-card class="mb-4">
+    <v-card-title class="bg-primary">
+      <v-icon class="mr-2">mdi-web</v-icon>
+      App Service Configuration
+    </v-card-title>
+    <v-card-text>
       <v-row dense>
         <v-col cols="12" md="6">
           <v-text-field 
-            v-model="config.name" 
-            label="Nombre del App Service" 
+            v-model="localAppBaseName" 
+            label="Nombre Base del App Service" 
             placeholder="Ej: myappservice" 
             density="compact" 
             variant="outlined"
             :rules="[rules.required, rules.appServiceNameFormat]"
-            hint="Solo letras, números y guiones, 2-60 caracteres"
+            hint="Solo letras, números y guiones. Se agregará automáticamente '-' y el environment"
             persistent-hint
+            @input="updateAppBaseName($event.target.value)"
           />
+          <v-chip 
+            v-if="computedAppName"
+            size="small" 
+            color="warning" 
+            variant="outlined" 
+            class="mt-1"
+          >
+            Nombre completo: {{ computedAppName }}
+          </v-chip>
         </v-col>
         <v-col cols="12" md="6">
           <v-text-field 
-            v-model="config.appServicePlanName" 
-            label="Nombre del App Service Plan" 
-            placeholder="Ej: myappservice-plan" 
+            v-model="localConfig.appServicePlanReference" 
+            label="Referencia al App Service Plan" 
+            placeholder="Seleccionar App Service Plan existente" 
             density="compact" 
             variant="outlined"
-            :rules="[rules.required]"
-            hint="Plan que contendrá el App Service"
+            readonly
+            hint="Se asignará automáticamente al ASP configurado"
             persistent-hint
           />
         </v-col>
@@ -32,20 +45,7 @@
       <v-row dense>
         <v-col cols="12" md="6">
           <v-select
-            v-model="config.sku"
-            :items="skuOptions"
-            label="SKU del App Service Plan"
-            item-title="label"
-            item-value="value"
-            density="compact"
-            variant="outlined"
-            hint="Nivel de rendimiento y precios"
-            persistent-hint
-          />
-        </v-col>
-        <v-col cols="12" md="6">
-          <v-select
-            v-model="config.runtimeStack"
+            v-model="localConfig.runtimeStack"
             :items="runtimeStackOptions"
             label="Runtime Stack"
             item-title="label"
@@ -54,41 +54,53 @@
             variant="outlined"
             hint="Tecnología de la aplicación"
             persistent-hint
-          />
-        </v-col>
-      </v-row>
-
-      <v-row dense>
-        <v-col cols="12" md="6">
-          <v-select
-            v-model="config.operatingSystem"
-            :items="operatingSystemOptions"
-            label="Sistema Operativo"
-            item-title="label"
-            item-value="value"
-            density="compact"
-            variant="outlined"
-            hint="OS del App Service Plan"
-            persistent-hint
+            @update:model-value="updateConfig('runtimeStack', $event)"
           />
         </v-col>
         <v-col cols="12" md="6" class="d-flex flex-column">
           <v-switch
-            v-model="config.httpsOnly"
+            v-model="localConfig.httpsOnly"
             label="Solo HTTPS"
             density="compact"
             color="primary"
             hint="Redirigir HTTP a HTTPS automáticamente"
             persistent-hint
             class="mb-1"
+            @update:model-value="updateConfig('httpsOnly', $event)"
           />
           <v-switch
-            v-model="config.alwaysOn"
+            v-model="localConfig.alwaysOn"
             label="Always On"
             density="compact"
             color="primary"
             hint="Mantener la aplicación cargada todo el tiempo"
             persistent-hint
+            @update:model-value="updateConfig('alwaysOn', $event)"
+          />
+        </v-col>
+      </v-row>
+
+      <v-row dense>
+        <v-col cols="12" md="6">
+          <v-switch
+            v-model="localConfig.clientAffinityEnabled"
+            label="Client Affinity"
+            density="compact"
+            color="primary"
+            hint="Habilitar afinidad de sesión"
+            persistent-hint
+            @update:model-value="updateConfig('clientAffinityEnabled', $event)"
+          />
+        </v-col>
+        <v-col cols="12" md="6">
+          <v-switch
+            v-model="localConfig.publicNetworkAccess"
+            label="Acceso de Red Público"
+            density="compact"
+            color="primary"
+            hint="Permitir acceso desde internet"
+            persistent-hint
+            @update:model-value="updateConfig('publicNetworkAccess', $event)"
           />
         </v-col>
       </v-row>
@@ -96,38 +108,7 @@
   </v-card>
 </template>
 
-<script setup>
-import { defineProps } from 'vue'
-
-const props = defineProps({
-  config: {
-    type: Object,
-    required: true
-  }
-})
-
-// Inicializar valores por defecto si no existen
-if (!props.config.appServicePlanName) props.config.appServicePlanName = `${props.config.name || 'myapp'}-plan`
-if (!props.config.sku) props.config.sku = 'B1'
-if (!props.config.runtimeStack) props.config.runtimeStack = 'DOTNETCORE|8.0'
-if (!props.config.operatingSystem) props.config.operatingSystem = 'Linux'
-if (props.config.httpsOnly === undefined) props.config.httpsOnly = true
-if (props.config.alwaysOn === undefined) props.config.alwaysOn = false
-
-const skuOptions = [
-  { label: 'Free F1 (Desarrollo)', value: 'F1' },
-  { label: 'Shared D1 (Desarrollo)', value: 'D1' },
-  { label: 'Basic B1 (Pequeño)', value: 'B1' },
-  { label: 'Basic B2 (Mediano)', value: 'B2' },
-  { label: 'Basic B3 (Grande)', value: 'B3' },
-  { label: 'Standard S1 (Pequeño)', value: 'S1' },
-  { label: 'Standard S2 (Mediano)', value: 'S2' },
-  { label: 'Standard S3 (Grande)', value: 'S3' },
-  { label: 'Premium P1V2 (Pequeño)', value: 'P1V2' },
-  { label: 'Premium P2V2 (Mediano)', value: 'P2V2' },
-  { label: 'Premium P3V2 (Grande)', value: 'P3V2' }
-]
-
+<script>
 const runtimeStackOptions = [
   { label: '.NET 8.0', value: 'DOTNETCORE|8.0' },
   { label: '.NET 6.0', value: 'DOTNETCORE|6.0' },
@@ -141,17 +122,101 @@ const runtimeStackOptions = [
   { label: 'PHP 8.2', value: 'PHP|8.2' }
 ]
 
-const operatingSystemOptions = [
-  { label: 'Linux', value: 'Linux' },
-  { label: 'Windows', value: 'Windows' }
-]
-
-const rules = {
-  required: value => !!value || 'Este campo es obligatorio',
-  appServiceNameFormat: value => {
-    if (!value) return true
-    const regex = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,58}[a-zA-Z0-9]$/
-    return regex.test(value) || 'Solo letras, números y guiones, 2-60 caracteres. Debe empezar y terminar con letra o número'
+export default {
+  name: 'AppServiceConfig',
+  props: {
+    config: {
+      type: Object,
+      required: true
+    },
+    environment: {
+      type: String,
+      required: true,
+      default: 'dev'
+    }
+  },
+  emits: ['update', 'update:config'],
+  data() {
+    return {
+      localAppBaseName: '',
+      localConfig: {
+        appServicePlanReference: 'Se asignará al ASP configurado',
+        runtimeStack: 'DOTNETCORE|8.0',
+        httpsOnly: true,
+        alwaysOn: false,
+        clientAffinityEnabled: false,
+        publicNetworkAccess: true,
+        ...this.config
+      }
+    }
+  },
+  computed: {
+    computedAppName() {
+      const env = this.environment || 'dev'
+      return this.localAppBaseName ? `${this.localAppBaseName}-${env}` : ''
+    },
+    runtimeStackOptions() {
+      return runtimeStackOptions
+    },
+    rules() {
+      return {
+        required: value => !!value || 'Este campo es obligatorio',
+        appServiceNameFormat: value => {
+          if (!value) return true
+          const regex = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,58}[a-zA-Z0-9]$/
+          return regex.test(value) || 'Solo letras, números y guiones, 2-60 caracteres. Debe empezar y terminar con letra o número'
+        }
+      }
+    }
+  },
+  watch: {
+    localAppBaseName(newValue) {
+      this.updateConfig('name', this.computedAppName)
+    },
+    config: {
+      handler(newConfig) {
+        this.localConfig = {
+          appServicePlanReference: 'Se asignará al ASP configurado',
+          runtimeStack: 'DOTNETCORE|8.0',
+          httpsOnly: true,
+          alwaysOn: false,
+          clientAffinityEnabled: false,
+          publicNetworkAccess: true,
+          ...newConfig
+        }
+      },
+      deep: true,
+      immediate: true
+    }
+  },
+  mounted() {
+    // Initialize localAppBaseName from existing name
+    if (this.config.name) {
+      const env = this.environment || 'dev'
+      const suffix = `-${env}`
+      
+      let baseName = this.config.name
+      
+      // Remove environment suffix if present
+      if (baseName.endsWith(suffix)) {
+        baseName = baseName.replace(suffix, '')
+      }
+      
+      this.localAppBaseName = baseName
+    } else {
+      // Set default app base name if none exists
+      this.localAppBaseName = 'myapp'
+    }
+  },
+  methods: {
+    updateConfig(key, value) {
+      this.localConfig[key] = value
+      this.$emit('update', { ...this.config, [key]: value })
+      this.$emit('update:config', { ...this.config, [key]: value })
+    },
+    updateAppBaseName(value) {
+      this.localAppBaseName = value
+    }
   }
 }
 </script>

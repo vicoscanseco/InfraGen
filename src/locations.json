@@ -2,61 +2,109 @@
   {
     "label": "East US",
     "value": "eastus",
-    "displayName": "East US"
+    "displayName": "East US",
+    "shortName": "eus"
   },
   {
     "label": "East US 2",
     "value": "eastus2",
-    "displayName": "East US 2"
+    "displayName": "East US 2",
+    "shortName": "eus2"
   },
   {
     "label": "West US",
     "value": "westus",
-    "displayName": "West US"
+    "displayName": "West US",
+    "shortName": "wus"
   },
   {
     "label": "West US 2",
     "value": "westus2",
-    "displayName": "West US 2"
+    "displayName": "West US 2",
+    "shortName": "wus2" 
   },
   {
     "label": "West US 3",
     "value": "westus3",
-    "displayName": "West US 3"
+    "displayName": "West US 3",
+    "shortName": "wus3"
   },
   {
     "label": "Central US",
     "value": "centralus",
-    "displayName": "Central US"
+    "displayName": "Central US",
+    "shortName": "cus"
   },
   {
     "label": "North Central US",
     "value": "northcentralus",
-    "displayName": "North Central US"
+    "displayName": "North Central US",
+    "shortName": "ncu"
   },
   {
     "label": "South Central US",
     "value": "southcentralus",
-    "displayName": "South Central US"
+    "displayName": "South Central US",
+    "shortName": "scu"
   },
   {
     "label": "West Central US",
     "value": "westcentralus",
-    "displayName": "West Central US"
+    "displayName": "West Central US",
+    "shortName": "wcu"
   },
   {
     "label": "Canada Central",
     "value": "canadacentral",
-    "displayName": "Canada Central"
+    "displayName": "Canada Central",
+    "shortName": "cc"
   },
   {
     "label": "Canada East",
     "value": "canadaeast",
-    "displayName": "Canada East"
+    "displayName": "Canada East",
+    "shortName": "ce"
   },
   {
     "label": "Mexico Central",
     "value": "mexicocentral",
-    "displayName": "Mexico Central"
+    "displayName": "Mexico Central",
+    "shortName": "mc"
+  },
+  {
+    "label": "North Europe",
+    "value": "northeurope",
+    "displayName": "North Europe",
+    "shortName": "ne"
+  },
+  {
+    "label": "West Europe",
+    "value": "westeurope",
+    "displayName": "West Europe",
+    "shortName": "we"
+  },
+  {
+    "label": "UK South",
+    "value": "uksouth",
+    "displayName": "UK South",
+    "shortName": "uks"
+  },
+  {
+    "label": "UK West",
+    "value": "ukwest",
+    "displayName": "UK West",
+    "shortName": "ukw"
+  },
+  {
+    "label": "Southeast Asia",
+    "value": "southeastasia",
+    "displayName": "Southeast Asia",
+    "shortName": "sea"
+  },
+  {
+    "label": "East Asia",
+    "value": "eastasia",
+    "displayName": "East Asia",
+    "shortName": "ea"
   }
 ]

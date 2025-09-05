@@ -1,23 +1,36 @@
 <template>
-  <v-card class="mb-4" flat>
-    <v-card-title class="text-subtitle-1 py-2">Configurar Storage Account</v-card-title>
-    <v-card-text class="pt-2">
+  <v-card class="mb-4">
+    <v-card-title class="bg-primary">
+      <v-icon class="mr-2">mdi-database</v-icon>
+      Storage Account Configuration
+    </v-card-title>
+    <v-card-text>
       <v-row dense>
         <v-col cols="12" md="6">
           <v-text-field 
-            v-model="config.name" 
-            label="Nombre del Storage Account" 
+            v-model="localStorageBaseName" 
+            label="Nombre Base del Storage Account" 
             placeholder="Ej: mystorageaccount" 
             density="compact" 
             variant="outlined" 
             :rules="[rules.required, rules.storageNameFormat]"
-            hint="Solo letras minúsculas y números, 3-24 caracteres"
+            hint="Solo letras minúsculas y números, 3-24 caracteres. Se agregará automáticamente 'sta' y el environment"
             persistent-hint
+            @input="updateStorageBaseName($event.target.value)"
           />
+          <v-chip 
+            v-if="computedStorageName"
+            size="small" 
+            color="success" 
+            variant="outlined" 
+            class="mt-1"
+          >
+            Nombre completo: {{ computedStorageName }}
+          </v-chip>
         </v-col>
         <v-col cols="12" md="6">
           <v-select
-            v-model="config.sku"
+            v-model="localConfig.sku"
             :items="skuOptions"
             label="Tipo de redundancia (SKU)"
             item-title="label"
@@ -26,6 +39,7 @@
             variant="outlined"
             hint="Selecciona el nivel de redundancia para tus datos"
             persistent-hint
+            @update:model-value="updateConfig('sku', $event)"
           />
         </v-col>
       </v-row>
@@ -33,7 +47,7 @@
       <v-row dense>
         <v-col cols="12" md="6">
           <v-select
-            v-model="config.kind"
+            v-model="localConfig.kind"
             :items="kindOptions"
             label="Tipo de cuenta"
             item-title="label"
@@ -42,11 +56,12 @@
             variant="outlined"
             hint="Tipo de storage account según el uso"
             persistent-hint
+            @update:model-value="updateConfig('kind', $event)"
           />
         </v-col>
         <v-col cols="12" md="6">
           <v-select
-            v-model="config.accessTier"
+            v-model="localConfig.accessTier"
             :items="accessTierOptions"
             label="Nivel de acceso"
             item-title="label"
@@ -55,6 +70,7 @@
             variant="outlined"
             hint="Optimización de costos según frecuencia de acceso"
             persistent-hint
+            @update:model-value="updateConfig('accessTier', $event)"
           />
         </v-col>
       </v-row>
@@ -62,21 +78,23 @@
       <v-row dense>
         <v-col cols="12" md="6" class="d-flex flex-column">
           <v-switch
-            v-model="config.httpsOnly"
+            v-model="localConfig.httpsOnly"
             label="Solo HTTPS"
             density="compact"
             color="primary"
             hint="Requiere conexiones seguras HTTPS"
             persistent-hint
             class="mb-1"
+            @update:model-value="updateConfig('httpsOnly', $event)"
           />
           <v-switch
-            v-model="config.enableBlobPublicAccess"
+            v-model="localConfig.enableBlobPublicAccess"
             label="Permitir acceso público a blobs"
             density="compact"
             color="primary"
             hint="Permite acceso anónimo a contenedores y blobs"
             persistent-hint
+            @update:model-value="updateConfig('enableBlobPublicAccess', $event)"
           />
         </v-col>
       </v-row>
@@ -84,23 +102,7 @@
   </v-card>
 </template>
 
-<script setup>
-import { defineProps, reactive } from 'vue'
-
-const props = defineProps({
-  config: {
-    type: Object,
-    required: true
-  }
-})
-
-// Inicializar valores por defecto si no existen
-if (!props.config.sku) props.config.sku = 'Standard_LRS'
-if (!props.config.kind) props.config.kind = 'StorageV2'
-if (!props.config.accessTier) props.config.accessTier = 'Hot'
-if (props.config.httpsOnly === undefined) props.config.httpsOnly = true
-if (props.config.enableBlobPublicAccess === undefined) props.config.enableBlobPublicAccess = false
-
+<script>
 const skuOptions = [
   { label: 'Standard LRS (Locally Redundant)', value: 'Standard_LRS' },
   { label: 'Standard GRS (Geo Redundant)', value: 'Standard_GRS' },
@@ -123,12 +125,113 @@ const accessTierOptions = [
   { label: 'Cool (Acceso poco frecuente)', value: 'Cool' }
 ]
 
-const rules = {
-  required: value => !!value || 'Este campo es obligatorio',
-  storageNameFormat: value => {
-    if (!value) return true
-    const regex = /^[a-z0-9]{3,24}$/
-    return regex.test(value) || 'Solo letras minúsculas y números, 3-24 caracteres'
+export default {
+  name: 'StorageAccountConfig',
+  props: {
+    config: {
+      type: Object,
+      required: true
+    },
+    environment: {
+      type: String,
+      required: true,
+      default: 'dev'
+    }
+  },
+  emits: ['update:config', 'update'],
+  data() {
+    return {
+      localStorageBaseName: '',
+      localConfig: {
+        sku: 'Standard_LRS',
+        kind: 'StorageV2', 
+        accessTier: 'Cool',
+        httpsOnly: true,
+        enableBlobPublicAccess: false,
+        ...this.config
+      }
+    }
+  },
+  computed: {
+    computedStorageName() {
+      const env = this.environment || 'dev'
+      // Storage accounts no pueden tener guiones, solo letras minúsculas y números
+      return this.localStorageBaseName ? `sta${this.localStorageBaseName}${env}` : ''
+    },
+    skuOptions() {
+      return skuOptions
+    },
+    kindOptions() {
+      return kindOptions
+    },
+    accessTierOptions() {
+      return accessTierOptions
+    },
+    rules() {
+      return {
+        required: value => !!value || 'Este campo es obligatorio',
+        storageNameFormat: value => {
+          if (!value) return true
+          const regex = /^[a-z0-9]{3,24}$/
+          return regex.test(value) || 'Solo letras minúsculas y números, 3-24 caracteres'
+        }
+      }
+    }
+  },
+  watch: {
+    localStorageBaseName(newValue) {
+      this.updateConfig('name', this.computedStorageName)
+    },
+    config: {
+      handler(newConfig) {
+        this.localConfig = {
+          sku: 'Standard_LRS',
+          kind: 'StorageV2', 
+          accessTier: 'Cool',
+          httpsOnly: true,
+          enableBlobPublicAccess: false,
+          ...newConfig
+        }
+      },
+      deep: true,
+      immediate: true
+    }
+  },
+  mounted() {
+    // Initialize localStorageBaseName from existing name
+    if (this.config.name) {
+      const env = this.environment || 'dev'
+      const prefix = 'sta'
+      
+      let baseName = this.config.name
+      
+      // Remove environment suffix if present
+      if (baseName.endsWith(env)) {
+        baseName = baseName.slice(0, -env.length)
+      }
+      
+      // Remove sta prefix if present
+      if (baseName.startsWith(prefix)) {
+        baseName = baseName.slice(prefix.length)
+      }
+      
+      this.localStorageBaseName = baseName
+    } else {
+      // Set default storage base name if none exists
+      this.localStorageBaseName = 'mystorage'
+      // Trigger name update immediately
+      this.updateConfig('name', this.computedStorageName)
+    }
+  },
+  methods: {
+    updateConfig(key, value) {
+      this.localConfig[key] = value
+      this.$emit('update', { ...this.config, [key]: value })
+      this.$emit('update:config', { ...this.config, [key]: value })
+    },
+    updateStorageBaseName(value) {
+      this.localStorageBaseName = value
+    }
   }
 }
 </script>

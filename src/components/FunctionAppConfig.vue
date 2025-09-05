@@ -1,30 +1,42 @@
 <template>
-  <v-card class="mb-4" flat>
-    <v-card-title class="text-subtitle-1 py-2">Configurar Function App</v-card-title>
-    <v-card-text class="pt-2">
+  <v-card class="mb-4">
+    <v-card-title class="bg-primary">
+      <v-icon class="mr-2">mdi-function</v-icon>
+      Function App Configuration
+    </v-card-title>
+    <v-card-text>
       <v-row dense>
         <v-col cols="12" md="6">
-          <v-text-field 
-            v-model="config.name" 
-            label="Nombre del Function App" 
-            placeholder="Ej: myfunctionapp" 
-            density="compact" 
+          <v-text-field
+            :model-value="localFunctionBaseName"
+            @update:model-value="updateFunctionBaseName"
+            label="Nombre base de Function App"
+            hint="Se añadirá automáticamente el sufijo del environment"
+            persistent-hint
+            density="compact"
             variant="outlined"
             :rules="[rules.required, rules.functionAppNameFormat]"
-            hint="Solo letras, números y guiones, 2-60 caracteres"
-            persistent-hint
           />
+          
+          <!-- Chip de preview del nombre final -->
+          <div class="mt-2" v-if="computedFunctionName">
+            <v-chip color="orange" variant="outlined" size="small">
+              <v-icon left>mdi-eye</v-icon>
+              Nombre final: {{ computedFunctionName }}
+            </v-chip>
+          </div>
         </v-col>
+        
         <v-col cols="12" md="6">
-          <v-text-field 
-            v-model="config.appServicePlanName" 
-            label="Nombre del App Service Plan" 
-            placeholder="Ej: myfunctionapp-plan" 
-            density="compact" 
-            variant="outlined"
-            :rules="[rules.required]"
-            hint="Plan que contendrá el Function App"
+          <v-text-field
+            :model-value="computedAppServicePlanName"
+            label="Nombre del App Service Plan"
+            hint="Se genera automáticamente"
             persistent-hint
+            density="compact"
+            variant="outlined"
+            readonly
+            append-inner-icon="mdi-lock"
           />
         </v-col>
       </v-row>
@@ -32,7 +44,8 @@
       <v-row dense>
         <v-col cols="12" md="6">
           <v-select
-            v-model="config.hostingPlan"
+            :model-value="config.hostingPlan"
+            @update:model-value="updateHostingPlan"
             :items="hostingPlanOptions"
             label="Plan de Hosting"
             item-title="label"
@@ -45,8 +58,9 @@
         </v-col>
         <v-col cols="12" md="6">
           <v-select
-            v-model="config.sku"
-            :items="getSkuOptions()"
+            :model-value="config.sku"
+            @update:model-value="value => updateConfig('sku', value)"
+            :items="currentSkuOptions"
             label="SKU del Plan"
             item-title="label"
             item-value="value"
@@ -61,7 +75,8 @@
       <v-row dense>
         <v-col cols="12" md="6">
           <v-select
-            v-model="config.runtimeStack"
+            :model-value="config.runtimeStack"
+            @update:model-value="value => updateConfig('runtimeStack', value)"
             :items="runtimeStackOptions"
             label="Runtime Stack"
             item-title="label"
@@ -74,7 +89,8 @@
         </v-col>
         <v-col cols="12" md="6">
           <v-select
-            v-model="config.operatingSystem"
+            :model-value="config.operatingSystem"
+            @update:model-value="value => updateConfig('operatingSystem', value)"
             :items="operatingSystemOptions"
             label="Sistema Operativo"
             item-title="label"
@@ -89,20 +105,22 @@
 
       <v-row dense>
         <v-col cols="12" md="6">
-          <v-text-field 
-            v-model="config.storageAccountName" 
-            label="Storage Account (requerido)" 
-            placeholder="Ej: myfuncstorageaccount" 
-            density="compact" 
-            variant="outlined"
-            :rules="[rules.required, rules.storageNameFormat]"
-            hint="Storage para metadatos y triggers (solo minúsculas y números)"
+          <v-text-field
+            :model-value="computedStorageAccountName"
+            label="Storage Account (requerido)"
+            hint="Se genera automáticamente (solo letras y números)"
             persistent-hint
+            density="compact"
+            variant="outlined"
+            readonly
+            append-inner-icon="mdi-lock"
+            :rules="[rules.storageNameFormat]"
           />
         </v-col>
         <v-col cols="12" md="6" class="d-flex flex-column">
           <v-switch
-            v-model="config.httpsOnly"
+            :model-value="config.httpsOnly"
+            @update:model-value="value => updateConfig('httpsOnly', value)"
             label="Solo HTTPS"
             density="compact"
             color="primary"
@@ -111,7 +129,8 @@
             class="mb-1"
           />
           <v-switch
-            v-model="config.enableApplicationInsights"
+            :model-value="config.enableApplicationInsights"
+            @update:model-value="value => updateConfig('enableApplicationInsights', value)"
             label="Application Insights"
             density="compact"
             color="primary"
@@ -124,7 +143,8 @@
       <v-row dense v-if="config.hostingPlan === 'Premium'">
         <v-col cols="12" md="6">
           <v-select
-            v-model="config.preWarmedInstances"
+            :model-value="config.preWarmedInstances"
+            @update:model-value="value => updateConfig('preWarmedInstances', value)"
             :items="preWarmedInstanceOptions"
             label="Instancias Pre-calentadas"
             item-title="label"
@@ -137,7 +157,8 @@
         </v-col>
         <v-col cols="12" md="6">
           <v-switch
-            v-model="config.vnetIntegration"
+            :model-value="config.vnetIntegration"
+            @update:model-value="value => updateConfig('vnetIntegration', value)"
             label="Integración con VNet"
             density="compact"
             color="primary"
@@ -150,28 +171,7 @@
   </v-card>
 </template>
 
-<script setup>
-import { defineProps, computed } from 'vue'
-
-const props = defineProps({
-  config: {
-    type: Object,
-    required: true
-  }
-})
-
-// Inicializar valores por defecto si no existen
-if (!props.config.appServicePlanName) props.config.appServicePlanName = `${props.config.name || 'myfunc'}-plan`
-if (!props.config.hostingPlan) props.config.hostingPlan = 'Consumption'
-if (!props.config.sku) props.config.sku = 'Y1'
-if (!props.config.runtimeStack) props.config.runtimeStack = 'DOTNET-ISOLATED|8.0'
-if (!props.config.operatingSystem) props.config.operatingSystem = 'Linux'
-if (!props.config.storageAccountName) props.config.storageAccountName = `${props.config.name || 'myfunc'}storage`
-if (props.config.httpsOnly === undefined) props.config.httpsOnly = true
-if (props.config.enableApplicationInsights === undefined) props.config.enableApplicationInsights = true
-if (!props.config.preWarmedInstances) props.config.preWarmedInstances = '1'
-if (props.config.vnetIntegration === undefined) props.config.vnetIntegration = false
-
+<script>
 const hostingPlanOptions = [
   { label: 'Consumption (Serverless)', value: 'Consumption' },
   { label: 'Premium (Escalable)', value: 'Premium' },
@@ -227,21 +227,125 @@ const preWarmedInstanceOptions = [
   { label: '10 instancias', value: '10' }
 ]
 
-function getSkuOptions() {
-  return skuOptions[props.config.hostingPlan] || skuOptions.Consumption
-}
-
-const rules = {
-  required: value => !!value || 'Este campo es obligatorio',
-  functionAppNameFormat: value => {
-    if (!value) return true
-    const regex = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,58}[a-zA-Z0-9]$/
-    return regex.test(value) || 'Solo letras, números y guiones, 2-60 caracteres. Debe empezar y terminar con letra o número'
+export default {
+  name: 'FunctionAppConfig',
+  props: {
+    config: {
+      type: Object,
+      required: true
+    },
+    environment: {
+      type: String,
+      required: true,
+      default: 'dev'
+    }
   },
-  storageNameFormat: value => {
-    if (!value) return true
-    const regex = /^[a-z0-9]{3,24}$/
-    return regex.test(value) || 'Solo letras minúsculas y números, 3-24 caracteres'
+  emits: ['update'],
+  data() {
+    return {
+      localFunctionBaseName: ''
+    }
+  },
+  computed: {
+    computedFunctionName() {
+      const env = this.environment || 'dev'
+      return this.localFunctionBaseName ? `${this.localFunctionBaseName}-${env}` : ''
+    },
+    computedAppServicePlanName() {
+      return this.computedFunctionName ? `${this.computedFunctionName}-plan` : ''
+    },
+    computedStorageAccountName() {
+      const env = this.environment || 'dev'
+      // Storage accounts no pueden tener guiones
+      return this.localFunctionBaseName ? `sta${this.localFunctionBaseName}${env}` : ''
+    },
+    hostingPlanOptions() {
+      return hostingPlanOptions
+    },
+    currentSkuOptions() {
+      return skuOptions[this.config.hostingPlan] || skuOptions.Consumption
+    },
+    runtimeStackOptions() {
+      return runtimeStackOptions
+    },
+    operatingSystemOptions() {
+      return operatingSystemOptions
+    },
+    preWarmedInstanceOptions() {
+      return preWarmedInstanceOptions
+    },
+    rules() {
+      return {
+        required: value => !!value || 'Este campo es obligatorio',
+        functionAppNameFormat: value => {
+          if (!value) return true
+          const regex = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,58}[a-zA-Z0-9]$/
+          return regex.test(value) || 'Solo letras, números y guiones, 2-60 caracteres. Debe empezar y terminar con letra o número'
+        },
+        storageNameFormat: value => {
+          if (!value) return true
+          const regex = /^[a-z0-9]{3,24}$/
+          return regex.test(value) || 'Solo letras minúsculas y números, 3-24 caracteres'
+        }
+      }
+    }
+  },
+  watch: {
+    localFunctionBaseName(newValue) {
+      this.updateConfig('name', this.computedFunctionName)
+      this.updateConfig('appServicePlanName', this.computedAppServicePlanName)
+      this.updateConfig('storageAccountName', this.computedStorageAccountName)
+    },
+    environment(newValue) {
+      // Update computed names when environment changes
+      this.updateConfig('name', this.computedFunctionName)
+      this.updateConfig('appServicePlanName', this.computedAppServicePlanName)
+      this.updateConfig('storageAccountName', this.computedStorageAccountName)
+    },
+    'config.hostingPlan'() {
+      // Reset SKU when hosting plan changes
+      this.updateConfig('sku', this.currentSkuOptions[0]?.value || '')
+    }
+  },
+  mounted() {
+    // Initialize default values
+    if (!this.config.hostingPlan) this.updateConfig('hostingPlan', 'Consumption')
+    if (!this.config.sku) this.updateConfig('sku', 'Y1')
+    if (!this.config.runtimeStack) this.updateConfig('runtimeStack', 'DOTNET-ISOLATED|8.0')
+    if (!this.config.operatingSystem) this.updateConfig('operatingSystem', 'Linux')
+    if (this.config.httpsOnly === undefined) this.updateConfig('httpsOnly', true)
+    if (this.config.enableApplicationInsights === undefined) this.updateConfig('enableApplicationInsights', true)
+    if (!this.config.preWarmedInstances) this.updateConfig('preWarmedInstances', '1')
+    if (this.config.vnetIntegration === undefined) this.updateConfig('vnetIntegration', false)
+
+    // Initialize localFunctionBaseName from existing name
+    if (this.config.name) {
+      const env = this.environment || 'dev'
+      const suffix = `-${env}`
+      
+      let baseName = this.config.name
+      
+      // Remove environment suffix if present
+      if (baseName.endsWith(suffix)) {
+        baseName = baseName.replace(suffix, '')
+      }
+      
+      this.localFunctionBaseName = baseName
+    }
+  },
+  methods: {
+    updateConfig(key, value) {
+      this.$emit('update', { ...this.config, [key]: value })
+    },
+    updateFunctionBaseName(value) {
+      this.localFunctionBaseName = value
+    },
+    updateHostingPlan(value) {
+      // Reset SKU when hosting plan changes
+      const firstOption = this.currentSkuOptions[0]?.value || ''
+      this.updateConfig('hostingPlan', value)
+      this.updateConfig('sku', firstOption)
+    }
   }
 }
 </script>

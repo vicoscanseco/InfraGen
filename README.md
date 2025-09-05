@@ -11,9 +11,107 @@ Una aplicación web moderna construida con Vue.js 3 y Vuetify 3 que permite sele
 - **Interfaz moderna**: UI intuitiva con Vuetify 3 y Material Design
 - **Configuración visual**: Selección y configuración de recursos Azure sin código
 - **Generación automática**: Código Bicep profesional con mejores prácticas
-- **Validaciones robustas**: Verificación de nombres, formatos y configuraciones
+- **Validaciones inteligentes**: Sistema completo de validaciones con dependencias
+- **Nomenclatura automática**: Convenciones consistentes para todos los recursos
 - **Sistema modular**: Componentes especializados para cada tipo de recurso
 - **Vista previa de código**: Visualización con tema oscuro tipo VS Code
+- **Feedback visual**: Tooltips, alertas y estados de botones interactivos
+
+## 🔒 Sistema de Validaciones
+
+InfraGen incluye un sistema robusto de validaciones que asegura configuraciones válidas y dependencias correctas:
+
+### ✅ Validaciones Principales
+
+1. **Información Básica Requerida**
+   - Nombre de aplicación obligatorio
+   - Nombre de grupo de recursos obligatorio
+   - Selección de ubicación requerida
+   - **Visual**: Alerta informativa y botones deshabilitados
+
+2. **Dependencias de Componentes**
+   - **App Service** → Requiere **App Service Plan**
+   - **SQL Database** → Requiere **SQL Server**
+   - **Visual**: Tooltips explicativos e iconos de estado
+
+3. **Feedback Visual Inteligente**
+   - 🔒 Ícono de candado para componentes no disponibles
+   - ✅ Ícono de check para componentes disponibles
+   - 📝 Tooltips explicativos al hacer hover
+   - ⚠️ Alertas informativas contextuales
+   - 🎨 Atenuación visual (opacity) para elementos deshabilitados
+
+### 🎯 Estados de los Botones
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│                    Estado de Componentes                    │
+├─────────────────────────────────────────────────────────────┤
+│ ✅ Storage Account         │ Disponible - Info básica OK    │
+│ 🔒 App Service            │ Requiere App Service Plan      │
+│ ✅ App Service Plan       │ Disponible - Info básica OK    │
+│ 🔒 SQL Database           │ Requiere SQL Server            │
+│ ✅ SQL Server             │ Disponible - Info básica OK    │
+│ ✅ Function App           │ Disponible - Info básica OK    │
+│ ✅ Cognitive Service      │ Disponible - Info básica OK    │
+│ ✅ Monitoring Alerts      │ Disponible - Info básica OK    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## 📏 Convenciones de Nomenclatura
+
+InfraGen sigue convenciones estrictas y consistentes para garantizar nombres únicos y descriptivos:
+
+### 🏷️ Formato General
+```text
+{tipo}{shortName}_{location}_{nombreApp}
+```
+
+### 📋 Convenciones por Recurso
+
+| Recurso | Prefijo | Ejemplo | Formato Completo |
+|---------|---------|---------|------------------|
+| **Resource Group** | `rg` | `rgprod_eastus_myapp` | `rg{environment}_{location}_{appName}` |
+| **Storage Account** | `st` | `stprodeastusMyapp` | `st{environment}{location}{appName}` (sin guiones) |
+| **App Service** | `app` | `appprod_eastus_myapp` | `app{environment}_{location}_{appName}` |
+| **App Service Plan** | `asp` | `aspprod_eastus_myapp` | `asp{environment}_{location}_{appName}` |
+| **SQL Server** | `sql` | `sqlprod_eastus_myapp` | `sql{environment}_{location}_{appName}` |
+| **SQL Database** | `sqldb` | `sqldbprod_eastus_myapp` | `sqldb{environment}_{location}_{appName}` |
+| **Function App** | `func` | `funcprod_eastus_myapp` | `func{environment}_{location}_{appName}` |
+| **Cognitive Service** | `cog` | `cogprod_eastus_myapp` | `cog{environment}_{location}_{appName}` |
+| **Log Analytics** | `log` | `logprod_eastus_myapp` | `log{environment}_{location}_{appName}` |
+
+### 🔤 Reglas de Nomenclatura
+
+1. **Environments**: Se usan short names automáticos
+   - `development` → `dev`
+   - `testing` → `test`
+   - `staging` → `stage`
+   - `production` → `prod`
+
+2. **Locations**: Se convierten automáticamente
+   - `East US` → `eastus`
+   - `West Europe` → `westeurope`
+   - `Southeast Asia` → `southeastasia`
+
+3. **Casos Especiales**:
+   - **Storage Account**: Sin guiones ni guiones bajos (limitación Azure)
+   - **Resource Group**: Creación automática si no existe (targetScope = 'subscription')
+   - **SQL Database**: Incluye referencia automática al SQL Server
+
+### 📐 Ejemplo Completo
+
+Para una aplicación llamada `"MyWebApp"` en environment `"Production"` y ubicación `"East US"`:
+
+```text
+Resource Group:     rgprod_eastus_MyWebApp
+Storage Account:    stprodeastusMyWebApp
+App Service Plan:   aspprod_eastus_MyWebApp
+App Service:        appprod_eastus_MyWebApp
+SQL Server:         sqlprod_eastus_MyWebApp
+SQL Database:       sqldbprod_eastus_MyWebApp
+Function App:       funcprod_eastus_MyWebApp
+```
 
 ## 📋 Recursos Soportados
 
@@ -22,75 +120,114 @@ Una aplicación web moderna construida con Vue.js 3 y Vuetify 3 que permite sele
 Configuración completa de cuentas de almacenamiento con opciones de SKU, tipo de acceso y políticas de seguridad.
 
 **Características:**
-
-- Múltiples SKUs (Standard/Premium)
-- Tipos de almacenamiento (BlobStorage, StorageV2, etc.)
-- Configuración de acceso público
+- Múltiples SKUs (Standard_LRS, Standard_GRS, Premium_LRS)
+- Tipos de almacenamiento (StorageV2, BlobStorage, BlockBlobStorage)
+- Configuración de niveles de acceso (Hot, Cool, Archive)
 - Habilitación de HTTPS forzado
+- Control de acceso público
+
+**Valores por Defecto:**
+- SKU: `Standard_LRS`
+- Tipo: `StorageV2`
+- Nivel: `Cool`
+- HTTPS Only: `Habilitado`
 
 ```text
 ┌─────────────────────────────────────┐
 │ Storage Account Configuration       │
 ├─────────────────────────────────────┤
-│ Name: mystorageaccount             │
+│ Name: stprodeastusMyapp            │
 │ SKU: Standard_LRS ▼                │
 │ Kind: StorageV2 ▼                  │
-│ Access Tier: Hot ▼                 │
+│ Access Tier: Cool ▼                │
 │ ☑ Enable HTTPS Traffic Only        │
 │ ☐ Allow Public Access             │
 └─────────────────────────────────────┘
 ```
 
-### 🌐 App Service
+### 🌐 App Service & App Service Plan
 
 Configuración detallada de App Services con planes de servicio y configuraciones de runtime.
 
-**Características:**
-
-- 11+ opciones de SKU (Free, Shared, Basic, Standard, Premium)
-- Múltiples runtime stacks (Node.js, .NET, Python, Java, PHP)
+**App Service Plan - Características:**
+- 11+ opciones de SKU (F1, D1, B1, B2, B3, S1-S3, P1V2-P3V2, P1V3-P3V3)
 - Configuración de OS (Windows/Linux)
-- Opciones de escalado automático
-- Configuración de slots de deployment
+- Instancias configurables
+
+**App Service - Características:**
+- Múltiples runtime stacks (Node.js, .NET, Python, Java, PHP)
+- Configuración de versiones específicas
+- Always On habilitado
+- HTTPS Only forzado
+
+**Valores por Defecto:**
+- SKU: `B1` (Basic)
+- Runtime: `.NET 8`
+- OS: `Linux`
+- Always On: `Habilitado`
 
 ```text
 ┌─────────────────────────────────────┐
+│ App Service Plan Configuration      │
+├─────────────────────────────────────┤
+│ Name: aspprod_eastus_MyWebApp      │
+│ SKU: B1 ▼                          │
+│ OS: Linux ▼                        │
+│ Instances: 1                       │
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
 │ App Service Configuration           │
 ├─────────────────────────────────────┤
-│ Name: mywebapp                     │
-│ SKU: S1 ▼                          │
-│ Runtime: Node.js 18 ▼              │
-│ OS: Linux ▼                        │
+│ Name: appprod_eastus_MyWebApp      │
+│ Runtime: .NET 8 ▼                  │
 │ ☑ Always On                       │
 │ ☑ HTTPS Only                      │
 └─────────────────────────────────────┘
 ```
 
-### 🗃️ SQL Database
+### 🗃️ SQL Server & SQL Database
 
 Sistema completo de base de datos SQL con servidor, configuraciones de seguridad y firewall.
 
-**Características:**
+**SQL Server - Características:**
+- Configuración de administrador y contraseña
+- Firewall rules automáticas
+- Versión SQL 12.0 (SQL Server 2014)
 
-- Configuración de SQL Server completa
-- Opciones DTU y vCore
+**SQL Database - Características:**
+- 6 ediciones disponibles (Basic, Standard, Premium, GeneralPurpose, BusinessCritical, Hyperscale)
 - 50+ collations disponibles
-- Reglas de firewall automáticas
+- Configuración DTU/vCore
 - Threat Detection habilitado
 - Validación robusta de contraseñas
 
+**Valores por Defecto:**
+- Edición: `Basic`
+- Collation: `SQL_Latin1_General_CP1_CI_AS`
+- Admin User: `sqladmin`
+- Firewall: `Permitir servicios Azure`
+
 ```text
+┌─────────────────────────────────────┐
+│ SQL Server Configuration            │
+├─────────────────────────────────────┤
+│ Name: sqlprod_eastus_MyWebApp      │
+│ Admin User: sqladmin               │
+│ Password: ************             │
+│ Version: 12.0                      │
+│ ☑ Allow Azure Services Access      │
+└─────────────────────────────────────┘
+
 ┌─────────────────────────────────────┐
 │ SQL Database Configuration          │
 ├─────────────────────────────────────┤
-│ Server: mysqlserver                │
-│ Database: mydatabase               │
-│ Admin User: sqladmin               │
-│ Password: ************             │
-│ SKU: Basic ▼                       │
+│ Name: sqldbprod_eastus_MyWebApp    │
+│ Server: sqlprod_eastus_MyWebApp    │
+│ Edition: Basic ▼                   │
 │ Collation: SQL_Latin1_General... ▼ │
 │ ☑ Enable Threat Detection          │
-│ ☑ Allow Azure Services Access      │
+│ ☑ Enable Firewall Rules           │
 └─────────────────────────────────────┘
 ```
 
@@ -99,41 +236,102 @@ Sistema completo de base de datos SQL con servidor, configuraciones de seguridad
 Configuración avanzada de Azure Functions con diferentes planes de hosting.
 
 **Características:**
-
 - 3 tipos de planes (Consumption, Premium, Dedicated)
 - SKUs dinámicos según el plan seleccionado
-- Runtime stacks especializados (.NET, Node.js, Python, Java)
+- Runtime stacks especializados (.NET, Node.js, Python, Java, PowerShell)
 - Application Insights integrado
 - Storage Account automático
-- Configuración de instancias pre-calentadas
+- Configuración HTTPS forzado
+
+**Valores por Defecto:**
+- Plan: `Consumption`
+- Runtime: `.NET 8`
+- OS: `Windows`
+- Application Insights: `Habilitado`
 
 ```text
 ┌─────────────────────────────────────┐
 │ Function App Configuration          │
 ├─────────────────────────────────────┤
-│ Name: myfunctionapp                │
+│ Name: funcprod_eastus_MyWebApp     │
 │ Hosting: Consumption Plan ▼        │
 │ Runtime: .NET 8 ▼                  │
 │ OS: Windows ▼                      │
 │ ☑ Application Insights             │
-│ ☑ Create Storage Account           │
+│ ☑ HTTPS Only                      │
+└─────────────────────────────────────┘
+```
+
+### 🧠 Cognitive Services
+
+Configuración de servicios de IA y Machine Learning de Azure.
+
+**Características:**
+- 15+ tipos de servicios (Computer Vision, Speech, Language, etc.)
+- 3 niveles de SKU (F0 Free, S0 Standard, S1 Premium)
+- Configuración de acceso público
+
+**Valores por Defecto:**
+- Tipo: `CognitiveServices` (Multi-Service)
+- SKU: `S0` (Standard)
+- Acceso Público: `Habilitado`
+
+```text
+┌─────────────────────────────────────┐
+│ Cognitive Service Configuration     │
+├─────────────────────────────────────┤
+│ Name: cogprod_eastus_MyWebApp      │
+│ Kind: CognitiveServices ▼          │
+│ SKU: S0 ▼                          │
+│ ☑ Allow Public Network Access      │
+└─────────────────────────────────────┘
+```
+
+### 📊 Monitoring & Alerts
+
+Sistema de monitoreo con Log Analytics y alertas configurables.
+
+**Características:**
+- Workspace de Log Analytics
+- 3 tipos de alertas (CPU, Memory, Response Time)
+- Configuración de umbrales personalizables
+- Integración automática con recursos
+
+**Valores por Defecto:**
+- SKU: `PerGB2018`
+- Retención: `30 días`
+- Alertas: `CPU > 80%, Memory > 85%, Response > 5s`
+
+```text
+┌─────────────────────────────────────┐
+│ Monitoring Configuration            │
+├─────────────────────────────────────┤
+│ Workspace: logprod_eastus_MyWebApp │
+│ SKU: PerGB2018 ▼                   │
+│ Retention: 30 days                 │
+│ ☑ Enable CPU Alerts               │
+│ ☑ Enable Memory Alerts            │
+│ ☑ Enable Response Time Alerts     │
 └─────────────────────────────────────┘
 ```
 
 ## 🏗️ Arquitectura del Proyecto
 
-```
+```text
 InfraGen/
 ├── src/
 │   ├── components/
-│   │   ├── AzureSelector.vue          # Componente principal (678 líneas)
-│   │   ├── StorageAccountConfig.vue   # Config Storage (136 líneas)
-│   │   ├── AppServiceConfig.vue       # Config App Service (159 líneas)
-│   │   ├── SqlDatabaseConfig.vue      # Config SQL Database (250 líneas)
-│   │   └── FunctionAppConfig.vue      # Config Function App (249 líneas)
+│   │   ├── AzureSelector.vue          # Componente principal con validaciones (720+ líneas)
+│   │   ├── StorageAccountConfig.vue   # Config Storage Account (160+ líneas)
+│   │   ├── AppServiceConfig.vue       # Config App Service (180+ líneas)
+│   │   ├── SqlDatabaseConfig.vue      # Config SQL Database (460+ líneas)
+│   │   ├── FunctionAppConfig.vue      # Config Function App (270+ líneas)
+│   │   ├── CognitiveServiceConfig.vue # Config Cognitive Services (140+ líneas)
+│   │   ├── SQLServerConfig.vue        # Config SQL Server (130+ líneas)
+│   │   └── MonitoringAlertsConfig.vue # Config Monitoring (120+ líneas)
 │   ├── data/
 │   │   ├── environments.json          # Entornos disponibles
-│   │   └── locations.json             # 30 regiones Azure
+│   │   └── locations.json             # 30+ regiones Azure
 │   ├── App.vue                        # Componente raíz
 │   └── main.js                        # Configuración Vuetify
 ├── package.json
@@ -142,10 +340,11 @@ InfraGen/
 
 ## 🛠️ Tecnologías Utilizadas
 
-- **Vue.js 3**: Framework reactivo con Composition API
+- **Vue.js 3**: Framework reactivo con Composition API y Options API
 - **Vuetify 3**: Biblioteca de componentes Material Design
 - **Vite**: Herramienta de build rápida
 - **JavaScript ES6+**: Sintaxis moderna y módulos
+- **Azure Bicep**: Lenguaje de infraestructura como código
 
 ## 📦 Instalación y Uso
 
@@ -173,18 +372,38 @@ npm run build
 
 ### Uso de la Aplicación
 
-1. **Seleccionar Ambiente y Ubicación**: Elige el entorno de deployment y la región Azure
-2. **Configurar Resource Group**: Define el nombre del grupo de recursos (obligatorio)
-3. **Agregar Componentes**: Selecciona los recursos desde la lista de disponibles
-4. **Configurar Recursos**: Personaliza cada recurso con sus opciones específicas
-5. **Generar Bicep**: Visualiza y copia el código generado
+1. **Información Básica** (Obligatorio):
+   - Nombre de aplicación
+   - Seleccionar ambiente (Development, Testing, Staging, Production)
+   - Elegir ubicación Azure
 
-## 🎯 Flujo de Trabajo
+2. **Configurar Resource Group** (Obligatorio):
+   - Se genera automáticamente: `rg{environment}_{location}_{appName}`
+   - Creación automática si no existe (targetScope = 'subscription')
+
+3. **Agregar Componentes** (Con Validaciones):
+   - ✅ Componentes disponibles después de información básica
+   - 🔒 App Service requiere App Service Plan
+   - 🔒 SQL Database requiere SQL Server
+
+4. **Configurar Recursos**:
+   - Valores por defecto inteligentes
+   - Configuración específica por componente
+   - Validaciones en tiempo real
+
+5. **Generar Bicep**:
+   - Código optimizado con mejores prácticas
+   - Nomenclatura consistente
+   - Vista previa con sintaxis highlighting
+
+## 🎯 Flujo de Trabajo con Validaciones
 
 ```text
-[Seleccionar Ambiente] → [Elegir Ubicación] → [Configurar Resource Group]
+[Información Básica] → [Resource Group] → [Validaciones de Dependencias]
             ↓
-[Agregar Componentes] → [Configurar Recursos] → [Generar Bicep] → [Copiar Código]
+[Agregar Componentes] → [Configurar] → [Generar Bicep] → [Copiar Código]
+            ↓
+    [Visual Feedback: Tooltips, Alertas, Estados]
 ```
 
 ## 🔧 Configuración Avanzada
@@ -194,22 +413,65 @@ npm run build
 Edita `src/data/environments.json` para agregar nuevos entornos:
 
 ```json
-{
-  "environments": ["Development", "Testing", "Staging", "Production", "CustomEnv"]
-}
+["Development", "Testing", "Staging", "Production", "CustomEnv"]
 ```
 
 ### Regiones Adicionales
 
-Modifica `src/data/locations.json` para incluir nuevas regiones Azure.
+Modifica `src/data/locations.json` para incluir nuevas regiones Azure:
+
+```json
+[
+  "East US", "West US", "West Europe", "Southeast Asia",
+  "Brazil South", "Australia East", "Japan East"
+]
+```
+
+### Personalizar Validaciones
+
+En `AzureSelector.vue`, las validaciones están definidas en computed properties:
+
+```javascript
+// Validación información básica
+isBasicInfoComplete() {
+  return this.appName && this.resourceGroupName && this.location
+}
+
+// Validación dependencias
+hasAppServicePlan() {
+  return this.components.some(c => c.type === 'AppServicePlan')
+}
+
+hasSQLServer() {
+  return this.components.some(c => c.type === 'SQLServer')
+}
+```
 
 ## 📊 Estadísticas del Proyecto
 
-- **Líneas de código**: ~1,612 líneas
-- **Componentes Vue**: 6 componentes
-- **Recursos Azure**: 4 tipos completamente configurables
-- **Validaciones**: 15+ patrones de validación
-- **Configuraciones**: 50+ opciones únicas
+- **Líneas de código**: ~2,100+ líneas
+- **Componentes Vue**: 8 componentes especializados
+- **Recursos Azure**: 8 tipos completamente configurables
+- **Validaciones**: 20+ patrones de validación
+- **Configuraciones**: 80+ opciones únicas
+- **Nomenclatura**: Convenciones automáticas para todos los recursos
+
+## 🚀 Características Técnicas Avanzadas
+
+### Sistema de Validaciones
+- **Reactivo**: Validaciones en tiempo real con Vue.js reactivity
+- **Visual**: Feedback inmediato con iconos, tooltips y estados
+- **Inteligente**: Dependencias automáticas entre componentes
+
+### Generación de Código Bicep
+- **Optimizado**: Código limpio siguiendo mejores prácticas
+- **Modular**: Recursos organizados por tipo
+- **Escalable**: targetScope = 'subscription' para despliegues automáticos
+
+### Interfaz de Usuario
+- **Material Design**: Componentes Vuetify 3 consistentes
+- **Responsive**: Adaptable a diferentes tamaños de pantalla
+- **Accesible**: Tooltips, alertas y estados claramente definidos
 
 ## 🤝 Contribuir
 
@@ -218,6 +480,43 @@ Modifica `src/data/locations.json` para incluir nuevas regiones Azure.
 3. Commit tus cambios (`git commit -m 'Add: Nuevo recurso Azure'`)
 4. Push a la rama (`git push origin feature/NuevoRecurso`)
 5. Abre un Pull Request
+
+### Estructura para Nuevos Componentes
+
+```javascript
+// Ejemplo: NuevoRecursoConfig.vue
+<template>
+  <!-- UI con localConfig pattern -->
+</template>
+
+<script>
+export default {
+  props: ['modelValue'],
+  data() {
+    return {
+      localConfig: {
+        // Valores por defecto
+      }
+    }
+  },
+  watch: {
+    modelValue: {
+      handler(newVal) {
+        if (newVal) this.localConfig = { ...newVal }
+      },
+      immediate: true
+    }
+  },
+  methods: {
+    updateConfig() {
+      this.$emit('update:config', this.localConfig)
+      this.$emit('update:model-value', this.localConfig)
+      this.$emit('update', this.localConfig)
+    }
+  }
+}
+</script>
+```
 
 ## 📝 Licencia
 

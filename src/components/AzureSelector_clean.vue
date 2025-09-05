@@ -66,20 +66,6 @@
           </v-col>
         </v-row>
         
-        <!-- Mensaje informativo -->
-        <v-row v-if="!isBasicInfoComplete" dense class="mt-2">
-          <v-col cols="12">
-            <v-alert
-              type="info"
-              variant="tonal"
-              closable
-              icon="mdi-information"
-              title="Información requerida"
-              text="Complete el nombre de la aplicación y la configuración básica antes de agregar componentes."
-            />
-          </v-col>
-        </v-row>
-        
         <!-- Listado de componentes disponibles -->
         <v-row dense class="mt-2">
           <v-col cols="12">
@@ -90,32 +76,16 @@
                 :key="comp.value"
                 :title="comp.label"
                 :subtitle="comp.description"
-                :class="{ 'text-disabled': !canAddComponent(comp.value).allowed }"
                 class="px-2"
               >
-                <template v-slot:prepend>
-                  <v-icon 
-                    :color="canAddComponent(comp.value).allowed ? 'primary' : 'grey'"
-                    :icon="canAddComponent(comp.value).allowed ? 'mdi-check-circle' : 'mdi-lock'"
-                  />
-                </template>
                 <template v-slot:append>
-                  <v-tooltip 
-                    :text="!canAddComponent(comp.value).allowed ? canAddComponent(comp.value).reason : ''"
-                    :disabled="canAddComponent(comp.value).allowed"
+                  <v-btn
+                    color="primary"
+                    size="small"
+                    @click="addComponent(comp)"
                   >
-                    <template v-slot:activator="{ props }">
-                      <v-btn
-                        v-bind="props"
-                        :color="canAddComponent(comp.value).allowed ? 'primary' : 'grey'"
-                        :disabled="!canAddComponent(comp.value).allowed"
-                        size="small"
-                        @click="addComponent(comp)"
-                      >
-                        Agregar
-                      </v-btn>
-                    </template>
-                  </v-tooltip>
+                    Agregar
+                  </v-btn>
                 </template>
               </v-list-item>
             </v-list>
@@ -204,7 +174,7 @@
     </v-alert>
 
     <!-- Dialog de configuración -->
-    <v-dialog v-model="configDialog" max-width="900px" persistent>
+    <v-dialog v-model="configDialog" max-width="600px" persistent>
       <v-card>
         <v-card-title>
           Configurar {{ currentComponent?.label }}
@@ -212,15 +182,10 @@
         <v-card-text>
           <!-- Aquí se cargarán dinámicamente los componentes de configuración -->
           <component
-            :is="componentMapping[currentComponent?.value]"
-            v-if="currentComponent && componentMapping[currentComponent?.value]"
+            :is="currentComponent?.value"
+            v-if="currentComponent"
             :config="currentConfig"
-            :model-value="currentConfig"
-            :app-name="appName"
-            :environment="selectedEnv"
-            @update="updateCurrentConfig"
             @update:config="updateCurrentConfig"
-            @update:model-value="updateCurrentConfig"
           />
         </v-card-text>
         <v-card-actions>
@@ -239,24 +204,6 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import StorageAccountConfig from './StorageAccountConfig.vue'
-import AppServicePlanConfig from './AppServicePlanConfig.vue'
-import AppServiceConfig from './AppServiceConfig.vue'
-import SqlDatabaseConfig from './SqlDatabaseConfig.vue'
-import CognitiveServiceConfig from './CognitiveServiceConfig.vue'
-import SQLServerConfig from './SQLServerConfig.vue'
-import MonitoringAlertsConfig from './MonitoringAlertsConfig.vue'
-
-// Mapeo de componentes
-const componentMapping = {
-  'StorageAccount': StorageAccountConfig,
-  'AppServicePlan': AppServicePlanConfig,
-  'AppService': AppServiceConfig,
-  'CognitiveService': CognitiveServiceConfig,
-  'SQLServer': SQLServerConfig,
-  'SQLDatabase': SqlDatabaseConfig,
-  'MonitoringAlerts': MonitoringAlertsConfig
-}
 
 // Reactive references
 const environments = ref([])
@@ -288,38 +235,26 @@ onMounted(async () => {
     if (!envRes.ok) {
       throw new Error(`Error al cargar ambientes: ${envRes.status}`)
     }
+    const envData = await envRes.json()
     
-    let envData
-    try {
-      envData = await envRes.json()
-    } catch (jsonError) {
-      throw new Error(`Error al parsear environments.json: ${jsonError.message}`)
+    if (!envData || !Array.isArray(envData.environments)) {
+      throw new Error('Formato inválido en environments.json')
     }
     
-    if (!envData || !Array.isArray(envData)) {
-      throw new Error('Formato inválido en environments.json - debe ser un array')
-    }
-    
-    environments.value = envData
+    environments.value = envData.environments
     
     // Cargar ubicaciones
     const locRes = await fetch('/src/locations.json')
     if (!locRes.ok) {
       throw new Error(`Error al cargar ubicaciones: ${locRes.status}`)
     }
+    const locData = await locRes.json()
     
-    let locData
-    try {
-      locData = await locRes.json()
-    } catch (jsonError) {
-      throw new Error(`Error al parsear locations.json: ${jsonError.message}`)
+    if (!locData || !Array.isArray(locData.locations)) {
+      throw new Error('Formato inválido en locations.json')
     }
     
-    if (!locData || !Array.isArray(locData)) {
-      throw new Error('Formato inválido en locations.json - debe ser un array')
-    }
-    
-    locations.value = locData
+    locations.value = locData.locations
     
   } catch (error) {
     console.error('Error al cargar datos:', error)
@@ -351,60 +286,8 @@ const updateCurrentConfig = (newConfig) => {
   currentConfig.value = newConfig
 }
 
-// Funciones de validación
-const isBasicInfoComplete = computed(() => {
-  return appName.value.trim() !== '' && resourceGroup.value.trim() !== ''
-})
-
-const hasAppServicePlan = computed(() => {
-  return configuredComponents.value.some(item => item.value === 'AppServicePlan')
-})
-
-const hasSQLServer = computed(() => {
-  return configuredComponents.value.some(item => item.value === 'SQLServer')
-})
-
-const canAddComponent = (componentValue) => {
-  // Validación 1: Información básica requerida para todos los componentes
-  if (!isBasicInfoComplete.value) {
-    return {
-      allowed: false,
-      reason: 'Debe ingresar el nombre de la app y el grupo de recursos primero'
-    }
-  }
-  
-  // Validación 2: AppService requiere AppServicePlan
-  if (componentValue === 'AppService' && !hasAppServicePlan.value) {
-    return {
-      allowed: false,
-      reason: 'Debe agregar un App Service Plan antes de agregar un App Service'
-    }
-  }
-  
-  // Validación 3: SQLDatabase requiere SQLServer
-  if (componentValue === 'SQLDatabase' && !hasSQLServer.value) {
-    return {
-      allowed: false,
-      reason: 'Debe agregar un SQL Server antes de agregar una SQL Database'
-    }
-  }
-  
-  return { allowed: true, reason: '' }
-}
-
 // Funciones del componente
 const addComponent = (component) => {
-  const validation = canAddComponent(component.value)
-  
-  if (!validation.allowed) {
-    // Mostrar mensaje de error
-    errorMsg.value = validation.reason
-    setTimeout(() => {
-      errorMsg.value = ''
-    }, 5000)
-    return
-  }
-  
   currentComponent.value = component
   currentConfig.value = {}
   editingIndex.value = -1
@@ -424,13 +307,10 @@ const removeComponent = (index) => {
 }
 
 const saveConfiguration = () => {
-  console.log('saveConfiguration called with currentConfig:', currentConfig.value)
   const newItem = {
     ...currentComponent.value,
     config: { ...currentConfig.value }
   }
-  
-  console.log('newItem being saved:', newItem)
   
   if (editingIndex.value >= 0) {
     configuredComponents.value[editingIndex.value] = newItem
@@ -503,7 +383,6 @@ const generateBicep = () => {
       const cfg = item.config
       
       if (item.value === 'StorageAccount') {
-        if (!cfg.name) throw new Error('StorageAccount configuration is missing a name')
         content += '// Storage Account ' + cfg.name + '\n'
         content += 'resource storageAccount_' + cfg.name + ' \'Microsoft.Storage/storageAccounts@2022-09-01\' = {\n'
         content += '  scope: resourceGroup\n'
@@ -514,7 +393,7 @@ const generateBicep = () => {
         content += '  }\n'
         content += '  kind: \'' + (cfg.kind || 'StorageV2') + '\'\n'
         content += '  properties: {\n'
-        content += '    accessTier: \'' + (cfg.accessTier || 'Cool') + '\'\n'
+        content += '    accessTier: \'' + (cfg.accessTier || 'Hot') + '\'\n'
         content += '    supportsHttpsTrafficOnly: ' + (cfg.httpsOnly !== false) + '\n'
         content += '    allowBlobPublicAccess: ' + (cfg.enableBlobPublicAccess === true) + '\n'
         content += '    minimumTlsVersion: \'TLS1_2\'\n'
@@ -524,9 +403,6 @@ const generateBicep = () => {
       }
       
       if (item.value === 'AppServicePlan') {
-        if (!cfg.name) {
-          throw new Error('App Service Plan requiere un nombre válido')
-        }
         content += '// App Service Plan ' + cfg.name + '\n'
         content += 'resource appServicePlan_' + cfg.name.replace(/[^a-zA-Z0-9]/g, '') + ' \'Microsoft.Web/serverfarms@2022-03-01\' = {\n'
         content += '  scope: resourceGroup\n'
@@ -551,9 +427,6 @@ const generateBicep = () => {
       }
       
       if (item.value === 'AppService') {
-        if (!cfg.name) {
-          throw new Error('App Service requiere un nombre válido')
-        }
         content += '// App Service ' + cfg.name + '\n'
         content += 'resource appService_' + cfg.name.replace(/[^a-zA-Z0-9]/g, '') + ' \'Microsoft.Web/sites@2022-03-01\' = {\n'
         content += '  scope: resourceGroup\n'
@@ -601,7 +474,6 @@ const generateBicep = () => {
       }
       
       if (item.value === 'CognitiveService') {
-        if (!cfg.name) throw new Error('CognitiveService configuration is missing a name')
         content += '// Cognitive Service ' + cfg.name + '\n'
         content += 'resource cognitiveService_' + cfg.name.replace(/[^a-zA-Z0-9]/g, '') + ' \'Microsoft.CognitiveServices/accounts@2023-05-01\' = {\n'
         content += '  scope: resourceGroup\n'
@@ -623,7 +495,6 @@ const generateBicep = () => {
       }
       
       if (item.value === 'SQLServer') {
-        if (!cfg.name) throw new Error('SQLServer configuration is missing a name')
         content += '// SQL Server ' + cfg.name + '\n'
         content += 'resource sqlServer_' + cfg.name.replace(/[^a-zA-Z0-9]/g, '') + ' \'Microsoft.Sql/servers@2022-05-01-preview\' = {\n'
         content += '  scope: resourceGroup\n'
@@ -641,8 +512,6 @@ const generateBicep = () => {
       }
       
       if (item.value === 'SQLDatabase') {
-        console.log('SQLDatabase item config:', item.config)
-        if (!cfg.name) throw new Error('SQLDatabase configuration is missing a name')
         content += '// SQL Database ' + cfg.name + '\n'
         content += 'resource sqlDatabase_' + cfg.name.replace(/[^a-zA-Z0-9]/g, '') + ' \'Microsoft.Sql/servers/databases@2022-05-01-preview\' = {\n'
         content += '  scope: resourceGroup\n'
@@ -674,7 +543,6 @@ const generateBicep = () => {
       }
       
       if (item.value === 'MonitoringAlerts') {
-        if (!cfg.name) throw new Error('MonitoringAlerts configuration is missing a name')
         content += '// Application Insights ' + cfg.name + '\n'
         content += 'resource applicationInsights_' + cfg.name.replace(/[^a-zA-Z0-9]/g, '') + ' \'Microsoft.Insights/components@2020-02-02\' = {\n'
         content += '  scope: resourceGroup\n'
@@ -716,10 +584,6 @@ const copyToClipboard = () => {
 </script>
 
 <style scoped>
-.text-disabled {
-  opacity: 0.6;
-}
-
 .code-container {
   background-color: #1e1e1e;
   border-radius: 4px;
