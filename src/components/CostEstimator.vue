@@ -81,6 +81,72 @@
         </v-col>
       </v-row>
       
+      <!-- Botones de descarga -->
+      <v-row class="mt-3" justify="center">
+        <v-col cols="auto">
+          <div class="text-center mb-2">
+            <span class="text-body-2 text-grey-darken-1">
+              <v-icon size="16" class="mr-1">mdi-download</v-icon>
+              Descargar reporte de costos:
+            </span>
+          </div>
+          <v-btn-group variant="outlined" density="compact">
+            <v-tooltip text="Descargar como archivo CSV (compatible con Excel)">
+              <template v-slot:activator="{ props }">
+                <v-btn
+                  v-bind="props"
+                  size="small"
+                  @click="downloadCSV"
+                  prepend-icon="mdi-file-delimited"
+                  color="green"
+                >
+                  CSV
+                </v-btn>
+              </template>
+            </v-tooltip>
+            <v-tooltip text="Descargar como archivo Excel (.xls)">
+              <template v-slot:activator="{ props }">
+                <v-btn
+                  v-bind="props"
+                  size="small"
+                  @click="downloadExcel"
+                  prepend-icon="mdi-microsoft-excel"
+                  color="success"
+                >
+                  Excel
+                </v-btn>
+              </template>
+            </v-tooltip>
+            <v-tooltip text="Descargar como archivo JSON (datos estructurados)">
+              <template v-slot:activator="{ props }">
+                <v-btn
+                  v-bind="props"
+                  size="small"
+                  @click="downloadJSON"
+                  prepend-icon="mdi-code-json"
+                  color="blue"
+                >
+                  JSON
+                </v-btn>
+              </template>
+            </v-tooltip>
+            <v-tooltip text="Imprimir reporte completo">
+              <template v-slot:activator="{ props }">
+                <v-btn
+                  v-bind="props"
+                  size="small"
+                  @click="printReport"
+                  prepend-icon="mdi-printer"
+                  color="grey"
+                >
+                  Imprimir
+                </v-btn>
+              </template>
+            </v-tooltip>
+          </v-btn-group>
+        </v-col>
+      </v-row>
+      
       <!-- Desglose de costos -->
       <v-expansion-panels class="mt-4" variant="accordion">
         <v-expansion-panel>
@@ -343,6 +409,299 @@ export default {
       } else {
         return 'Configuración robusta para aplicaciones enterprise de alta demanda.'
       }
+    },
+    
+    // Métodos de descarga y exportación
+    generateReportData() {
+      const reportData = {
+        metadata: {
+          generatedAt: new Date().toISOString(),
+          region: this.regionInfo.name,
+          regionMultiplier: this.regionInfo.multiplier,
+          totalComponents: this.components.length,
+          totalCost: this.totalCost
+        },
+        components: this.components.map(component => ({
+          name: component.config?.name || 'Sin nombre',
+          type: this.getComponentDisplayName(component.type || component.value),
+          typeId: component.type || component.value,
+          cost: this.getComponentCost(component),
+          configuration: component.config,
+          description: getPriceDescription(component)
+        })),
+        costByCategory: this.costByCategory,
+        recommendations: this.costRecommendations
+      }
+      return reportData
+    },
+    
+    downloadCSV() {
+      const reportData = this.generateReportData()
+      let csvContent = "data:text/csv;charset=utf-8,"
+      
+      // Header del CSV
+      csvContent += "Reporte de Estimación de Costos Azure\n"
+      csvContent += `Generado el: ${new Date().toLocaleString()}\n`
+      csvContent += `Región: ${this.regionInfo.name}\n`
+      csvContent += `Multiplicador de región: ${this.regionInfo.multiplier}\n`
+      csvContent += `Total estimado: $${this.formatCost(this.totalCost)}/mes\n\n`
+      
+      // Tabla de componentes
+      csvContent += "Componente,Tipo,Costo Mensual,Descripción\n"
+      reportData.components.forEach(component => {
+        csvContent += `"${component.name}","${component.type}","$${this.formatCost(component.cost)}","${component.description}"\n`
+      })
+      
+      // Categorías
+      csvContent += "\nCostos por Categoría\n"
+      csvContent += "Categoría,Costo\n"
+      reportData.costByCategory.forEach(category => {
+        csvContent += `"${category.name}","$${this.formatCost(category.cost)}"\n`
+      })
+      
+      // Recomendaciones
+      if (reportData.recommendations.length > 0) {
+        csvContent += "\nRecomendaciones\n"
+        reportData.recommendations.forEach(rec => {
+          csvContent += `"${rec}"\n`
+        })
+      }
+      
+      const encodedUri = encodeURI(csvContent)
+      const link = document.createElement("a")
+      link.setAttribute("href", encodedUri)
+      link.setAttribute("download", `azure-cost-estimate-${new Date().toISOString().split('T')[0]}.csv`)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    },
+    
+    downloadExcel() {
+      const reportData = this.generateReportData()
+      
+      // Crear contenido HTML que Excel puede interpretar
+      let excelContent = `
+        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
+        <head>
+          <meta charset="UTF-8">
+          <!--[if gte mso 9]>
+          <xml>
+            <x:ExcelWorkbook>
+              <x:ExcelWorksheets>
+                <x:ExcelWorksheet>
+                  <x:Name>Estimación Costos</x:Name>
+                  <x:WorksheetOptions>
+                    <x:Print>
+                      <x:ValidPrinterInfo/>
+                    </x:Print>
+                  </x:WorksheetOptions>
+                </x:ExcelWorksheet>
+              </x:ExcelWorksheets>
+            </x:ExcelWorkbook>
+          </xml>
+          <![endif]-->
+          <style>
+            .header { font-weight: bold; background-color: #0078d4; color: white; }
+            .total { font-weight: bold; background-color: #f0f8ff; }
+            .number { text-align: right; }
+          </style>
+        </head>
+        <body>
+          <table border="1">
+            <tr class="header">
+              <td colspan="4">Estimación de Costos Azure</td>
+            </tr>
+            <tr>
+              <td><strong>Fecha:</strong></td>
+              <td colspan="3">${new Date().toLocaleString()}</td>
+            </tr>
+            <tr>
+              <td><strong>Región:</strong></td>
+              <td colspan="3">${reportData.metadata.region}</td>
+            </tr>
+            <tr>
+              <td><strong>Total:</strong></td>
+              <td colspan="3" class="total">$${this.formatCost(reportData.metadata.totalCost)}/mes</td>
+            </tr>
+            <tr><td colspan="4"></td></tr>
+            <tr class="header">
+              <td>Componente</td>
+              <td>Tipo</td>
+              <td>Costo Mensual</td>
+              <td>Descripción</td>
+            </tr>
+      `
+      
+      reportData.components.forEach(component => {
+        excelContent += `
+          <tr>
+            <td>${component.name}</td>
+            <td>${component.type}</td>
+            <td class="number">$${this.formatCost(component.cost)}</td>
+            <td>${component.description}</td>
+          </tr>
+        `
+      })
+      
+      excelContent += `
+            <tr><td colspan="4"></td></tr>
+            <tr class="header">
+              <td colspan="2">Categoría</td>
+              <td>Costo</td>
+              <td>Porcentaje</td>
+            </tr>
+      `
+      
+      reportData.costByCategory.forEach(category => {
+        excelContent += `
+          <tr>
+            <td colspan="2">${category.name}</td>
+            <td class="number">$${this.formatCost(category.cost)}</td>
+            <td class="number">${((category.cost / reportData.metadata.totalCost) * 100).toFixed(1)}%</td>
+          </tr>
+        `
+      })
+      
+      if (reportData.recommendations.length > 0) {
+        excelContent += `
+          <tr><td colspan="4"></td></tr>
+          <tr class="header">
+            <td colspan="4">Recomendaciones</td>
+          </tr>
+        `
+        reportData.recommendations.forEach(rec => {
+          excelContent += `<tr><td colspan="4">${rec}</td></tr>`
+        })
+      }
+      
+      excelContent += `
+          </table>
+        </body>
+        </html>
+      `
+      
+      const blob = new Blob([excelContent], { 
+        type: 'application/vnd.ms-excel;charset=utf-8' 
+      })
+      const url = URL.createObjectURL(blob)
+      
+      const link = document.createElement("a")
+      link.href = url
+      link.download = `azure-cost-estimate-${new Date().toISOString().split('T')[0]}.xls`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+    },
+    
+    downloadJSON() {
+      const reportData = this.generateReportData()
+      const jsonString = JSON.stringify(reportData, null, 2)
+      const blob = new Blob([jsonString], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      
+      const link = document.createElement("a")
+      link.href = url
+      link.download = `azure-cost-estimate-${new Date().toISOString().split('T')[0]}.json`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+    },
+    
+    printReport() {
+      const reportData = this.generateReportData()
+      
+      const printWindow = window.open('', '_blank')
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Estimación de Costos Azure</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            h1 { color: #0078d4; border-bottom: 2px solid #0078d4; padding-bottom: 10px; }
+            h2 { color: #323130; margin-top: 30px; }
+            table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f8f9fa; font-weight: bold; }
+            .total { font-size: 18px; font-weight: bold; color: #0078d4; }
+            .metadata { background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0; }
+            .recommendations { background-color: #fff3cd; padding: 15px; border-radius: 5px; border-left: 4px solid #ffc107; }
+            ul { margin: 0; padding-left: 20px; }
+            @media print { body { margin: 0; } }
+          </style>
+        </head>
+        <body>
+          <h1>🏗️ Estimación de Costos Azure</h1>
+          
+          <div class="metadata">
+            <p><strong>Fecha de generación:</strong> ${new Date().toLocaleString()}</p>
+            <p><strong>Región:</strong> ${reportData.metadata.region}</p>
+            <p><strong>Multiplicador de región:</strong> ${reportData.metadata.regionMultiplier}</p>
+            <p class="total"><strong>Total estimado:</strong> $${this.formatCost(reportData.metadata.totalCost)}/mes</p>
+          </div>
+          
+          <h2>📋 Componentes Configurados</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Componente</th>
+                <th>Tipo</th>
+                <th>Costo Mensual</th>
+                <th>Descripción</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${reportData.components.map(component => `
+                <tr>
+                  <td>${component.name}</td>
+                  <td>${component.type}</td>
+                  <td>$${this.formatCost(component.cost)}</td>
+                  <td>${component.description}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          
+          <h2>📊 Costos por Categoría</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Categoría</th>
+                <th>Costo</th>
+                <th>Porcentaje</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${reportData.costByCategory.map(category => `
+                <tr>
+                  <td>${category.name}</td>
+                  <td>$${this.formatCost(category.cost)}</td>
+                  <td>${((category.cost / reportData.metadata.totalCost) * 100).toFixed(1)}%</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          
+          ${reportData.recommendations.length > 0 ? `
+            <h2>💡 Recomendaciones</h2>
+            <div class="recommendations">
+              <ul>
+                ${reportData.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+              </ul>
+            </div>
+          ` : ''}
+          
+          <div style="margin-top: 40px; text-align: center; color: #666; font-size: 12px;">
+            <p>Generado por InfraGen - © ${new Date().getFullYear()} CodeLand</p>
+            <p><strong>Nota:</strong> Los costos son estimaciones y pueden variar según el uso real.</p>
+          </div>
+        </body>
+        </html>
+      `)
+      printWindow.document.close()
+      printWindow.print()
     }
   }
 }
