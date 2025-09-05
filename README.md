@@ -1,10 +1,97 @@
 # InfraGen - Generador de Infraestructura Azure
 
-Una aplicación web moderna construida con Vue.js 3 y Vuetify 3 que permite seleccionar y configurar recursos de Azure para generar código Bicep de manera visual e intuitiva.
+U## 🚀 Características
+
+- **Interfaz moderna*  - [🚀 Características](#-características)
+  - [💰 Estimador de Costos](#-estimador-de-costos)
+    - [🌍 Precios por Región](#-precios-por-región)
+    - [📊 Análisis de Costos](#-análisis-de-costos)
+    - [📁 Descarga de Reportes](#-descarga-de-reportes)
+  - [🔒 Sistema de Validaciones](#-sistema-de-validaciones) UI intuitiva con Vuetify 3 y Material Design
+- **Configuración visual**: Selección y configuración de recursos Azure sin código
+- **Generación automática**: Código Bicep profesional con mejores prácticas
+- **💰 Estimador de costos**: Cálculo automático de costos mensuales en tiempo real
+- **🌍 Precios por región**: Ajustes automáticos según la región Azure seleccionada
+- **📊 Análisis de costos**: Desglose por categorías y recomendaciones de optimización
+- **📁 Múltiples formatos**: Descarga de reportes en CSV, Excel, JSON e impresión
+- **Validaciones inteligentes**: Sistema completo de validaciones con dependencias
+- **Nomenclatura automática**: Convenciones consistentes para todos los recursos
+- **Sistema modular**: Componentes especializados para cada tipo de recurso
+- **Vista previa de código**: Visualización con tema oscuro tipo VS Code
+- **Feedback visual**: Tooltips, alertas y estados de botones interactivos
+
+## 💰 Estimador de Costos
+
+InfraGen incluye un **sistema avanzado de estimación de costos** que proporciona información detallada sobre los gastos mensuales estimados de tu infraestructura Azure.
+
+### 🌍 Precios por Región
+
+El sistema ajusta automáticamente los precios según la región Azure seleccionada:
+
+| Región | Multiplicador | Ejemplo (Storage Basic) |
+|--------|---------------|-------------------------|
+| **East US** | 1.00x (base) | $2.40/mes |
+| **Mexico Central** | 1.15x (+15%) | $2.76/mes |
+| **West Europe** | 1.08x (+8%) | $2.59/mes |
+| **Japan East** | 1.20x (+20%) | $2.88/mes |
+| **Brazil South** | 1.25x (+25%) | $3.00/mes |
+
+- **35+ regiones** con multiplicadores precisos
+- **Actualización automática** al cambiar región
+- **Transparencia total** en los cálculos
+
+### 📊 Análisis de Costos
+
+El estimador proporciona análisis detallado con:
+
+**Desglose por Categorías:**
+- 🖥️ **Cómputo** (App Service, Function App)
+- 🗄️ **Base de Datos** (SQL Database)
+- 💾 **Almacenamiento** (Storage Account)
+- 🧠 **Inteligencia Artificial** (Cognitive Services)
+- 📊 **Monitoreo** (Application Insights)
+
+**Recomendaciones Inteligentes:**
+- ✅ Sugerencias de optimización de costos
+- ⚠️ Alertas sobre recursos premium
+- 💡 Alternativas más económicas
+- 📈 Análisis de configuración (económica/intermedia/enterprise)
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│                 💰 Estimación de Costos Mensual            │
+├─────────────────────────────────────────────────────────────┤
+│ Storage Account (Standard_LRS)          $2.76             │
+│ App Service Plan (B1)                   $15.11            │
+│ SQL Database (Basic)                    $5.75             │
+│ Application Insights                    $2.65             │
+├─────────────────────────────────────────────────────────────┤
+│ Total: $26.27/mes                                          │
+│ 📍 Mexico Central (+15% vs East US)                        │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 📁 Descarga de Reportes
+
+Exporta la estimación de costos en múltiples formatos:
+
+**Formatos Disponibles:**
+- 📋 **CSV** - Compatible con Excel y hojas de cálculo
+- 📈 **Excel (.xls)** - Archivo nativo con formato y estilos
+- 💾 **JSON** - Datos estructurados para APIs/desarrollo
+- 🖨️ **Imprimir** - Reporte HTML optimizado para impresión
+
+**Contenido del Reporte:**
+- Metadatos completos (fecha, región, multiplicador)
+- Lista detallada de componentes con costos
+- Desglose por categorías con porcentajes
+- Recomendaciones de optimización
+- Información de región y ajustes aplicadosión web moderna construida con Vue.js 3 y Vuetify 3 que permite seleccionar y configurar recursos de Azure para generar código Bicep de manera visual e intuitiva, incluyendo **estimación de costos en tiempo real** y **análisis por región**.
 
 ![Vue.js](https://img.shields.io/badge/Vue.js-3.x-4FC08D?style=flat-square&logo=vue.js)
 ![Vuetify](https://img.shields.io/badge/Vuetify-3.x-1867C0?style=flat-square&logo=vuetify)
 ![Azure](https://img.shields.io/badge/Azure-Bicep-0078D4?style=flat-square&logo=microsoft-azure)
+![Version](https://img.shields.io/badge/Version-1.1.0-brightgreen?style=flat-square)
 
 ## � Tabla de Contenidos
 
@@ -362,7 +449,8 @@ Sistema de monitoreo con Log Analytics y alertas configurables.
 InfraGen/
 ├── src/
 │   ├── components/
-│   │   ├── AzureSelector.vue          # Componente principal con validaciones (720+ líneas)
+│   │   ├── AzureSelector.vue          # Componente principal con validaciones (767+ líneas)
+│   │   ├── CostEstimator.vue          # Estimador de costos avanzado (550+ líneas)
 │   │   ├── StorageAccountConfig.vue   # Config Storage Account (160+ líneas)
 │   │   ├── AppServiceConfig.vue       # Config App Service (180+ líneas)
 │   │   ├── SqlDatabaseConfig.vue      # Config SQL Database (460+ líneas)
@@ -370,22 +458,26 @@ InfraGen/
 │   │   ├── CognitiveServiceConfig.vue # Config Cognitive Services (140+ líneas)
 │   │   ├── SQLServerConfig.vue        # Config SQL Server (130+ líneas)
 │   │   └── MonitoringAlertsConfig.vue # Config Monitoring (120+ líneas)
+│   ├── utils/
+│   │   └── azurePricing.js            # Sistema de precios Azure por región (330+ líneas)
 │   ├── data/
 │   │   ├── environments.json          # Entornos disponibles
-│   │   └── locations.json             # 30+ regiones Azure
+│   │   └── locations.json             # 35+ regiones Azure con short names
 │   ├── App.vue                        # Componente raíz
 │   └── main.js                        # Configuración Vuetify
-├── package.json
-└── README.md
+├── package.json                       # Dependencias y scripts (v1.1.0)
+├── nextFeatures.md                    # Roadmap de características futuras
+└── README.md                          # Documentación completa
 ```
 
 ## 🛠️ Tecnologías Utilizadas
 
 - **Vue.js 3**: Framework reactivo con Composition API y Options API
 - **Vuetify 3**: Biblioteca de componentes Material Design
-- **Vite**: Herramienta de build rápida
-- **JavaScript ES6+**: Sintaxis moderna y módulos
+- **Vite**: Herramienta de build rápida y hot reload
+- **JavaScript ES6+**: Sintaxis moderna, módulos y async/await
 - **Azure Bicep**: Lenguaje de infraestructura como código
+- **Azure Pricing API**: Cálculos de costos basados en datos reales de Azure
 
 ## 📦 Instalación y Uso
 
@@ -490,21 +582,33 @@ hasSQLServer() {
 
 ## 📊 Estadísticas del Proyecto
 
-- **Líneas de código**: ~2,100+ líneas
-- **Componentes Vue**: 8 componentes especializados
+- **Líneas de código**: ~3,200+ líneas (incluye estimador de costos)
+- **Componentes Vue**: 9 componentes especializados
 - **Recursos Azure**: 8 tipos completamente configurables
 - **Validaciones**: 20+ patrones de validación
 - **Configuraciones**: 80+ opciones únicas
 - **Nomenclatura**: Convenciones automáticas para todos los recursos
+- **💰 Sistema de Costos**: 35+ regiones con multiplicadores precisos
+- **📊 Análisis de Costos**: 6 categorías de recursos con recomendaciones
+- **📁 Formatos de Export**: 4 formatos de descarga (CSV, Excel, JSON, Print)
 
 ## 🚀 Características Técnicas Avanzadas
 
 ### Sistema de Validaciones
+
 - **Reactivo**: Validaciones en tiempo real con Vue.js reactivity
 - **Visual**: Feedback inmediato con iconos, tooltips y estados
 - **Inteligente**: Dependencias automáticas entre componentes
 
+### Estimador de Costos
+
+- **Tiempo Real**: Cálculos automáticos al agregar/modificar componentes
+- **Regional**: Multiplicadores específicos por región Azure (35+ regiones)
+- **Inteligente**: Recomendaciones automáticas de optimización
+- **Exportable**: Múltiples formatos para análisis posterior
+
 ### Generación de Código Bicep
+
 - **Optimizado**: Código limpio siguiendo mejores prácticas
 - **Modular**: Recursos organizados por tipo
 - **Escalable**: targetScope = 'subscription' para despliegues automáticos
@@ -572,3 +676,5 @@ Victor Canseco
 ---
 
 ⭐ Si este proyecto te fue útil, no olvides darle una estrella en GitHub!
+
+**Versión 1.1.0** - Actualizada con estimador de costos, precios por región y exportación de reportes.
