@@ -225,7 +225,7 @@ Este proyecto está bajo la licencia MIT. Ver el archivo `LICENSE` para más det
 
 ## 👨‍💻 Autor
 
-Victor Oscaneseco
+Victor Canseco
 
 - GitHub: [@vicoscanseco](https://github.com/vicoscanseco)
 
