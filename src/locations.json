@@ -1,0 +1,62 @@
+[
+  {
+    "label": "East US",
+    "value": "eastus",
+    "displayName": "East US"
+  },
+  {
+    "label": "East US 2",
+    "value": "eastus2",
+    "displayName": "East US 2"
+  },
+  {
+    "label": "West US",
+    "value": "westus",
+    "displayName": "West US"
+  },
+  {
+    "label": "West US 2",
+    "value": "westus2",
+    "displayName": "West US 2"
+  },
+  {
+    "label": "West US 3",
+    "value": "westus3",
+    "displayName": "West US 3"
+  },
+  {
+    "label": "Central US",
+    "value": "centralus",
+    "displayName": "Central US"
+  },
+  {
+    "label": "North Central US",
+    "value": "northcentralus",
+    "displayName": "North Central US"
+  },
+  {
+    "label": "South Central US",
+    "value": "southcentralus",
+    "displayName": "South Central US"
+  },
+  {
+    "label": "West Central US",
+    "value": "westcentralus",
+    "displayName": "West Central US"
+  },
+  {
+    "label": "Canada Central",
+    "value": "canadacentral",
+    "displayName": "Canada Central"
+  },
+  {
+    "label": "Canada East",
+    "value": "canadaeast",
+    "displayName": "Canada East"
+  },
+  {
+    "label": "Mexico Central",
+    "value": "mexicocentral",
+    "displayName": "Mexico Central"
+  }
+]
