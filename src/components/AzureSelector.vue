@@ -4,9 +4,9 @@
       <v-card-title class="text-h5 mb-3 text-center">Generador de Infraestructura</v-card-title>
       <v-divider class="mb-3" />
       <v-card-text>
-        <!-- Campos principales en una fila -->
+        <!-- Campos principales en dos filas -->
         <v-row dense>
-          <v-col cols="12" md="4">
+          <v-col cols="12" md="6">
             <v-select
               v-model="selectedEnv"
               :items="environments"
@@ -18,17 +18,7 @@
               required
             />
           </v-col>
-          <v-col cols="12" md="4">
-            <v-text-field
-              v-model="appName"
-              label="Nombre de la aplicación"
-              density="compact"
-              variant="outlined"
-              :rules="[v => !!v || 'El nombre de la aplicación es obligatorio']"
-              required
-            />
-          </v-col>
-          <v-col cols="12" md="4">
+          <v-col cols="12" md="6">
             <v-select
               v-model="location"
               :items="locations"
@@ -39,6 +29,31 @@
               variant="outlined"
               :rules="[v => !!v || 'La ubicación es obligatoria']"
               required
+            />
+          </v-col>
+        </v-row>
+        
+        <v-row dense>
+          <v-col cols="12" md="6">
+            <v-text-field
+              v-model="appName"
+              label="Nombre de la aplicación"
+              density="compact"
+              variant="outlined"
+              :rules="[v => !!v || 'El nombre de la aplicación es obligatorio']"
+              required
+            />
+          </v-col>
+          <v-col cols="12" md="6">
+            <v-text-field
+              v-model="resourceGroup"
+              label="Grupo de recursos"
+              density="compact"
+              variant="outlined"
+              :rules="[v => !!v || 'El grupo de recursos es obligatorio']"
+              required
+              hint="Grupo común para todos los componentes"
+              persistent-hint
             />
           </v-col>
         </v-row>
@@ -78,7 +93,7 @@
                 v-for="(item, index) in configuredComponents"
                 :key="index"
                 :title="item.label"
-                :subtitle="`Nombre: ${item.config.name} | Grupo: ${item.config.resourceGroup}`"
+                :subtitle="`Nombre: ${item.config.name}`"
                 class="px-2"
               >
                 <template v-slot:append>
@@ -150,6 +165,7 @@ const environments = ref([])
 const locations = ref([])
 const selectedEnv = ref('dev')
 const appName = ref('')
+const resourceGroup = ref('')
 const location = ref('mexicocentral')
 
 onMounted(async () => {
@@ -220,7 +236,6 @@ function addComponent(component) {
   if (component.value === 'StorageAccount') {
     currentConfig.value = {
       name: component.value.toLowerCase(),
-      resourceGroup: 'myResourceGroup',
       sku: 'Standard_LRS',
       kind: 'StorageV2',
       accessTier: 'Hot',
@@ -229,8 +244,7 @@ function addComponent(component) {
     }
   } else {
     currentConfig.value = {
-      name: component.value.toLowerCase(),
-      resourceGroup: 'myResourceGroup'
+      name: component.value.toLowerCase()
     }
   }
   
@@ -286,6 +300,10 @@ function generateBicep() {
     errorMsg.value = 'El nombre de la aplicación es obligatorio.'
     return
   }
+  if (!resourceGroup.value) {
+    errorMsg.value = 'El grupo de recursos es obligatorio.'
+    return
+  }
   if (!location.value) {
     errorMsg.value = 'La ubicación es obligatoria.'
     return
@@ -297,12 +315,29 @@ function generateBicep() {
     return
   }
 
+  // Agregar parámetros al inicio
+  content += `// Parámetros de la infraestructura
+@description('Nombre de la aplicación')
+param appName string = '${appName.value}'
+
+@description('Ambiente de despliegue')
+param environment string = '${selectedEnv.value}'
+
+@description('Ubicación de los recursos')
+param location string = '${location.value}'
+
+@description('Grupo de recursos donde se crearán los componentes')
+param resourceGroupName string = '${resourceGroup.value}'
+
+// Recursos
+`
+
   configuredComponents.value.forEach(item => {
     const cfg = item.config
     if (item.value === 'StorageAccount') {
       content += `resource storageAccount_${cfg.name} 'Microsoft.Storage/storageAccounts@2022-09-01' = {
   name: '${cfg.name}'
-  location: '${location.value}'
+  location: location
   sku: {
     name: '${cfg.sku || 'Standard_LRS'}'
   }
@@ -314,8 +349,8 @@ function generateBicep() {
     minimumTlsVersion: 'TLS1_2'
   }
   tags: {
-    Environment: '${selectedEnv.value}'
-    Application: '${appName.value}'
+    Environment: environment
+    Application: appName
   }
 }
 
@@ -324,9 +359,13 @@ function generateBicep() {
     if (item.value === 'AppService') {
       content += `resource appService_${cfg.name} 'Microsoft.Web/sites@2022-03-01' = {
   name: '${cfg.name}'
-  location: '${location.value}'
+  location: location
   properties: {
     serverFarmId: '${cfg.name}plan'
+  }
+  tags: {
+    Environment: environment
+    Application: appName
   }
 }
 
@@ -335,9 +374,13 @@ function generateBicep() {
     if (item.value === 'SqlDatabase') {
       content += `resource sqlDatabase_${cfg.name} 'Microsoft.Sql/servers/databases@2022-02-01-preview' = {
   name: '${cfg.name}'
-  location: '${location.value}'
+  location: location
   properties: {
     edition: 'Basic'
+  }
+  tags: {
+    Environment: environment
+    Application: appName
   }
 }
 
@@ -346,10 +389,14 @@ function generateBicep() {
     if (item.value === 'FunctionApp') {
       content += `resource functionApp_${cfg.name} 'Microsoft.Web/sites@2022-03-01' = {
   name: '${cfg.name}'
-  location: '${location.value}'
+  location: location
   kind: 'functionapp'
   properties: {
     serverFarmId: '${cfg.name}plan'
+  }
+  tags: {
+    Environment: environment
+    Application: appName
   }
 }
 

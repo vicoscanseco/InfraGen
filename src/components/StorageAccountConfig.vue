@@ -16,19 +16,6 @@
           />
         </v-col>
         <v-col cols="12" md="6">
-          <v-text-field 
-            v-model="config.resourceGroup" 
-            label="Grupo de recursos" 
-            placeholder="Nombre del grupo" 
-            density="compact" 
-            variant="outlined" 
-            :rules="[rules.required]"
-          />
-        </v-col>
-      </v-row>
-
-      <v-row dense>
-        <v-col cols="12" md="6">
           <v-select
             v-model="config.sku"
             :items="skuOptions"
@@ -41,6 +28,9 @@
             persistent-hint
           />
         </v-col>
+      </v-row>
+
+      <v-row dense>
         <v-col cols="12" md="6">
           <v-select
             v-model="config.kind"
@@ -54,9 +44,6 @@
             persistent-hint
           />
         </v-col>
-      </v-row>
-
-      <v-row dense>
         <v-col cols="12" md="6">
           <v-select
             v-model="config.accessTier"
@@ -70,6 +57,9 @@
             persistent-hint
           />
         </v-col>
+      </v-row>
+
+      <v-row dense>
         <v-col cols="12" md="6" class="d-flex flex-column">
           <v-switch
             v-model="config.httpsOnly"
