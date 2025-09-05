@@ -96,6 +96,10 @@ Exporta la estimación de costos en múltiples formatos:
 ## � Tabla de Contenidos
 
 - [InfraGen - Generador de Infraestructura Azure](#infragen---generador-de-infraestructura-azure)
+  - [💰 Estimador de Costos](#-estimador-de-costos)
+    - [🌍 Precios por Región](#-precios-por-región)
+    - [📊 Análisis de Costos](#-análisis-de-costos)
+    - [📁 Descarga de Reportes](#-descarga-de-reportes)
   - [� Tabla de Contenidos](#-tabla-de-contenidos)
   - [�🚀 Características](#-características)
   - [🔒 Sistema de Validaciones](#-sistema-de-validaciones)
@@ -127,6 +131,7 @@ Exporta la estimación de costos en múltiples formatos:
   - [📊 Estadísticas del Proyecto](#-estadísticas-del-proyecto)
   - [🚀 Características Técnicas Avanzadas](#-características-técnicas-avanzadas)
     - [Sistema de Validaciones](#sistema-de-validaciones)
+    - [Estimador de Costos](#estimador-de-costos)
     - [Generación de Código Bicep](#generación-de-código-bicep)
     - [Interfaz de Usuario](#interfaz-de-usuario)
   - [🤝 Contribuir](#-contribuir)
