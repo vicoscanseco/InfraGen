@@ -253,6 +253,44 @@ function addComponent(component) {
       httpsOnly: true,
       enableBlobPublicAccess: false
     }
+  } else if (component.value === 'AppService') {
+    currentConfig.value = {
+      name: component.value.toLowerCase(),
+      appServicePlanName: `${component.value.toLowerCase()}-plan`,
+      sku: 'B1',
+      runtimeStack: 'DOTNETCORE|8.0',
+      operatingSystem: 'Linux',
+      httpsOnly: true,
+      alwaysOn: false
+    }
+  } else if (component.value === 'SqlDatabase') {
+    currentConfig.value = {
+      name: component.value.toLowerCase(),
+      databaseName: `${component.value.toLowerCase()}db`,
+      serverName: `${component.value.toLowerCase()}-server`,
+      adminUsername: 'sqladmin',
+      adminPassword: '',
+      edition: 'Basic',
+      serviceObjective: 'Basic',
+      collation: 'SQL_Latin1_General_CP1_CI_AS',
+      enableFirewallRules: true,
+      enableThreatDetection: false,
+      allowedIpRanges: ''
+    }
+  } else if (component.value === 'FunctionApp') {
+    currentConfig.value = {
+      name: component.value.toLowerCase(),
+      appServicePlanName: `${component.value.toLowerCase()}-plan`,
+      hostingPlan: 'Consumption',
+      sku: 'Y1',
+      runtimeStack: 'DOTNET-ISOLATED|8.0',
+      operatingSystem: 'Linux',
+      storageAccountName: `${component.value.toLowerCase()}storage`,
+      httpsOnly: true,
+      enableApplicationInsights: true,
+      preWarmedInstances: '1',
+      vnetIntegration: false
+    }
   } else {
     currentConfig.value = {
       name: component.value.toLowerCase()
@@ -372,11 +410,33 @@ param tags object = {
 `
     }
     if (item.value === 'AppService') {
-      content += `resource appService_${cfg.name} 'Microsoft.Web/sites@2022-03-01' = {
+      content += `// App Service Plan para ${cfg.name}
+resource appServicePlan_${cfg.appServicePlanName || cfg.name + 'plan'} 'Microsoft.Web/serverfarms@2022-03-01' = {
+  name: '${cfg.appServicePlanName || cfg.name + '-plan'}'
+  location: location
+  sku: {
+    name: '${cfg.sku || 'B1'}'
+  }
+  kind: '${cfg.operatingSystem === 'Windows' ? 'app' : 'linux'}'
+  properties: {
+    reserved: ${cfg.operatingSystem !== 'Windows'}
+  }
+  tags: tags
+}
+
+// App Service ${cfg.name}
+resource appService_${cfg.name} 'Microsoft.Web/sites@2022-03-01' = {
   name: '${cfg.name}'
   location: location
   properties: {
-    serverFarmId: '${cfg.name}plan'
+    serverFarmId: appServicePlan_${cfg.appServicePlanName || cfg.name + 'plan'}.id
+    httpsOnly: ${cfg.httpsOnly !== false}
+    siteConfig: {
+      linuxFxVersion: '${cfg.operatingSystem === 'Linux' ? (cfg.runtimeStack || 'DOTNETCORE|8.0') : ''}'
+      windowsFxVersion: '${cfg.operatingSystem === 'Windows' ? (cfg.runtimeStack || 'DOTNETCORE|8.0') : ''}'
+      alwaysOn: ${cfg.alwaysOn === true}
+      ftpsState: 'Disabled'
+    }
   }
   tags: tags
 }
@@ -384,24 +444,182 @@ param tags object = {
 `
     }
     if (item.value === 'SqlDatabase') {
-      content += `resource sqlDatabase_${cfg.name} 'Microsoft.Sql/servers/databases@2022-02-01-preview' = {
-  name: '${cfg.name}'
+      const firewallRules = cfg.enableFirewallRules ? `
+// Regla de firewall para permitir servicios de Azure
+resource sqlServerFirewallAzure_${cfg.serverName || cfg.name + 'server'} 'Microsoft.Sql/servers/firewallRules@2022-02-01-preview' = {
+  parent: sqlServer_${cfg.serverName || cfg.name + 'server'}
+  name: 'AllowAllWindowsAzureIps'
+  properties: {
+    startIpAddress: '0.0.0.0'
+    endIpAddress: '0.0.0.0'
+  }
+}
+
+` : ''
+
+      const customFirewallRule = (cfg.enableFirewallRules && cfg.allowedIpRanges) ? `
+// Reglas de firewall para IPs específicas
+resource sqlServerFirewallCustom_${cfg.serverName || cfg.name + 'server'} 'Microsoft.Sql/servers/firewallRules@2022-02-01-preview' = {
+  parent: sqlServer_${cfg.serverName || cfg.name + 'server'}
+  name: 'AllowedIpRanges'
+  properties: {
+    startIpAddress: '${cfg.allowedIpRanges.split('-')[0] || '0.0.0.0'}'
+    endIpAddress: '${cfg.allowedIpRanges.split('-')[1] || '0.0.0.0'}'
+  }
+}
+
+` : ''
+
+      const threatDetection = cfg.enableThreatDetection ? `
+// Advanced Threat Protection
+resource sqlServerSecurityAlertPolicy_${cfg.serverName || cfg.name + 'server'} 'Microsoft.Sql/servers/securityAlertPolicies@2022-02-01-preview' = {
+  parent: sqlServer_${cfg.serverName || cfg.name + 'server'}
+  name: 'default'
+  properties: {
+    state: 'Enabled'
+    disabledAlerts: []
+    emailAddresses: []
+    emailAccountAdmins: true
+    retentionDays: 30
+  }
+}
+
+` : ''
+
+      content += `// SQL Server para ${cfg.databaseName || cfg.name}
+resource sqlServer_${cfg.serverName || cfg.name + 'server'} 'Microsoft.Sql/servers@2022-02-01-preview' = {
+  name: '${cfg.serverName || cfg.name + '-server'}'
   location: location
   properties: {
-    edition: 'Basic'
+    administratorLogin: '${cfg.adminUsername || 'sqladmin'}'
+    administratorLoginPassword: '${cfg.adminPassword || 'P@ssw0rd123!'}'
+    version: '12.0'
+    minimalTlsVersion: '1.2'
+    publicNetworkAccess: 'Enabled'
   }
   tags: tags
 }
 
-`
+${firewallRules}${customFirewallRule}// SQL Database ${cfg.databaseName || cfg.name}
+resource sqlDatabase_${cfg.databaseName || cfg.name} 'Microsoft.Sql/servers/databases@2022-02-01-preview' = {
+  parent: sqlServer_${cfg.serverName || cfg.name + 'server'}
+  name: '${cfg.databaseName || cfg.name}'
+  location: location
+  sku: {
+    name: '${cfg.serviceObjective || 'Basic'}'
+    tier: '${cfg.edition || 'Basic'}'
+  }
+  properties: {
+    collation: '${cfg.collation || 'SQL_Latin1_General_CP1_CI_AS'}'
+    maxSizeBytes: ${cfg.edition === 'Basic' ? '2147483648' : '268435456000'}
+    catalogCollation: 'SQL_Latin1_General_CP1_CI_AS'
+    zoneRedundant: false
+    readScale: 'Disabled'
+    requestedBackupStorageRedundancy: 'Local'
+  }
+  tags: tags
+}
+
+${threatDetection}`
+
     }
     if (item.value === 'FunctionApp') {
-      content += `resource functionApp_${cfg.name} 'Microsoft.Web/sites@2022-03-01' = {
+      const storageConnectionString = `DefaultEndpointsProtocol=https;AccountName=\${functionAppStorage_${cfg.storageAccountName || cfg.name + 'storage'}.name};AccountKey=\${functionAppStorage_${cfg.storageAccountName || cfg.name + 'storage'}.listKeys().keys[0].value};EndpointSuffix=core.windows.net`
+      
+      const appInsightsConfig = cfg.enableApplicationInsights ? `
+// Application Insights para ${cfg.name}
+resource functionAppInsights_${cfg.name} 'Microsoft.Insights/components@2020-02-02' = {
+  name: '${cfg.name}-insights'
+  location: location
+  kind: 'web'
+  properties: {
+    Application_Type: 'web'
+    Request_Source: 'rest'
+    RetentionInDays: 90
+    WorkspaceResourceId: null
+  }
+  tags: tags
+}
+
+` : ''
+
+      content += `// Storage Account para Function App ${cfg.name}
+resource functionAppStorage_${cfg.storageAccountName || cfg.name + 'storage'} 'Microsoft.Storage/storageAccounts@2022-09-01' = {
+  name: '${cfg.storageAccountName || cfg.name + 'storage'}'
+  location: location
+  sku: {
+    name: 'Standard_LRS'
+  }
+  kind: 'StorageV2'
+  properties: {
+    supportsHttpsTrafficOnly: true
+    allowBlobPublicAccess: false
+    minimumTlsVersion: 'TLS1_2'
+  }
+  tags: tags
+}
+
+${cfg.hostingPlan !== 'Consumption' ? `// App Service Plan para Function App ${cfg.name}
+resource functionAppPlan_${cfg.appServicePlanName || cfg.name + 'plan'} 'Microsoft.Web/serverfarms@2022-03-01' = {
+  name: '${cfg.appServicePlanName || cfg.name + '-plan'}'
+  location: location
+  sku: {
+    name: '${cfg.sku || 'Y1'}'
+    tier: '${cfg.hostingPlan === 'Premium' ? 'ElasticPremium' : (cfg.hostingPlan === 'Dedicated' ? 'Standard' : 'Dynamic')}'
+  }
+  kind: '${cfg.operatingSystem === 'Windows' ? 'functionapp' : 'linux'}'
+  properties: {
+    reserved: ${cfg.operatingSystem !== 'Windows'}
+    ${cfg.hostingPlan === 'Premium' ? `maximumElasticWorkerCount: 20` : ''}
+  }
+  tags: tags
+}
+
+` : ''}${appInsightsConfig}// Function App ${cfg.name}
+resource functionApp_${cfg.name} 'Microsoft.Web/sites@2022-03-01' = {
   name: '${cfg.name}'
   location: location
-  kind: 'functionapp'
+  kind: '${cfg.operatingSystem === 'Windows' ? 'functionapp' : 'functionapp,linux'}'
   properties: {
-    serverFarmId: '${cfg.name}plan'
+    ${cfg.hostingPlan !== 'Consumption' ? `serverFarmId: functionAppPlan_${cfg.appServicePlanName || cfg.name + 'plan'}.id` : ''}
+    httpsOnly: ${cfg.httpsOnly !== false}
+    siteConfig: {
+      ${cfg.operatingSystem === 'Linux' ? `linuxFxVersion: '${cfg.runtimeStack || 'DOTNET-ISOLATED|8.0'}'` : `windowsFxVersion: '${cfg.runtimeStack || 'DOTNET-ISOLATED|8.0'}'`}
+      appSettings: [
+        {
+          name: 'AzureWebJobsStorage'
+          value: '${storageConnectionString}'
+        }
+        {
+          name: 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING'
+          value: '${storageConnectionString}'
+        }
+        {
+          name: 'WEBSITE_CONTENTSHARE'
+          value: '${cfg.name}'
+        }
+        {
+          name: 'FUNCTIONS_EXTENSION_VERSION'
+          value: '~4'
+        }
+        {
+          name: 'FUNCTIONS_WORKER_RUNTIME'
+          value: '${cfg.runtimeStack?.split('|')[0]?.toLowerCase() || 'dotnet-isolated'}'
+        }${cfg.enableApplicationInsights ? `
+        {
+          name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
+          value: functionAppInsights_${cfg.name}.properties.InstrumentationKey
+        }
+        {
+          name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
+          value: functionAppInsights_${cfg.name}.properties.ConnectionString
+        }` : ''}
+      ]
+      ftpsState: 'Disabled'
+      minTlsVersion: '1.2'
+      ${cfg.hostingPlan === 'Premium' ? `preWarmedInstanceCount: ${cfg.preWarmedInstances || '1'}` : ''}
+    }
+    ${cfg.vnetIntegration ? `virtualNetworkSubnetId: null` : ''}
   }
   tags: tags
 }
