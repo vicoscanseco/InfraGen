@@ -36,7 +36,7 @@
                 variant="flat"
                 class="font-weight-bold"
               >
-                ${{ formatCost(calculateComponentCost(component)) }}
+                ${{ formatCost(getComponentCost(component)) }}
               </v-chip>
               <div class="text-caption text-grey-darken-1 mt-1">
                 /mes
@@ -58,6 +58,14 @@
           </div>
           <div class="text-body-2 text-grey-darken-1">
             {{ components.length }} {{ components.length === 1 ? 'recurso' : 'recursos' }} configurados
+          </div>
+          <div class="text-caption text-grey-darken-2 mt-1" v-if="regionInfo.multiplier !== 1.0">
+            <v-icon size="12" class="mr-1">mdi-map-marker</v-icon>
+            {{ regionInfo.name }} ({{ (regionInfo.multiplier * 100 - 100).toFixed(0) }}{{ regionInfo.multiplier > 1 ? '+' : '' }}% vs East US)
+          </div>
+          <div class="text-caption text-grey-darken-2 mt-1" v-else>
+            <v-icon size="12" class="mr-1">mdi-map-marker</v-icon>
+            {{ regionInfo.name }} (precio base)
           </div>
         </v-col>
         <v-col cols="4" class="pa-0 text-right">
@@ -148,8 +156,9 @@
           <v-icon>mdi-information-outline</v-icon>
         </template>
         <div class="text-body-2">
-          <strong>Nota importante:</strong> Los costos son estimaciones basadas en precios estándar de Azure (región East US). 
-          Los costos reales pueden variar según el uso actual, la región seleccionada, descuentos aplicables, 
+          <strong>Nota importante:</strong> Los costos son estimaciones basadas en precios estándar de Azure. 
+          Se ha aplicado un ajuste del {{ regionInfo.multiplier !== 1.0 ? ((regionInfo.multiplier - 1) * 100).toFixed(0) + '% para la región ' + regionInfo.name : 'precio base para ' + regionInfo.name }}. 
+          Los costos reales pueden variar según el uso actual, descuentos aplicables, 
           ofertas especiales y el consumo real de recursos.
         </div>
       </v-alert>
@@ -162,7 +171,8 @@ import {
   calculateComponentCost, 
   calculateTotalCost, 
   getPriceDescription, 
-  getComponentIcon 
+  getComponentIcon,
+  regionPriceMultipliers 
 } from '../utils/azurePricing.js'
 
 export default {
@@ -171,14 +181,22 @@ export default {
     components: {
       type: Array,
       default: () => []
+    },
+    region: {
+      type: String,
+      default: 'eastus'
     }
   },
   computed: {
+    regionInfo() {
+      return regionPriceMultipliers[this.region] || { multiplier: 1.0, name: 'Unknown Region' }
+    },
+    
     totalCost() {
       if (!this.components || !Array.isArray(this.components)) {
         return 0
       }
-      return calculateTotalCost(this.components)
+      return calculateTotalCost(this.components, this.region)
     },
     
     costByCategory() {
@@ -198,7 +216,7 @@ export default {
       this.components.forEach(component => {
         if (!component) return
         
-        const cost = calculateComponentCost(component)
+        const cost = calculateComponentCost(component, this.region)
         const componentType = component.type || component.value
         let categorized = false
         
@@ -271,12 +289,17 @@ export default {
     getPriceDescription,
     getComponentIcon,
     
+    // Helper method que incluye la región
+    getComponentCost(component) {
+      return calculateComponentCost(component, this.region)
+    },
+    
     formatCost(cost) {
       return cost.toFixed(2)
     },
     
     getCostColor(component) {
-      const cost = calculateComponentCost(component)
+      const cost = this.getComponentCost(component)
       if (cost === 0) return 'grey'
       if (cost < 10) return 'green'
       if (cost < 50) return 'orange'

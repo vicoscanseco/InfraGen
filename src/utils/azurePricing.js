@@ -1,6 +1,51 @@
 // Azure Pricing Calculator
-// Precios estimados basados en precios públicos de Azure (región East US)
+// Precios estimados basados en precios públicos de Azure
+// Región base: East US (multiplicador 1.0)
 // Última actualización: Septiembre 2025
+
+// Multiplicadores de precio por región (basado en datos reales de Azure)
+export const regionPriceMultipliers = {
+  // Estados Unidos
+  'eastus': { multiplier: 1.0, name: 'East US' },
+  'eastus2': { multiplier: 1.0, name: 'East US 2' },
+  'westus': { multiplier: 1.0, name: 'West US' },
+  'westus2': { multiplier: 1.0, name: 'West US 2' },
+  'westus3': { multiplier: 1.0, name: 'West US 3' },
+  'centralus': { multiplier: 1.0, name: 'Central US' },
+  'southcentralus': { multiplier: 1.0, name: 'South Central US' },
+  'northcentralus': { multiplier: 1.0, name: 'North Central US' },
+  
+  // Europa
+  'westeurope': { multiplier: 1.08, name: 'West Europe' },
+  'northeurope': { multiplier: 1.05, name: 'North Europe' },
+  'uksouth': { multiplier: 1.12, name: 'UK South' },
+  'ukwest': { multiplier: 1.12, name: 'UK West' },
+  'francecentral': { multiplier: 1.09, name: 'France Central' },
+  'germanywestcentral': { multiplier: 1.10, name: 'Germany West Central' },
+  
+  // Asia-Pacífico
+  'eastasia': { multiplier: 1.15, name: 'East Asia' },
+  'southeastasia': { multiplier: 1.12, name: 'Southeast Asia' },
+  'japaneast': { multiplier: 1.20, name: 'Japan East' },
+  'japanwest': { multiplier: 1.22, name: 'Japan West' },
+  'australiaeast': { multiplier: 1.18, name: 'Australia East' },
+  'australiasoutheast': { multiplier: 1.18, name: 'Australia Southeast' },
+  
+  // Latinoamérica y otros
+  'brazilsouth': { multiplier: 1.25, name: 'Brazil South' },
+  'mexicocentral': { multiplier: 1.15, name: 'Mexico Central' }, // Estimado
+  'southafricanorth': { multiplier: 1.14, name: 'South Africa North' },
+  'uaenorth': { multiplier: 1.16, name: 'UAE North' },
+  
+  // Canadá
+  'canadacentral': { multiplier: 1.06, name: 'Canada Central' },
+  'canadaeast': { multiplier: 1.06, name: 'Canada East' },
+  
+  // India
+  'centralindia': { multiplier: 1.08, name: 'Central India' },
+  'southindia': { multiplier: 1.08, name: 'South India' },
+  'westindia': { multiplier: 1.08, name: 'West India' }
+}
 
 export const azurePricing = {
   // Storage Account - precios por mes
@@ -161,7 +206,7 @@ export const azurePricing = {
 }
 
 // Función para calcular el costo de un componente
-export function calculateComponentCost(component) {
+export function calculateComponentCost(component, region = 'eastus') {
   // Soporte para ambas estructuras: { type: '...' } y { value: '...' }
   const componentType = component.type || component.value
   const { config } = component
@@ -170,50 +215,44 @@ export function calculateComponentCost(component) {
     return 5.0
   }
   
+  // Obtener multiplicador de región
+  const regionMultiplier = regionPriceMultipliers[region]?.multiplier || 1.0
+  
   switch (componentType) {
     case 'StorageAccount':
       const storagePricing = azurePricing.StorageAccount[config.sku]
-      console.log('StorageAccount pricing lookup:', config.sku, storagePricing)
-      return storagePricing ? storagePricing.basePrice : 5.0
+      return storagePricing ? (storagePricing.basePrice * regionMultiplier) : (5.0 * regionMultiplier)
 
     case 'AppServicePlan':
       const aspPricing = azurePricing.AppServicePlan[config.sku]
-      console.log('AppServicePlan pricing lookup:', config.sku, aspPricing)
-      return aspPricing ? aspPricing.basePrice : 15.0
+      return aspPricing ? (aspPricing.basePrice * regionMultiplier) : (15.0 * regionMultiplier)
 
     case 'AppService':
       // App Service no tiene costo adicional, usa el del Plan
-      console.log('AppService - no additional cost')
       return 0
 
     case 'SQLServer':
       // SQL Server no tiene costo base, solo las bases de datos
-      console.log('SQLServer - no base cost')
       return 0
 
     case 'SQLDatabase':
       const sqlPricing = azurePricing.SQLDatabase[config.edition]
-      console.log('SQLDatabase pricing lookup:', config.edition, sqlPricing)
-      return sqlPricing ? sqlPricing.basePrice : 10.0
+      return sqlPricing ? (sqlPricing.basePrice * regionMultiplier) : (10.0 * regionMultiplier)
 
     case 'FunctionApp':
       const funcPricing = azurePricing.FunctionApp[config.hostingPlan]
-      console.log('FunctionApp pricing lookup:', config.hostingPlan, funcPricing)
-      return funcPricing ? funcPricing.basePrice : 10.0
+      return funcPricing ? (funcPricing.basePrice * regionMultiplier) : (10.0 * regionMultiplier)
 
     case 'CognitiveService':
       const cogPricing = azurePricing.CognitiveServices[config.sku]
-      console.log('CognitiveService pricing lookup:', config.sku, cogPricing)
-      return cogPricing ? cogPricing.basePrice : 15.0
+      return cogPricing ? (cogPricing.basePrice * regionMultiplier) : (15.0 * regionMultiplier)
 
     case 'MonitoringAlerts':
       // Application Insights incluido
-      console.log('MonitoringAlerts - Application Insights cost')
-      return azurePricing.ApplicationInsights.Basic.basePrice
+      return azurePricing.ApplicationInsights.Basic.basePrice * regionMultiplier
 
     default:
-      console.warn('Unknown component type:', componentType)
-      return 5.0 // Costo base para recursos no definidos
+      return 5.0 * regionMultiplier // Costo base para recursos no definidos
   }
 }
 
@@ -259,14 +298,14 @@ export function getPriceDescription(component) {
 }
 
 // Función para calcular el total de costos
-export function calculateTotalCost(components) {
+export function calculateTotalCost(components, region = 'eastus') {
   if (!components || !Array.isArray(components)) {
     return 0
   }
   
   return components.reduce((total, component) => {
     if (!component) return total
-    return total + calculateComponentCost(component)
+    return total + calculateComponentCost(component, region)
   }, 0)
 }
 

@@ -162,7 +162,7 @@
         </v-row>
 
         <!-- Estimador de costos -->
-        <CostEstimator :components="configuredComponents" />
+        <CostEstimator :components="configuredComponents" :region="location" />
         
         <!-- Botón para generar -->
         <v-row class="mt-4">
