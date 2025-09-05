@@ -19,42 +19,57 @@
             />
           </v-col>
           <v-col cols="12" md="6">
-            <v-select
-              v-model="location"
-              :items="locations"
-              item-title="label"
-              item-value="value"
-              label="Ubicación"
-              density="compact"
-              variant="outlined"
-              :rules="[v => !!v || 'La ubicación es obligatoria']"
-              required
-            />
+            <v-tooltip text="Selecciona la región de Azure donde se desplegarán tus recursos. Esto afecta los costos y la latencia.">
+              <template v-slot:activator="{ props }">
+                <v-select
+                  v-bind="props"
+                  v-model="location"
+                  :items="locations"
+                  item-title="label"
+                  item-value="value"
+                  label="Ubicación"
+                  density="compact"
+                  variant="outlined"
+                  :rules="[v => !!v || 'La ubicación es obligatoria']"
+                  required
+                />
+              </template>
+            </v-tooltip>
           </v-col>
         </v-row>
         
         <v-row dense>
           <v-col cols="12" md="6">
-            <v-text-field
-              v-model="appName"
-              label="Nombre de la aplicación"
-              density="compact"
-              variant="outlined"
-              :rules="[v => !!v || 'El nombre de la aplicación es obligatorio']"
-              required
-            />
+            <v-tooltip text="Nombre único para identificar tu aplicación en Azure. Se usará como prefijo para generar nombres de recursos.">
+              <template v-slot:activator="{ props }">
+                <v-text-field
+                  v-bind="props"
+                  v-model="appName"
+                  label="Nombre de la aplicación"
+                  density="compact"
+                  variant="outlined"
+                  :rules="[v => !!v || 'El nombre de la aplicación es obligatorio']"
+                  required
+                />
+              </template>
+            </v-tooltip>
           </v-col>
           <v-col cols="12" md="6">
-            <v-text-field
-              v-model="resourceGroup"
-              label="Grupo de recursos"
-              density="compact"
-              variant="outlined"
-              readonly
-              append-inner-icon="mdi-lock"
-              hint="Se genera automáticamente: rg + ubicación + nombre de app"
-              persistent-hint
-            />
+            <v-tooltip text="El grupo de recursos se genera automáticamente combinando ubicación y nombre de la aplicación. Contiene todos los recursos relacionados.">
+              <template v-slot:activator="{ props }">
+                <v-text-field
+                  v-bind="props"
+                  v-model="resourceGroup"
+                  label="Grupo de recursos"
+                  density="compact"
+                  variant="outlined"
+                  readonly
+                  append-inner-icon="mdi-lock"
+                  hint="Se genera automáticamente: rg + ubicación + nombre de app"
+                  persistent-hint
+                />
+              </template>
+            </v-tooltip>
             
             <!-- Chip de preview del nombre del grupo de recursos -->
             <div class="mt-2" v-if="computedResourceGroupName">
@@ -140,21 +155,31 @@
                   </v-avatar>
                 </template>
                 <template v-slot:append>
-                  <v-btn
-                    color="orange"
-                    size="small"
-                    class="me-2"
-                    @click="editComponent(index)"
-                  >
-                    Editar
-                  </v-btn>
-                  <v-btn
-                    color="red"
-                    size="small"
-                    @click="removeComponent(index)"
-                  >
-                    Quitar
-                  </v-btn>
+                  <v-tooltip text="Edita la configuración de este componente">
+                    <template v-slot:activator="{ props }">
+                      <v-btn
+                        v-bind="props"
+                        color="orange"
+                        size="small"
+                        class="me-2"
+                        @click="editComponent(index)"
+                      >
+                        Editar
+                      </v-btn>
+                    </template>
+                  </v-tooltip>
+                  <v-tooltip text="Elimina este componente de la configuración">
+                    <template v-slot:activator="{ props }">
+                      <v-btn
+                        v-bind="props"
+                        color="red"
+                        size="small"
+                        @click="removeComponent(index)"
+                      >
+                        Quitar
+                      </v-btn>
+                    </template>
+                  </v-tooltip>
                 </template>
               </v-list-item>
             </v-list>
@@ -167,15 +192,20 @@
         <!-- Botón para generar -->
         <v-row class="mt-4">
           <v-col cols="12" class="text-center">
-            <v-btn
-              color="primary"
-              size="large"
-              :disabled="configuredComponents.length === 0 || !appName || !location"
-              @click="generateBicep"
-            >
-              <v-icon left>mdi-cog</v-icon>
-              Generar Infraestructura
-            </v-btn>
+            <v-tooltip text="Genera el código Bicep para desplegar tu infraestructura en Azure. Requiere al menos un componente configurado.">
+              <template v-slot:activator="{ props }">
+                <v-btn
+                  v-bind="props"
+                  color="primary"
+                  size="large"
+                  :disabled="configuredComponents.length === 0 || !appName || !location"
+                  @click="generateBicep"
+                >
+                  <v-icon left>mdi-cog</v-icon>
+                  Generar Infraestructura
+                </v-btn>
+              </template>
+            </v-tooltip>
           </v-col>
         </v-row>
       </v-card-text>
@@ -186,14 +216,22 @@
       <v-card-title class="text-h6 mb-3">
         Código Bicep Generado
         <v-spacer />
-        <v-btn color="primary" size="small" class="me-2" @click="copyToClipboard">
-          <v-icon left>mdi-content-copy</v-icon>
-          Copiar
-        </v-btn>
-        <v-btn color="success" size="small" @click="downloadBicep">
-          <v-icon left>mdi-download</v-icon>
-          Descargar
-        </v-btn>
+        <v-tooltip text="Copia el código Bicep al portapapeles para usarlo en tus deployments">
+          <template v-slot:activator="{ props }">
+            <v-btn v-bind="props" color="primary" size="small" class="me-2" @click="copyToClipboard">
+              <v-icon left>mdi-content-copy</v-icon>
+              Copiar
+            </v-btn>
+          </template>
+        </v-tooltip>
+        <v-tooltip text="Descarga el código Bicep como archivo .bicep para usar con Azure CLI o Azure PowerShell">
+          <template v-slot:activator="{ props }">
+            <v-btn v-bind="props" color="success" size="small" @click="downloadBicep">
+              <v-icon left>mdi-download</v-icon>
+              Descargar
+            </v-btn>
+          </template>
+        </v-tooltip>
       </v-card-title>
       <v-divider class="mb-3" />
       <div class="code-container">

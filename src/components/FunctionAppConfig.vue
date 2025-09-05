@@ -7,16 +7,22 @@
     <v-card-text>
       <v-row dense class="mt-3">
         <v-col cols="12" md="6">
-          <v-text-field
-            :model-value="localFunctionBaseName"
-            @update:model-value="updateFunctionBaseName"
-            label="Nombre base de Function App"
-            hint="Se añadirá automáticamente el sufijo del environment"
-            persistent-hint
-            density="compact"
-            variant="outlined"
-            :rules="[rules.required, rules.functionAppNameFormat]"
-          />
+          <v-tooltip location="top">
+            <template v-slot:activator="{ props }">
+              <v-text-field
+                v-bind="props"
+                :model-value="localFunctionBaseName"
+                @update:model-value="updateFunctionBaseName"
+                label="Nombre base de Function App"
+                hint="Se añadirá automáticamente el sufijo del environment"
+                persistent-hint
+                density="compact"
+                variant="outlined"
+                :rules="[rules.required, rules.functionAppNameFormat]"
+              />
+            </template>
+            <span>Nombre base del Function App. Se agregará automáticamente el sufijo del entorno (-dev, -prod). Debe ser único globalmente en Azure. Solo letras, números y guiones, 2-60 caracteres</span>
+          </v-tooltip>
           
           <!-- Chip de preview del nombre final -->
           <div class="mt-2" v-if="computedFunctionName">
@@ -28,143 +34,203 @@
         </v-col>
         
         <v-col cols="12" md="6">
-          <v-text-field
-            :model-value="computedAppServicePlanName"
-            label="Nombre del App Service Plan"
-            hint="Se genera automáticamente"
-            persistent-hint
-            density="compact"
-            variant="outlined"
-            readonly
-            append-inner-icon="mdi-lock"
-          />
+          <v-tooltip location="top">
+            <template v-slot:activator="{ props }">
+              <v-text-field
+                v-bind="props"
+                :model-value="computedAppServicePlanName"
+                label="Nombre del App Service Plan"
+                hint="Se genera automáticamente"
+                persistent-hint
+                density="compact"
+                variant="outlined"
+                readonly
+                append-inner-icon="mdi-lock"
+              />
+            </template>
+            <span>Nombre del App Service Plan asociado al Function App. Se genera automáticamente basado en el nombre del Function App. Contiene la configuración de SKU y escalado</span>
+          </v-tooltip>
         </v-col>
       </v-row>
 
       <v-row dense>
         <v-col cols="12" md="6">
-          <v-select
-            :model-value="config.hostingPlan"
-            @update:model-value="updateHostingPlan"
-            :items="hostingPlanOptions"
-            label="Plan de Hosting"
-            item-title="label"
-            item-value="value"
-            density="compact"
-            variant="outlined"
-            hint="Tipo de plan de ejecución"
-            persistent-hint
-          />
+          <v-tooltip location="top">
+            <template v-slot:activator="{ props }">
+              <v-select
+                v-bind="props"
+                :model-value="config.hostingPlan"
+                @update:model-value="updateHostingPlan"
+                :items="hostingPlanOptions"
+                label="Plan de Hosting"
+                item-title="label"
+                item-value="value"
+                density="compact"
+                variant="outlined"
+                hint="Tipo de plan de ejecución"
+                persistent-hint
+              />
+            </template>
+            <span>Tipo de plan de hosting. Consumption: serverless, pago por ejecución, escala automático. Premium: pre-calentado, VNet, escala más rápida. Dedicated: recursos dedicados en App Service Plan</span>
+          </v-tooltip>
         </v-col>
         <v-col cols="12" md="6">
-          <v-select
-            :model-value="config.sku"
-            @update:model-value="value => updateConfig('sku', value)"
-            :items="currentSkuOptions"
-            label="SKU del Plan"
-            item-title="label"
-            item-value="value"
-            density="compact"
-            variant="outlined"
-            hint="Nivel de rendimiento y precios"
-            persistent-hint
-          />
-        </v-col>
-      </v-row>
-
-      <v-row dense>
-        <v-col cols="12" md="6">
-          <v-select
-            :model-value="config.runtimeStack"
-            @update:model-value="value => updateConfig('runtimeStack', value)"
-            :items="runtimeStackOptions"
-            label="Runtime Stack"
-            item-title="label"
-            item-value="value"
-            density="compact"
-            variant="outlined"
-            hint="Tecnología de la función"
-            persistent-hint
-          />
-        </v-col>
-        <v-col cols="12" md="6">
-          <v-select
-            :model-value="config.operatingSystem"
-            @update:model-value="value => updateConfig('operatingSystem', value)"
-            :items="operatingSystemOptions"
-            label="Sistema Operativo"
-            item-title="label"
-            item-value="value"
-            density="compact"
-            variant="outlined"
-            hint="OS del Function App"
-            persistent-hint
-          />
+          <v-tooltip location="top">
+            <template v-slot:activator="{ props }">
+              <v-select
+                v-bind="props"
+                :model-value="config.sku"
+                @update:model-value="value => updateConfig('sku', value)"
+                :items="currentSkuOptions"
+                label="SKU del Plan"
+                item-title="label"
+                item-value="value"
+                density="compact"
+                variant="outlined"
+                hint="Nivel de rendimiento y precios"
+                persistent-hint
+              />
+            </template>
+            <span>SKU específico del plan. Y1: Consumption serverless. EP1-3: Elastic Premium con diferentes recursos. B1-P3V2: App Service Plans dedicados con CPU/memoria garantizada</span>
+          </v-tooltip>
         </v-col>
       </v-row>
 
       <v-row dense>
         <v-col cols="12" md="6">
-          <v-text-field
-            :model-value="computedStorageAccountName"
-            label="Storage Account (requerido)"
-            hint="Se genera automáticamente (solo letras y números)"
-            persistent-hint
-            density="compact"
-            variant="outlined"
-            readonly
-            append-inner-icon="mdi-lock"
-            :rules="[rules.storageNameFormat]"
-          />
+          <v-tooltip location="top">
+            <template v-slot:activator="{ props }">
+              <v-select
+                v-bind="props"
+                :model-value="config.runtimeStack"
+                @update:model-value="value => updateConfig('runtimeStack', value)"
+                :items="runtimeStackOptions"
+                label="Runtime Stack"
+                item-title="label"
+                item-value="value"
+                density="compact"
+                variant="outlined"
+                hint="Tecnología de la función"
+                persistent-hint
+              />
+            </template>
+            <span>Lenguaje y versión de runtime para las funciones. .NET Isolated: modelo recomendado para .NET. Node.js/Python/Java: versiones específicas. PowerShell: para automatización y scripts</span>
+          </v-tooltip>
+        </v-col>
+        <v-col cols="12" md="6">
+          <v-tooltip location="top">
+            <template v-slot:activator="{ props }">
+              <v-select
+                v-bind="props"
+                :model-value="config.operatingSystem"
+                @update:model-value="value => updateConfig('operatingSystem', value)"
+                :items="operatingSystemOptions"
+                label="Sistema Operativo"
+                item-title="label"
+                item-value="value"
+                density="compact"
+                variant="outlined"
+                hint="OS del Function App"
+                persistent-hint
+              />
+            </template>
+            <span>Sistema operativo del Function App. Linux: más económico, soporta todos los runtimes modernos. Windows: requerido para .NET Framework, PowerShell, y algunas características específicas</span>
+          </v-tooltip>
+        </v-col>
+      </v-row>
+
+      <v-row dense>
+        <v-col cols="12" md="6">
+          <v-tooltip location="top">
+            <template v-slot:activator="{ props }">
+              <v-text-field
+                v-bind="props"
+                :model-value="computedStorageAccountName"
+                label="Storage Account (requerido)"
+                hint="Se genera automáticamente (solo letras y números)"
+                persistent-hint
+                density="compact"
+                variant="outlined"
+                readonly
+                append-inner-icon="mdi-lock"
+                :rules="[rules.storageNameFormat]"
+              />
+            </template>
+            <span>Storage Account requerido para Function Apps. Almacena código de funciones, logs de ejecución, y estado interno. Se genera automáticamente con formato 'sta{nombre}{entorno}' (solo letras minúsculas y números)</span>
+          </v-tooltip>
         </v-col>
         <v-col cols="12" md="6" class="d-flex flex-column">
-          <v-switch
-            :model-value="config.httpsOnly"
-            @update:model-value="value => updateConfig('httpsOnly', value)"
-            label="Solo HTTPS"
-            density="compact"
-            color="primary"
-            hint="Forzar conexiones seguras HTTPS"
-            persistent-hint
-            class="mb-1"
-          />
-          <v-switch
-            :model-value="config.enableApplicationInsights"
-            @update:model-value="value => updateConfig('enableApplicationInsights', value)"
-            label="Application Insights"
-            density="compact"
-            color="primary"
-            hint="Monitoreo y telemetría avanzada"
-            persistent-hint
-          />
+          <v-tooltip location="top">
+            <template v-slot:activator="{ props }">
+              <v-switch
+                v-bind="props"
+                :model-value="config.httpsOnly"
+                @update:model-value="value => updateConfig('httpsOnly', value)"
+                label="Solo HTTPS"
+                density="compact"
+                color="primary"
+                hint="Forzar conexiones seguras HTTPS"
+                persistent-hint
+                class="mb-1"
+              />
+            </template>
+            <span>Fuerza todas las conexiones HTTP a redirigir a HTTPS. Recomendado para seguridad. Todas las invocaciones de funciones requerirán conexiones encriptadas</span>
+          </v-tooltip>
+          <v-tooltip location="top">
+            <template v-slot:activator="{ props }">
+              <v-switch
+                v-bind="props"
+                :model-value="config.enableApplicationInsights"
+                @update:model-value="value => updateConfig('enableApplicationInsights', value)"
+                label="Application Insights"
+                density="compact"
+                color="primary"
+                hint="Monitoreo y telemetría avanzada"
+                persistent-hint
+              />
+            </template>
+            <span>Habilita Application Insights para monitoreo avanzado. Recopila telemetría de ejecución, métricas de rendimiento, trazas de dependencias y logs detallados de las funciones</span>
+          </v-tooltip>
         </v-col>
       </v-row>
 
       <v-row dense v-if="config.hostingPlan === 'Premium'">
         <v-col cols="12" md="6">
-          <v-select
-            :model-value="config.preWarmedInstances"
-            @update:model-value="value => updateConfig('preWarmedInstances', value)"
-            :items="preWarmedInstanceOptions"
-            label="Instancias Pre-calentadas"
-            item-title="label"
-            item-value="value"
-            density="compact"
-            variant="outlined"
-            hint="Instancias siempre listas para Premium"
-            persistent-hint
-          />
+          <v-tooltip location="top">
+            <template v-slot:activator="{ props }">
+              <v-select
+                v-bind="props"
+                :model-value="config.preWarmedInstances"
+                @update:model-value="value => updateConfig('preWarmedInstances', value)"
+                :items="preWarmedInstanceOptions"
+                label="Instancias Pre-calentadas"
+                item-title="label"
+                item-value="value"
+                density="compact"
+                variant="outlined"
+                hint="Instancias siempre listas para Premium"
+                persistent-hint
+              />
+            </template>
+            <span>Número de instancias que permanecen "calientes" y listas para ejecutar funciones inmediatamente. Reduce latencia de arranque en frío. Solo disponible en planes Premium. Mínimo 1, máximo varía por SKU</span>
+          </v-tooltip>
         </v-col>
         <v-col cols="12" md="6">
-          <v-switch
-            :model-value="config.vnetIntegration"
-            @update:model-value="value => updateConfig('vnetIntegration', value)"
-            label="Integración con VNet"
-            density="compact"
-            color="primary"
-            hint="Conectar a red virtual privada"
-            persistent-hint
-          />
+          <v-tooltip location="top">
+            <template v-slot:activator="{ props }">
+              <v-switch
+                v-bind="props"
+                :model-value="config.vnetIntegration"
+                @update:model-value="value => updateConfig('vnetIntegration', value)"
+                label="Integración con VNet"
+                density="compact"
+                color="primary"
+                hint="Conectar a red virtual privada"
+                persistent-hint
+              />
+            </template>
+            <span>Integración con Virtual Network para acceso a recursos privados. Permite al Function App conectarse a bases de datos privadas, servicios internos y otros recursos en VNet sin exposición pública</span>
+          </v-tooltip>
         </v-col>
       </v-row>
     </v-card-text>

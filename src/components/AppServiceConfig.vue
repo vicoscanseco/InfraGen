@@ -7,17 +7,22 @@
     <v-card-text>
       <v-row dense class="mt-3">
         <v-col cols="12" md="6">
-          <v-text-field 
-            v-model="localAppBaseName" 
-            label="Nombre Base del App Service" 
-            placeholder="Ej: myappservice" 
-            density="compact" 
-            variant="outlined"
-            :rules="[rules.required, rules.appServiceNameFormat]"
-            hint="Solo letras, números y guiones. Se agregará automáticamente '-' y el environment"
-            persistent-hint
-            @input="updateAppBaseName($event.target.value)"
-          />
+          <v-tooltip text="Define el nombre base de tu App Service. Se combinará automáticamente con el entorno (dev, prod, etc.) para crear el nombre final único en Azure.">
+            <template v-slot:activator="{ props }">
+              <v-text-field 
+                v-bind="props"
+                v-model="localAppBaseName" 
+                label="Nombre Base del App Service" 
+                placeholder="Ej: myappservice" 
+                density="compact" 
+                variant="outlined"
+                :rules="[rules.required, rules.appServiceNameFormat]"
+                hint="Solo letras, números y guiones. Se agregará automáticamente '-' y el environment"
+                persistent-hint
+                @input="updateAppBaseName($event.target.value)"
+              />
+            </template>
+          </v-tooltip>
           <v-chip 
             v-if="computedAppName"
             size="small" 
@@ -29,79 +34,109 @@
           </v-chip>
         </v-col>
         <v-col cols="12" md="6">
-          <v-text-field 
-            v-model="localConfig.appServicePlanReference" 
-            label="Referencia al App Service Plan" 
-            placeholder="Seleccionar App Service Plan existente" 
-            density="compact" 
-            variant="outlined"
-            readonly
-            hint="Se asignará automáticamente al ASP configurado"
-            persistent-hint
-          />
+          <v-tooltip text="Referencia automática al App Service Plan configurado en tu infraestructura. Esto determina el rendimiento y costo de tu aplicación.">
+            <template v-slot:activator="{ props }">
+              <v-text-field 
+                v-bind="props"
+                v-model="localConfig.appServicePlanReference" 
+                label="Referencia al App Service Plan" 
+                placeholder="Seleccionar App Service Plan existente" 
+                density="compact" 
+                variant="outlined"
+                readonly
+                hint="Se asignará automáticamente al ASP configurado"
+                persistent-hint
+              />
+            </template>
+          </v-tooltip>
         </v-col>
       </v-row>
 
       <v-row dense>
         <v-col cols="12" md="6">
-          <v-select
-            v-model="localConfig.runtimeStack"
-            :items="runtimeStackOptions"
-            label="Runtime Stack"
-            item-title="label"
-            item-value="value"
-            density="compact"
-            variant="outlined"
-            hint="Tecnología de la aplicación"
-            persistent-hint
-            @update:model-value="updateConfig('runtimeStack', $event)"
-          />
+          <v-tooltip text="Selecciona la tecnología y versión que usará tu aplicación. Esto afecta las librerías disponibles y el rendimiento.">
+            <template v-slot:activator="{ props }">
+              <v-select
+                v-bind="props"
+                v-model="localConfig.runtimeStack"
+                :items="runtimeStackOptions"
+                label="Runtime Stack"
+                item-title="label"
+                item-value="value"
+                density="compact"
+                variant="outlined"
+                hint="Tecnología de la aplicación"
+                persistent-hint
+                @update:model-value="updateConfig('runtimeStack', $event)"
+              />
+            </template>
+          </v-tooltip>
         </v-col>
         <v-col cols="12" md="6" class="d-flex flex-column">
-          <v-switch
-            v-model="localConfig.httpsOnly"
-            label="Solo HTTPS"
-            density="compact"
-            color="primary"
-            hint="Redirigir HTTP a HTTPS automáticamente"
-            persistent-hint
-            class="mb-1"
-            @update:model-value="updateConfig('httpsOnly', $event)"
-          />
-          <v-switch
-            v-model="localConfig.alwaysOn"
-            label="Always On"
-            density="compact"
-            color="primary"
-            hint="Mantener la aplicación cargada todo el tiempo"
-            persistent-hint
-            @update:model-value="updateConfig('alwaysOn', $event)"
-          />
+          <v-tooltip text="Cuando está activado, redirige automáticamente todo el tráfico HTTP a HTTPS para mayor seguridad. Recomendado para producción.">
+            <template v-slot:activator="{ props }">
+              <v-switch
+                v-bind="props"
+                v-model="localConfig.httpsOnly"
+                label="Solo HTTPS"
+                density="compact"
+                color="primary"
+                hint="Redirigir HTTP a HTTPS automáticamente"
+                persistent-hint
+                class="mb-1"
+                @update:model-value="updateConfig('httpsOnly', $event)"
+              />
+            </template>
+          </v-tooltip>
+          <v-tooltip text="Mantiene tu aplicación siempre cargada en memoria, evitando arranques en frío. Recomendado para aplicaciones de producción con tráfico constante.">
+            <template v-slot:activator="{ props }">
+              <v-switch
+                v-bind="props"
+                v-model="localConfig.alwaysOn"
+                label="Always On"
+                density="compact"
+                color="primary"
+                hint="Mantener la aplicación cargada todo el tiempo"
+                persistent-hint
+                @update:model-value="updateConfig('alwaysOn', $event)"
+              />
+            </template>
+          </v-tooltip>
         </v-col>
       </v-row>
 
       <v-row dense>
         <v-col cols="12" md="6">
-          <v-switch
-            v-model="localConfig.clientAffinityEnabled"
-            label="Client Affinity"
-            density="compact"
-            color="primary"
-            hint="Habilitar afinidad de sesión"
-            persistent-hint
-            @update:model-value="updateConfig('clientAffinityEnabled', $event)"
-          />
+          <v-tooltip text="Habilita afinidad de sesión para mantener las peticiones del mismo usuario en la misma instancia. Útil para aplicaciones con estado de sesión.">
+            <template v-slot:activator="{ props }">
+              <v-switch
+                v-bind="props"
+                v-model="localConfig.clientAffinityEnabled"
+                label="Client Affinity"
+                density="compact"
+                color="primary"
+                hint="Habilitar afinidad de sesión"
+                persistent-hint
+                @update:model-value="updateConfig('clientAffinityEnabled', $event)"
+              />
+            </template>
+          </v-tooltip>
         </v-col>
         <v-col cols="12" md="6">
-          <v-switch
-            v-model="localConfig.publicNetworkAccess"
-            label="Acceso de Red Público"
-            density="compact"
-            color="primary"
-            hint="Permitir acceso desde internet"
-            persistent-hint
-            @update:model-value="updateConfig('publicNetworkAccess', $event)"
-          />
+          <v-tooltip text="Permite que tu aplicación sea accesible desde internet. Desactívalo solo si usas redes privadas o VPN para mayor seguridad.">
+            <template v-slot:activator="{ props }">
+              <v-switch
+                v-bind="props"
+                v-model="localConfig.publicNetworkAccess"
+                label="Acceso de Red Público"
+                density="compact"
+                color="primary"
+                hint="Permitir acceso desde internet"
+                persistent-hint
+                @update:model-value="updateConfig('publicNetworkAccess', $event)"
+              />
+            </template>
+          </v-tooltip>
         </v-col>
       </v-row>
     </v-card-text>

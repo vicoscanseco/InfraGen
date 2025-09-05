@@ -1,6 +1,26 @@
-# 🚀 InfraGen - Próximos Features v1.1+
+# 🚀 InfraGen - Próximos Features v1.2+
 
 Este documento contiene las mejoras y características planificadas para futuras versiones de InfraGen.
+
+## ✅ **FUNCIONALIDADES IMPLEMENTADAS EN v1.1**
+
+### 💰 **Estimador de Costos** *(COMPLETADO)*
+
+- ✅ Cálculo automático de costos por componente
+- ✅ Precios específicos por región (35+ regiones soportadas)
+- ✅ Multiplicadores regionales automáticos
+- ✅ Interfaz visual con desglose detallado
+- ✅ Sistema de exportación en múltiples formatos (CSV, Excel, JSON, Print)
+- ✅ Análisis de categorías de recursos
+- ✅ Reportes completos con metadatos
+
+### 📁 **Gestión de Archivos** *(COMPLETADO)*
+
+- ✅ Renombrado de archivos de documentación
+- ✅ Estructura de proyecto mejorada
+- ✅ README.md completamente actualizado v1.1.0
+
+---
 
 ## 📋 Tabla de Contenidos
 
@@ -9,53 +29,18 @@ Este documento contiene las mejoras y características planificadas para futuras
 - [⚡ Baja Prioridad - Características Avanzadas](#-baja-prioridad---características-avanzadas)
 - [🛠️ Mejoras Técnicas](#️-mejoras-técnicas)
 - [📦 Mejoras de Package](#-mejoras-de-package)
-- [🏆 Top 3 Recomendaciones Inmediatas](#-top-3-recomendaciones-inmediatas)
+- [🏆 Top 3 Recomendaciones v1.2](#-top-3-recomendaciones-v12)
 
 ---
 
 ## 🎯 **ALTA PRIORIDAD - Funcionalidad Core**
 
-### 1. 🔍 **Validación de Código Bicep**
-
-**Descripción**: Validador de sintaxis Bicep en tiempo real antes de mostrar el código generado.
-
-**Implementación**:
-```javascript
-// Agregar en AzureSelector.vue
-validateBicepSyntax() {
-  const errors = []
-  if (!this.bicepContent.includes('targetScope = \'subscription\'')) {
-    errors.push('Missing targetScope')
-  }
-  if (!this.bicepContent.includes('resource rg \'Microsoft.Resources/resourceGroups@')) {
-    errors.push('Missing resource group definition')
-  }
-  return errors
-}
-
-showBicepValidationErrors() {
-  const errors = this.validateBicepSyntax()
-  if (errors.length > 0) {
-    // Mostrar errores en UI
-    this.validationErrors = errors
-  }
-}
-```
-
-**Beneficios**:
-- ✅ Previene errores de deployment
-- ✅ Mejora la confianza del usuario
-- ✅ Feedback inmediato
-
-**Estimación**: 2-3 días
-
----
-
-### 2. 💾 **Persistencia Local (LocalStorage)**
+### 1. 💾 **Persistencia Local (LocalStorage)**
 
 **Descripción**: Auto-guardado de configuración en progreso para prevenir pérdida de datos al recargar la página.
 
 **Implementación**:
+
 ```javascript
 // Auto-guardar configuración en progreso
 saveToLocalStorage() {
@@ -97,6 +82,7 @@ watch([appName, selectedEnv, location, components], () => {
 ```
 
 **UI Components**:
+
 ```vue
 <v-snackbar v-model="showAutoSaveNotification" timeout="2000" color="success">
   <v-icon left>mdi-content-save</v-icon>
@@ -110,6 +96,7 @@ watch([appName, selectedEnv, location, components], () => {
 ```
 
 **Beneficios**:
+
 - ✅ No perder progreso al recargar
 - ✅ Mejor experiencia de usuario
 - ✅ Recuperación automática
@@ -118,173 +105,54 @@ watch([appName, selectedEnv, location, components], () => {
 
 ---
 
-### 3. 📊 **Estimación de Costos**
+### 2. 🔍 **Validación de Código Bicep**
 
-**Descripción**: Calculadora de costos estimados mensuales para los recursos seleccionados.
+**Descripción**: Validador de sintaxis Bicep en tiempo real antes de mostrar el código generado.
 
 **Implementación**:
+
 ```javascript
-// Datos de precios base (estimados)
-const azurePricing = {
-  'StorageAccount': { 
-    'Standard_LRS': 0.018, // per GB
-    'Standard_GRS': 0.036,
-    'Premium_LRS': 0.15
-  },
-  'AppService': {
-    'B1': 13.14, // per month
-    'S1': 56.94,
-    'P1V2': 82.13
-  },
-  'SQLDatabase': {
-    'Basic': 4.99,
-    'Standard': 15.00,
-    'Premium': 465.00
-  },
-  'FunctionApp': {
-    'Consumption': 0.000016, // per execution
-    'Premium': 159.00
+// Agregar en AzureSelector.vue
+validateBicepSyntax() {
+  const errors = []
+  if (!this.bicepContent.includes('targetScope = \'subscription\'')) {
+    errors.push('Missing targetScope')
+  }
+  if (!this.bicepContent.includes('resource rg \'Microsoft.Resources/resourceGroups@')) {
+    errors.push('Missing resource group definition')
+  }
+  return errors
+}
+
+showBicepValidationErrors() {
+  const errors = this.validateBicepSyntax()
+  if (errors.length > 0) {
+    // Mostrar errores en UI
+    this.validationErrors = errors
   }
 }
-
-estimateCost(component) {
-  switch(component.type) {
-    case 'StorageAccount':
-      return azurePricing.StorageAccount[component.config.sku] * 100 || 5 // 100GB estimado
-    case 'AppService':
-      return azurePricing.AppService[component.config.sku] || 15
-    case 'SQLDatabase':
-      return azurePricing.SQLDatabase[component.config.edition] || 5
-    case 'FunctionApp':
-      return component.config.hostingPlan === 'Consumption' ? 10 : 159 // 10$ estimado para consumption
-    default:
-      return 5 // Costo base
-  }
-}
-
-get totalEstimatedCost() {
-  return this.components.reduce((total, comp) => total + this.estimateCost(comp), 0)
-}
-```
-
-**UI Component**:
-```vue
-<v-card class="mt-4" v-if="components.length > 0">
-  <v-card-title class="bg-success">
-    <v-icon class="mr-2">mdi-calculator</v-icon>
-    💰 Estimación de Costos Mensual
-  </v-card-title>
-  <v-card-text>
-    <v-list density="compact">
-      <v-list-item v-for="component in components" :key="component.id">
-        <template v-slot:prepend>
-          <v-icon>{{ getComponentIcon(component.type) }}</v-icon>
-        </template>
-        <v-list-item-title>{{ component.type }}</v-list-item-title>
-        <v-list-item-subtitle>{{ component.config.sku || component.config.edition }}</v-list-item-subtitle>
-        <template v-slot:append>
-          <v-chip color="green" size="small">~${{ estimateCost(component) }}/mes</v-chip>
-        </template>
-      </v-list-item>
-    </v-list>
-    
-    <v-divider class="my-3"></v-divider>
-    
-    <v-row>
-      <v-col>
-        <v-chip color="primary" size="large" variant="elevated">
-          <v-icon left>mdi-cash</v-icon>
-          Total Estimado: ~${{ totalEstimatedCost }}/mes
-        </v-chip>
-      </v-col>
-    </v-row>
-    
-    <v-alert type="info" density="compact" class="mt-3">
-      <v-icon>mdi-information</v-icon>
-      Los costos son estimaciones basadas en precios estándar de Azure. 
-      Los costos reales pueden variar según el uso, región y descuentos aplicables.
-    </v-alert>
-  </v-card-text>
-</v-card>
 ```
 
 **Beneficios**:
-- ✅ Visibilidad de costos antes del deployment
-- ✅ Ayuda en la toma de decisiones
-- ✅ Planificación presupuestaria
 
-**Estimación**: 3-4 días
+- ✅ Previene errores de deployment
+- ✅ Mejora la confianza del usuario
+- ✅ Feedback inmediato
 
----
-
-## 🎨 **MEDIA PRIORIDAD - UX/UI**
-
-### 4. 🔄 **Modo Oscuro/Claro**
-
-**Descripción**: Toggle entre tema claro y oscuro para mejor experiencia visual.
-
-**Implementación**:
-```javascript
-// En main.js
-const theme = {
-  defaultTheme: 'light',
-  themes: {
-    light: {
-      colors: {
-        primary: '#0078D4',
-        secondary: '#106EBE',
-        success: '#107C10',
-        warning: '#FF8C00',
-        error: '#D13438'
-      }
-    },
-    dark: {
-      colors: {
-        primary: '#4FC3F7',
-        secondary: '#81C784',
-        success: '#66BB6A',
-        warning: '#FFB74D',
-        error: '#EF5350'
-      }
-    }
-  }
-}
-
-// En AzureSelector.vue
-data() {
-  return {
-    darkMode: false
-  }
-},
-methods: {
-  toggleTheme() {
-    this.darkMode = !this.darkMode
-    this.$vuetify.theme.global.name = this.darkMode ? 'dark' : 'light'
-    localStorage.setItem('darkMode', this.darkMode)
-  }
-}
-```
-
-**UI Component**:
-```vue
-<v-btn @click="toggleTheme" icon variant="text">
-  <v-icon>{{ darkMode ? 'mdi-white-balance-sunny' : 'mdi-moon-waning-crescent' }}</v-icon>
-</v-btn>
-```
-
-**Estimación**: 1 día
+**Estimación**: 2-3 días
 
 ---
 
-### 5. 📱 **Export/Import de Configuraciones**
+### 3. 📱 **Export/Import de Configuraciones**
 
 **Descripción**: Exportar configuraciones a archivos JSON e importar configuraciones existentes.
 
 **Implementación**:
+
 ```javascript
 exportConfiguration() {
   const config = {
-    version: '1.0',
+    version: '1.1',
     appName: this.appName,
     environment: this.selectedEnv,
     location: this.location,
@@ -292,7 +160,7 @@ exportConfiguration() {
     components: this.components,
     metadata: {
       exportedAt: new Date().toISOString(),
-      exportedBy: 'InfraGen v1.0'
+      exportedBy: 'InfraGen v1.1'
     }
   }
   
@@ -337,6 +205,7 @@ importConfiguration(event) {
 ```
 
 **UI Components**:
+
 ```vue
 <v-row class="mb-4">
   <v-col>
@@ -363,11 +232,73 @@ importConfiguration(event) {
 
 ---
 
-### 6. 🎯 **Templates Predefinidos**
+## 🎨 **MEDIA PRIORIDAD - UX/UI**
+
+### 4. 🔄 **Modo Oscuro/Claro**
+
+**Descripción**: Toggle entre tema claro y oscuro para mejor experiencia visual.
+
+**Implementación**:
+
+```javascript
+// En main.js
+const theme = {
+  defaultTheme: 'light',
+  themes: {
+    light: {
+      colors: {
+        primary: '#0078D4',
+        secondary: '#106EBE',
+        success: '#107C10',
+        warning: '#FF8C00',
+        error: '#D13438'
+      }
+    },
+    dark: {
+      colors: {
+        primary: '#4FC3F7',
+        secondary: '#81C784',
+        success: '#66BB6A',
+        warning: '#FFB74D',
+        error: '#EF5350'
+      }
+    }
+  }
+}
+
+// En AzureSelector.vue
+data() {
+  return {
+    darkMode: false
+  }
+},
+methods: {
+  toggleTheme() {
+    this.darkMode = !this.darkMode
+    this.$vuetify.theme.global.name = this.darkMode ? 'dark' : 'light'
+    localStorage.setItem('darkMode', this.darkMode)
+  }
+}
+```
+
+**UI Component**:
+
+```vue
+<v-btn @click="toggleTheme" icon variant="text">
+  <v-icon>{{ darkMode ? 'mdi-white-balance-sunny' : 'mdi-moon-waning-crescent' }}</v-icon>
+</v-btn>
+```
+
+**Estimación**: 1 día
+
+---
+
+### 5. 🎯 **Templates Predefinidos**
 
 **Descripción**: Plantillas predefinidas para escenarios comunes de infraestructura.
 
 **Implementación**:
+
 ```javascript
 const templates = {
   'web-app-basic': {
@@ -406,6 +337,7 @@ const templates = {
 ```
 
 **UI Component**:
+
 ```vue
 <v-dialog v-model="showTemplates" max-width="800">
   <v-card>
@@ -436,6 +368,50 @@ const templates = {
 
 ---
 
+### 6. 🎨 **Editor de Parámetros Visual**
+
+**Descripción**: Interfaz visual para editar parámetros del Bicep generado.
+
+**Implementación**:
+
+```javascript
+// Editor de parámetros dinámico
+data() {
+  return {
+    bicepParameters: {},
+    showParameterEditor: false
+  }
+},
+methods: {
+  extractParametersFromBicep() {
+    const paramRegex = /param\s+(\w+)\s+(\w+)(?:\s*=\s*(.+))?/g
+    const matches = [...this.bicepContent.matchAll(paramRegex)]
+    
+    matches.forEach(([, name, type, defaultValue]) => {
+      this.bicepParameters[name] = {
+        type,
+        value: defaultValue || this.getDefaultValueForType(type),
+        description: `Parameter for ${name}`
+      }
+    })
+  },
+  
+  updateBicepWithParameters() {
+    let updatedBicep = this.bicepContent
+    Object.entries(this.bicepParameters).forEach(([name, config]) => {
+      const oldParam = new RegExp(`param\\s+${name}\\s+\\w+(?:\\s*=\\s*.+)?`)
+      const newParam = `param ${name} ${config.type} = ${config.value}`
+      updatedBicep = updatedBicep.replace(oldParam, newParam)
+    })
+    this.bicepContent = updatedBicep
+  }
+}
+```
+
+**Estimación**: 3 días
+
+---
+
 ## ⚡ **BAJA PRIORIDAD - Características Avanzadas**
 
 ### 7. 🔍 **Búsqueda en Componentes**
@@ -443,6 +419,7 @@ const templates = {
 **Descripción**: Campo de búsqueda para filtrar componentes disponibles.
 
 **Implementación**:
+
 ```javascript
 data() {
   return {
@@ -470,6 +447,7 @@ computed: {
 **Descripción**: Tracking de componentes más utilizados para mejorar la UX.
 
 **Implementación**:
+
 ```javascript
 trackComponentUsage(componentType) {
   const usage = JSON.parse(localStorage.getItem('component-usage') || '{}')
@@ -495,6 +473,7 @@ get popularComponents() {
 **Descripción**: Notificar cuando hay nuevas versiones disponibles.
 
 **Implementación**:
+
 ```javascript
 async checkForUpdates() {
   try {
@@ -519,6 +498,7 @@ async checkForUpdates() {
 ### 10. 📝 **Sistema de Logging Mejorado**
 
 **Implementación**:
+
 ```javascript
 // utils/logger.js
 export const logger = {
@@ -547,8 +527,8 @@ export const logger = {
 ### 11. 🧪 **Testing Suite**
 
 **Implementación**:
+
 ```json
-// package.json
 {
   "scripts": {
     "test": "vitest",
@@ -571,6 +551,7 @@ export const logger = {
 ### 12. 🚀 **Optimización de Performance**
 
 **Implementación**:
+
 ```javascript
 // Lazy loading de componentes grandes
 const SqlDatabaseConfig = defineAsyncComponent(() => 
@@ -591,15 +572,40 @@ const memoizedBicepGeneration = computed(() => {
 
 ---
 
+### 13. 🔐 **Gestión de Secretos**
+
+**Descripción**: Sistema para manejar secretos y configuraciones sensibles.
+
+**Implementación**:
+
+```javascript
+// Integración con Azure Key Vault
+const secretsManager = {
+  async getSecret(secretName) {
+    // Integración con Azure Key Vault
+    const response = await fetch(`/api/secrets/${secretName}`)
+    return response.json()
+  },
+  
+  generateKeyVaultReference(secretName) {
+    return `@Microsoft.KeyVault(SecretUri=https://\${keyVaultName}.vault.azure.net/secrets/${secretName}/)`
+  }
+}
+```
+
+**Estimación**: 3-4 días
+
+---
+
 ## 📦 **MEJORAS DE PACKAGE**
 
-### 13. **Actualizar package.json**
+### 14. **Actualizar package.json**
 
 ```json
 {
   "name": "infragen",
-  "version": "1.0.0",
-  "description": "Generador visual de infraestructura Azure con Bicep - Configura recursos Azure de manera intuitiva",
+  "version": "1.2.0",
+  "description": "Generador visual de infraestructura Azure con Bicep - Configura recursos Azure de manera intuitiva con estimación de costos",
   "keywords": [
     "azure", 
     "bicep", 
@@ -607,7 +613,9 @@ const memoizedBicepGeneration = computed(() => {
     "vue", 
     "generator", 
     "devops", 
-    "cloud"
+    "cloud",
+    "cost-estimation",
+    "azure-pricing"
   ],
   "author": "Victor Canseco <email@example.com>",
   "license": "MIT",
@@ -626,13 +634,20 @@ const memoizedBicepGeneration = computed(() => {
     "lint": "eslint src/ --ext .vue,.js,.ts",
     "lint:fix": "eslint src/ --ext .vue,.js,.ts --fix",
     "format": "prettier --write src/",
-    "type-check": "vue-tsc --noEmit"
+    "type-check": "vue-tsc --noEmit",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage"
   },
   "devDependencies": {
     "eslint": "^8.57.0",
     "prettier": "^3.0.0",
     "typescript": "^5.0.0",
-    "vue-tsc": "^1.8.0"
+    "vue-tsc": "^1.8.0",
+    "vitest": "^1.0.0",
+    "@vue/test-utils": "^2.4.0",
+    "@vitest/ui": "^1.0.0",
+    "jsdom": "^23.0.0"
   }
 }
 ```
@@ -641,21 +656,24 @@ const memoizedBicepGeneration = computed(() => {
 
 ---
 
-## 🏆 **TOP 3 RECOMENDACIONES INMEDIATAS**
+## 🏆 **TOP 3 RECOMENDACIONES v1.2**
 
-### 1. 💾 **Auto-save LocalStorage** 
+### 1. 💾 **Auto-save LocalStorage**
+
 - **Impacto**: Alto
 - **Esfuerzo**: Bajo
 - **Beneficio**: Evita frustración del usuario
 - **Prioridad**: 🔥 CRÍTICA
 
-### 2. 💰 **Estimación de Costos** 
+### 2. 🔍 **Validación de Bicep**
+
 - **Impacto**: Alto
 - **Esfuerzo**: Medio
-- **Beneficio**: Valor agregado significativo
+- **Beneficio**: Previene errores de deployment
 - **Prioridad**: 🔥 ALTA
 
-### 3. 📱 **Export/Import** 
+### 3. 📱 **Export/Import**
+
 - **Impacto**: Medio-Alto
 - **Esfuerzo**: Medio
 - **Beneficio**: Reutilización y compartir configuraciones
@@ -665,25 +683,30 @@ const memoizedBicepGeneration = computed(() => {
 
 ## 📅 **Roadmap Sugerido**
 
-### **v1.1 (2-3 semanas)**
+### **v1.2 (2-3 semanas)**
+
 - ✅ Auto-save LocalStorage
-- ✅ Export/Import configuraciones
-- ✅ Modo oscuro/claro
-
-### **v1.2 (1-2 meses)**
-- ✅ Estimación de costos
-- ✅ Templates predefinidos
 - ✅ Validación de Bicep
+- ✅ Export/Import configuraciones
 
-### **v1.3 (2-3 meses)**
+### **v1.3 (1-2 meses)**
+
+- ✅ Modo oscuro/claro
+- ✅ Templates predefinidos
+- ✅ Editor de parámetros visual
+
+### **v1.4 (2-3 meses)**
+
 - ✅ Testing suite
 - ✅ Analytics de uso
 - ✅ Optimizaciones de performance
 
 ### **v2.0 (3-6 meses)**
+
 - ✅ Sistema de plugins
 - ✅ API REST
 - ✅ Colaboración en tiempo real
+- ✅ Gestión de secretos avanzada
 
 ---
 
@@ -694,9 +717,30 @@ const memoizedBicepGeneration = computed(() => {
 - Documentar todos los cambios en el README
 - Crear tests para nuevas funcionalidades
 - Seguir las convenciones de código existentes
+- Aprovechar el sistema de costos ya implementado para mejorar UX
+
+---
+
+## 🔄 **Estado Actual del Proyecto**
+
+### **Funcionalidades Core Completadas**
+
+- ✅ Generación de código Bicep
+- ✅ Configuración visual de componentes Azure
+- ✅ **Estimador de costos con precios regionales**
+- ✅ **Exportación de reportes en múltiples formatos**
+- ✅ Interfaz Vue.js responsiva
+- ✅ Documentación completa
+
+### **Próximos Pasos Inmediatos**
+
+1. **Persistencia Local** - Para mejorar UX y evitar pérdida de datos
+2. **Validación Bicep** - Para asegurar calidad del código generado
+3. **Export/Import** - Para facilitar reutilización de configuraciones
 
 ---
 
 **Última actualización**: 5 de Septiembre, 2025  
-**Versión del documento**: 1.0  
-**Mantenido por**: CodeLand Team
+**Versión del documento**: 2.0  
+**Mantenido por**: InfraGen Team  
+**Estado del proyecto**: v1.1.0 - Sistema de estimación de costos completado

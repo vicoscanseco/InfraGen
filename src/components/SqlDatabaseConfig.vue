@@ -7,17 +7,23 @@
     <v-card-text class="pa-6">
       <v-row class="mb-2 mt-3">
         <v-col cols="12" md="6">
-          <v-text-field 
-            v-model="localDatabaseBaseName" 
-            label="Nombre Base de la Base de Datos" 
-            placeholder="Ej: mydatabase" 
-            density="comfortable" 
-            variant="outlined"
-            :rules="[rules.required, rules.databaseNameFormat]"
-            hint="Solo letras, números, guiones y guiones bajos. Se agregará automáticamente 'db-' y el environment"
-            persistent-hint
-            @input="updateDatabaseBaseName($event.target.value)"
-          />
+          <v-tooltip location="top">
+            <template v-slot:activator="{ props }">
+              <v-text-field 
+                v-bind="props"
+                v-model="localDatabaseBaseName" 
+                label="Nombre Base de la Base de Datos" 
+                placeholder="Ej: mydatabase" 
+                density="comfortable" 
+                variant="outlined"
+                :rules="[rules.required, rules.databaseNameFormat]"
+                hint="Solo letras, números, guiones y guiones bajos. Se agregará automáticamente 'db-' y el environment"
+                persistent-hint
+                @input="updateDatabaseBaseName($event.target.value)"
+              />
+            </template>
+            <span>Nombre base de la base de datos. Se generará el nombre completo agregando prefijo 'db-' y sufijo del entorno (dev/prod). Solo letras, números, guiones y guiones bajos</span>
+          </v-tooltip>
           <v-chip 
             v-if="computedDatabaseName"
             size="small" 
@@ -29,17 +35,23 @@
           </v-chip>
         </v-col>
         <v-col cols="12" md="6">
-          <v-text-field 
-            v-model="localServerBaseName" 
-            label="Nombre Base del SQL Server" 
-            placeholder="Ej: myserver" 
-            density="comfortable" 
-            variant="outlined"
-            :rules="[rules.required, rules.serverNameFormat]"
-            hint="Solo letras minúsculas, números y guiones. Se agregará automáticamente 'sqls-' y el environment"
-            persistent-hint
-            @input="updateServerBaseName($event.target.value)"
-          />
+          <v-tooltip location="top">
+            <template v-slot:activator="{ props }">
+              <v-text-field 
+                v-bind="props"
+                v-model="localServerBaseName" 
+                label="Nombre Base del SQL Server" 
+                placeholder="Ej: myserver" 
+                density="comfortable" 
+                variant="outlined"
+                :rules="[rules.required, rules.serverNameFormat]"
+                hint="Solo letras minúsculas, números y guiones. Se agregará automáticamente 'sqls-' y el environment"
+                persistent-hint
+                @input="updateServerBaseName($event.target.value)"
+              />
+            </template>
+            <span>Nombre base del servidor SQL. Se generará el nombre completo con prefijo 'sqls-' y sufijo del entorno. Debe ser único globalmente en Azure (nombreservidor.database.windows.net)</span>
+          </v-tooltip>
           <v-chip 
             v-if="computedServerName"
             size="small" 
@@ -54,115 +66,163 @@
 
       <v-row class="mb-2">
         <v-col cols="12" md="6">
-          <v-text-field 
-            v-model="localConfig.adminUsername" 
-            label="Usuario Administrador" 
-            placeholder="Ej: sqladmin" 
-            density="comfortable" 
-            variant="outlined"
-            :rules="[rules.required, rules.adminUsernameFormat]"
-            hint="No puede ser 'admin', 'administrator', 'sa', etc."
-            persistent-hint
-            @input="updateConfigField('adminUsername', $event.target.value)"
-          />
+          <v-tooltip location="top">
+            <template v-slot:activator="{ props }">
+              <v-text-field 
+                v-bind="props"
+                v-model="localConfig.adminUsername" 
+                label="Usuario Administrador" 
+                placeholder="Ej: sqladmin" 
+                density="comfortable" 
+                variant="outlined"
+                :rules="[rules.required, rules.adminUsernameFormat]"
+                hint="No puede ser 'admin', 'administrator', 'sa', etc."
+                persistent-hint
+                @input="updateConfigField('adminUsername', $event.target.value)"
+              />
+            </template>
+            <span>Nombre del usuario administrador del servidor SQL. No puede usar nombres reservados como 'admin', 'administrator', 'sa', 'root'. Debe empezar con letra y contener solo letras, números y guión bajo</span>
+          </v-tooltip>
         </v-col>
         <v-col cols="12" md="6">
-          <v-text-field 
-            v-model="localConfig.adminPassword" 
-            label="Contraseña del Administrador" 
-            placeholder="Contraseña segura" 
-            type="password"
-            density="comfortable" 
-            variant="outlined"
-            :rules="[rules.required, rules.passwordFormat]"
-            hint="Mínimo 8 caracteres: 1 mayúscula, 1 minúscula, 1 número, 1 carácter especial"
-            persistent-hint
-            @input="updateConfigField('adminPassword', $event.target.value)"
-          />
-        </v-col>
-      </v-row>
-
-      <v-row class="mb-2">
-        <v-col cols="12" md="6">
-          <v-select
-            v-model="localConfig.edition"
-            :items="editionOptions"
-            label="Edición de la Base de Datos"
-            item-title="label"
-            item-value="value"
-            density="comfortable"
-            variant="outlined"
-            hint="Nivel de rendimiento y características"
-            persistent-hint
-            @update:model-value="updateConfigField('edition', $event)"
-          />
-        </v-col>
-        <v-col cols="12" md="6">
-          <v-select
-            v-model="localConfig.serviceObjective"
-            :items="currentServiceObjectiveOptions"
-            label="Objetivo de Servicio"
-            item-title="label"
-            item-value="value"
-            density="comfortable"
-            variant="outlined"
-            hint="DTU o vCore según la edición"
-            persistent-hint
-            @update:model-value="updateConfigField('serviceObjective', $event)"
-          />
+          <v-tooltip location="top">
+            <template v-slot:activator="{ props }">
+              <v-text-field 
+                v-bind="props"
+                v-model="localConfig.adminPassword" 
+                label="Contraseña del Administrador" 
+                placeholder="Contraseña segura" 
+                type="password"
+                density="comfortable" 
+                variant="outlined"
+                :rules="[rules.required, rules.passwordFormat]"
+                hint="Mínimo 8 caracteres: 1 mayúscula, 1 minúscula, 1 número, 1 carácter especial"
+                persistent-hint
+                @input="updateConfigField('adminPassword', $event.target.value)"
+              />
+            </template>
+            <span>Contraseña del administrador del servidor SQL. Debe cumplir con políticas de seguridad: mínimo 8 caracteres, incluir mayúsculas, minúsculas, números y caracteres especiales (!@#$%^&*)</span>
+          </v-tooltip>
         </v-col>
       </v-row>
 
       <v-row class="mb-2">
         <v-col cols="12" md="6">
-          <v-select
-            v-model="localConfig.collation"
-            :items="collationOptions"
-            label="Collation"
-            item-title="label"
-            item-value="value"
-            density="comfortable"
-            variant="outlined"
-            hint="Reglas de ordenamiento y comparación"
-            persistent-hint
-            @update:model-value="updateConfigField('collation', $event)"
-          />
+          <v-tooltip location="top">
+            <template v-slot:activator="{ props }">
+              <v-select
+                v-bind="props"
+                v-model="localConfig.edition"
+                :items="editionOptions"
+                label="Edición de la Base de Datos"
+                item-title="label"
+                item-value="value"
+                density="comfortable"
+                variant="outlined"
+                hint="Nivel de rendimiento y características"
+                persistent-hint
+                @update:model-value="updateConfigField('edition', $event)"
+              />
+            </template>
+            <span>Nivel de servicio de la base de datos. Basic: desarrollo/testing. Standard: aplicaciones generales con DTUs. Premium: alto rendimiento. vCore tiers (GP/BC/Hyperscale): última generación con vCores</span>
+          </v-tooltip>
+        </v-col>
+        <v-col cols="12" md="6">
+          <v-tooltip location="top">
+            <template v-slot:activator="{ props }">
+              <v-select
+                v-bind="props"
+                v-model="localConfig.serviceObjective"
+                :items="currentServiceObjectiveOptions"
+                label="Objetivo de Servicio"
+                item-title="label"
+                item-value="value"
+                density="comfortable"
+                variant="outlined"
+                hint="DTU o vCore según la edición"
+                persistent-hint
+                @update:model-value="updateConfigField('serviceObjective', $event)"
+              />
+            </template>
+            <span>Tamaño específico del rendimiento. DTU (Database Transaction Units) para tiers básicos, o vCore (núcleos virtuales) para tiers modernos. Determina CPU, memoria y IOPS disponibles</span>
+          </v-tooltip>
+        </v-col>
+      </v-row>
+
+      <v-row class="mb-2">
+        <v-col cols="12" md="6">
+          <v-tooltip location="top">
+            <template v-slot:activator="{ props }">
+              <v-select
+                v-bind="props"
+                v-model="localConfig.collation"
+                :items="collationOptions"
+                label="Collation"
+                item-title="label"
+                item-value="value"
+                density="comfortable"
+                variant="outlined"
+                hint="Reglas de ordenamiento y comparación"
+                persistent-hint
+                @update:model-value="updateConfigField('collation', $event)"
+              />
+            </template>
+            <span>Reglas de ordenamiento, comparación y sensibilidad a mayúsculas/acentos. CI_AS = Case Insensitive, Accent Sensitive. CS_AS = Case Sensitive. Determina cómo se comparan strings en consultas</span>
+          </v-tooltip>
         </v-col>
         <v-col cols="12" md="6" class="d-flex flex-column">
-          <v-switch
-            v-model="localConfig.enableFirewallRules"
-            label="Habilitar reglas de Firewall"
-            density="compact"
-            color="primary"
-            hint="Permitir acceso desde Azure y IPs específicas"
-            persistent-hint
-            class="mb-1"
-            @update:model-value="updateConfigField('enableFirewallRules', $event)"
-          />
-          <v-switch
-            v-model="localConfig.enableThreatDetection"
-            label="Detección de Amenazas"
-            density="compact"
-            color="primary"
-            hint="Advanced Threat Protection"
-            persistent-hint
-            @update:model-value="updateConfigField('enableThreatDetection', $event)"
-          />
+          <v-tooltip location="top">
+            <template v-slot:activator="{ props }">
+              <v-switch
+                v-bind="props"
+                v-model="localConfig.enableFirewallRules"
+                label="Habilitar reglas de Firewall"
+                density="compact"
+                color="primary"
+                hint="Permitir acceso desde Azure y IPs específicas"
+                persistent-hint
+                class="mb-1"
+                @update:model-value="updateConfigField('enableFirewallRules', $event)"
+              />
+            </template>
+            <span>Habilita reglas de firewall para permitir conexiones desde servicios de Azure y rangos de IP específicos. Cuando está deshabilitado, solo conexiones locales son permitidas</span>
+          </v-tooltip>
+          <v-tooltip location="top">
+            <template v-slot:activator="{ props }">
+              <v-switch
+                v-bind="props"
+                v-model="localConfig.enableThreatDetection"
+                label="Detección de Amenazas"
+                density="compact"
+                color="primary"
+                hint="Advanced Threat Protection"
+                persistent-hint
+                @update:model-value="updateConfigField('enableThreatDetection', $event)"
+              />
+            </template>
+            <span>Advanced Threat Protection: detecta actividades anómalas como intentos de acceso inusuales, inyección SQL potencial, acceso desde ubicaciones inusuales. Incluye alertas y recomendaciones de seguridad</span>
+          </v-tooltip>
         </v-col>
       </v-row>
 
       <v-row class="mb-2" v-if="localConfig.enableFirewallRules">
         <v-col cols="12">
-          <v-text-field 
-            v-model="localConfig.allowedIpRanges" 
-            label="Rangos de IP Permitidos (opcional)" 
-            placeholder="Ej: 192.168.1.0-192.168.1.255" 
-            density="comfortable" 
-            variant="outlined"
-            hint="Formato: IP_INICIO-IP_FIN, separados por comas"
-            persistent-hint
-            @input="updateConfigField('allowedIpRanges', $event.target.value)"
-          />
+          <v-tooltip location="top">
+            <template v-slot:activator="{ props }">
+              <v-text-field 
+                v-bind="props"
+                v-model="localConfig.allowedIpRanges" 
+                label="Rangos de IP Permitidos (opcional)" 
+                placeholder="Ej: 192.168.1.0-192.168.1.255" 
+                density="comfortable" 
+                variant="outlined"
+                hint="Formato: IP_INICIO-IP_FIN, separados por comas"
+                persistent-hint
+                @input="updateConfigField('allowedIpRanges', $event.target.value)"
+              />
+            </template>
+            <span>Rangos de direcciones IP permitidas para conectarse al servidor SQL. Formato: IP_INICIO-IP_FIN (ej: 192.168.1.0-192.168.1.255). Múltiples rangos separados por comas. 0.0.0.0-0.0.0.0 permite todos los servicios Azure</span>
+          </v-tooltip>
         </v-col>
       </v-row>
     </v-card-text>

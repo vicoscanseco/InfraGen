@@ -8,82 +8,112 @@
       <v-row>
         <!-- Name (Auto-generated) -->
         <v-col cols="12" md="6">
-          <v-text-field
-            v-model="config.name"
-            label="App Service Plan Name"
-            hint="Format: appname-environment-asp"
-            persistent-hint
-            readonly
-            prepend-icon="mdi-tag"
-          />
+          <v-tooltip text="Nombre del plan de App Service generado automáticamente basado en tu aplicación y entorno. Define los recursos compartidos para todas las apps del plan.">
+            <template v-slot:activator="{ props }">
+              <v-text-field
+                v-bind="props"
+                v-model="config.name"
+                label="App Service Plan Name"
+                hint="Format: appname-environment-asp"
+                persistent-hint
+                readonly
+                prepend-icon="mdi-tag"
+              />
+            </template>
+          </v-tooltip>
         </v-col>
 
         <!-- SKU -->
         <v-col cols="12" md="6">
-          <v-select
-            v-model="config.sku"
-            label="SKU"
-            :items="skuOptions"
-            item-title="name"
-            item-value="value"
-            prepend-icon="mdi-speedometer"
-            @update:model-value="updateParent"
-          >
-            <template v-slot:item="{ props, item }">
-              <v-list-item v-bind="props">
-                <v-list-item-title>{{ item.raw.name }}</v-list-item-title>
-                <v-list-item-subtitle>{{ item.raw.description }}</v-list-item-subtitle>
-              </v-list-item>
+          <v-tooltip text="Tier de pricing que determina CPU, RAM, almacenamiento y características disponibles. Basic para desarrollo, Standard para producción, Premium para alta demanda.">
+            <template v-slot:activator="{ props }">
+              <v-select
+                v-bind="props"
+                v-model="config.sku"
+                label="SKU"
+                :items="skuOptions"
+                item-title="name"
+                item-value="value"
+                prepend-icon="mdi-speedometer"
+                @update:model-value="updateParent"
+              >
+                <template v-slot:item="{ props, item }">
+                  <v-list-item v-bind="props">
+                    <v-list-item-title>{{ item.raw.name }}</v-list-item-title>
+                    <v-list-item-subtitle>{{ item.raw.description }}</v-list-item-subtitle>
+                  </v-list-item>
+                </template>
+              </v-select>
             </template>
-          </v-select>
+          </v-tooltip>
         </v-col>
 
         <!-- Operating System -->
         <v-col cols="12" md="6">
-          <v-select
-            v-model="config.os"
-            label="Operating System"
-            :items="osOptions"
-            prepend-icon="mdi-desktop-classic"
-            @update:model-value="updateParent"
-          />
+          <v-tooltip text="Sistema operativo para el plan. Windows soporta .NET Framework y .NET Core. Linux es más económico y soporta tecnologías open source.">
+            <template v-slot:activator="{ props }">
+              <v-select
+                v-bind="props"
+                v-model="config.os"
+                label="Operating System"
+                :items="osOptions"
+                prepend-icon="mdi-desktop-classic"
+                @update:model-value="updateParent"
+              />
+            </template>
+          </v-tooltip>
         </v-col>
 
         <!-- Per App Scaling -->
         <v-col cols="12" md="6">
-          <v-switch
-            v-model="config.perSiteScaling"
-            label="Per App Scaling"
-            color="primary"
-            hide-details
-            @update:model-value="updateParent"
-          />
+          <v-tooltip text="Permite que cada aplicación en el plan escale independientemente. Útil cuando tienes múltiples apps con diferentes patrones de tráfico.">
+            <template v-slot:activator="{ props }">
+              <v-switch
+                v-bind="props"
+                v-model="config.perSiteScaling"
+                label="Per App Scaling"
+                color="primary"
+                hide-details
+                @update:model-value="updateParent"
+              />
+            </template>
+          </v-tooltip>
           <small class="text-grey">Enable individual app scaling within the plan</small>
         </v-col>
 
         <!-- Zone Redundancy (Premium only) -->
         <v-col cols="12" md="6" v-if="isPremiumSku">
-          <v-switch
-            v-model="config.zoneRedundant"
-            label="Zone Redundant"
-            color="primary"
-            hide-details
-            @update:model-value="updateParent"
-          />
+          <v-tooltip text="Distribuye tu aplicación across múltiples zonas de disponibilidad para mayor resistencia ante fallos. Solo disponible en planes Premium.">
+            <template v-slot:activator="{ props }">
+              <v-switch
+                v-bind="props"
+                v-model="config.zoneRedundant"
+                label="Zone Redundant"
+                color="primary"
+                hide-details
+                @update:model-value="updateParent"
+              />
+            </template>
+          </v-tooltip>
           <small class="text-grey">Deploy across availability zones</small>
         </v-col>
 
         <!-- Maximum Elastic Worker Count -->
         <v-col cols="12" md="6" v-if="isElasticSku">
-          <v-text-field
-            v-model.number="config.maximumElasticWorkerCount"
-            label="Maximum Elastic Workers"
-            type="number"
-            min="1"
-            max="20"
-            prepend-icon="mdi-account-multiple"
-            @update:model-value="updateParent"
-          />
+          <v-tooltip text="Número máximo de workers que pueden crearse automáticamente durante picos de tráfico. Solo aplicable en planes Premium con escalado automático.">
+            <template v-slot:activator="{ props }">
+              <v-text-field
+                v-bind="props"
+                v-model.number="config.maximumElasticWorkerCount"
+                label="Maximum Elastic Workers"
+                type="number"
+                min="1"
+                max="20"
+                prepend-icon="mdi-account-multiple"
+                @update:model-value="updateParent"
+              />
+            </template>
+          </v-tooltip>
         </v-col>
       </v-row>
     </v-card-text>

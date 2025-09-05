@@ -65,6 +65,35 @@ button:focus-visible {
   text-align: center;
 }
 
+/* Estilos para asegurar que los tooltips funcionen correctamente */
+.v-overlay--absolute {
+  position: absolute;
+}
+
+.v-overlay__content {
+  pointer-events: none;
+}
+
+.v-tooltip > .v-overlay__content {
+  background: rgba(97, 97, 97, 0.9) !important;
+  color: white !important;
+  border-radius: 4px !important;
+  font-size: 0.875rem !important;
+  padding: 8px 12px !important;
+  max-width: 300px !important;
+  word-wrap: break-word !important;
+  z-index: 2001 !important;
+}
+
+/* Asegurar que los tooltips aparezcan sobre otros elementos */
+.v-overlay {
+  z-index: 2000 !important;
+}
+
+.v-tooltip .v-overlay__content {
+  z-index: 2001 !important;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;

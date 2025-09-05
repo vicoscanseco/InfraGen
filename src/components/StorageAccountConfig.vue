@@ -7,17 +7,22 @@
     <v-card-text>
       <v-row dense class="mt-3">
         <v-col cols="12" md="6">
-          <v-text-field 
-            v-model="localStorageBaseName" 
-            label="Nombre Base del Storage Account" 
-            placeholder="Ej: mystorageaccount" 
-            density="compact" 
-            variant="outlined" 
-            :rules="[rules.required, rules.storageNameFormat]"
-            hint="Solo letras minúsculas y números, 3-24 caracteres. Se agregará automáticamente 'sta' y el environment"
-            persistent-hint
-            @input="updateStorageBaseName($event.target.value)"
-          />
+          <v-tooltip text="Define el nombre base de tu Storage Account. Se combinará automáticamente con 'sta' y el entorno. Debe ser único globalmente en Azure.">
+            <template v-slot:activator="{ props }">
+              <v-text-field 
+                v-bind="props"
+                v-model="localStorageBaseName" 
+                label="Nombre Base del Storage Account" 
+                placeholder="Ej: mystorageaccount" 
+                density="compact" 
+                variant="outlined" 
+                :rules="[rules.required, rules.storageNameFormat]"
+                hint="Solo letras minúsculas y números, 3-24 caracteres. Se agregará automáticamente 'sta' y el environment"
+                persistent-hint
+                @input="updateStorageBaseName($event.target.value)"
+              />
+            </template>
+          </v-tooltip>
           <v-chip 
             v-if="computedStorageName"
             size="small" 
@@ -29,73 +34,98 @@
           </v-chip>
         </v-col>
         <v-col cols="12" md="6">
-          <v-select
-            v-model="localConfig.sku"
-            :items="skuOptions"
-            label="Tipo de redundancia (SKU)"
-            item-title="label"
-            item-value="value"
-            density="compact"
-            variant="outlined"
-            hint="Selecciona el nivel de redundancia para tus datos"
-            persistent-hint
-            @update:model-value="updateConfig('sku', $event)"
-          />
+          <v-tooltip text="Tipo de redundancia que determina cómo se replican tus datos. LRS (local), GRS (geográfica), ZRS (zonas). Afecta disponibilidad y costo.">
+            <template v-slot:activator="{ props }">
+              <v-select
+                v-bind="props"
+                v-model="localConfig.sku"
+                :items="skuOptions"
+                label="Tipo de redundancia (SKU)"
+                item-title="label"
+                item-value="value"
+                density="compact"
+                variant="outlined"
+                hint="Selecciona el nivel de redundancia para tus datos"
+                persistent-hint
+                @update:model-value="updateConfig('sku', $event)"
+              />
+            </template>
+          </v-tooltip>
         </v-col>
       </v-row>
 
       <v-row dense>
         <v-col cols="12" md="6">
-          <v-select
-            v-model="localConfig.kind"
-            :items="kindOptions"
-            label="Tipo de cuenta"
-            item-title="label"
-            item-value="value"
-            density="compact"
-            variant="outlined"
-            hint="Tipo de storage account según el uso"
-            persistent-hint
-            @update:model-value="updateConfig('kind', $event)"
-          />
+          <v-tooltip text="Tipo de cuenta que determina qué servicios están disponibles. StorageV2 es la recomendada para uso general, BlobStorage solo para archivos.">
+            <template v-slot:activator="{ props }">
+              <v-select
+                v-bind="props"
+                v-model="localConfig.kind"
+                :items="kindOptions"
+                label="Tipo de cuenta"
+                item-title="label"
+                item-value="value"
+                density="compact"
+                variant="outlined"
+                hint="Tipo de storage account según el uso"
+                persistent-hint
+                @update:model-value="updateConfig('kind', $event)"
+              />
+            </template>
+          </v-tooltip>
         </v-col>
         <v-col cols="12" md="6">
-          <v-select
-            v-model="localConfig.accessTier"
-            :items="accessTierOptions"
-            label="Nivel de acceso"
-            item-title="label"
-            item-value="value"
-            density="compact"
-            variant="outlined"
-            hint="Optimización de costos según frecuencia de acceso"
-            persistent-hint
-            @update:model-value="updateConfig('accessTier', $event)"
-          />
+          <v-tooltip text="Nivel de acceso que optimiza costos según frecuencia de uso. Hot para acceso frecuente (más caro), Cool para acceso ocasional (más barato).">
+            <template v-slot:activator="{ props }">
+              <v-select
+                v-bind="props"
+                v-model="localConfig.accessTier"
+                :items="accessTierOptions"
+                label="Nivel de acceso"
+                item-title="label"
+                item-value="value"
+                density="compact"
+                variant="outlined"
+                hint="Optimización de costos según frecuencia de acceso"
+                persistent-hint
+                @update:model-value="updateConfig('accessTier', $event)"
+              />
+            </template>
+          </v-tooltip>
         </v-col>
       </v-row>
 
       <v-row dense>
         <v-col cols="12" md="6" class="d-flex flex-column">
-          <v-switch
-            v-model="localConfig.httpsOnly"
-            label="Solo HTTPS"
-            density="compact"
-            color="primary"
-            hint="Requiere conexiones seguras HTTPS"
-            persistent-hint
-            class="mb-1"
-            @update:model-value="updateConfig('httpsOnly', $event)"
-          />
-          <v-switch
-            v-model="localConfig.enableBlobPublicAccess"
-            label="Permitir acceso público a blobs"
-            density="compact"
-            color="primary"
-            hint="Permite acceso anónimo a contenedores y blobs"
-            persistent-hint
-            @update:model-value="updateConfig('enableBlobPublicAccess', $event)"
-          />
+          <v-tooltip text="Fuerza todas las conexiones a usar HTTPS para mayor seguridad. Recomendado para ambientes de producción y datos sensibles.">
+            <template v-slot:activator="{ props }">
+              <v-switch
+                v-bind="props"
+                v-model="localConfig.httpsOnly"
+                label="Solo HTTPS"
+                density="compact"
+                color="primary"
+                hint="Requiere conexiones seguras HTTPS"
+                persistent-hint
+                class="mb-1"
+                @update:model-value="updateConfig('httpsOnly', $event)"
+              />
+            </template>
+          </v-tooltip>
+          <v-tooltip text="Permite acceso público anónimo a contenedores y blobs. Desactívalo para mayor seguridad, solo permite acceso autenticado.">
+            <template v-slot:activator="{ props }">
+              <v-switch
+                v-bind="props"
+                v-model="localConfig.enableBlobPublicAccess"
+                label="Permitir acceso público a blobs"
+                density="compact"
+                color="primary"
+                hint="Permite acceso anónimo a contenedores y blobs"
+                persistent-hint
+                @update:model-value="updateConfig('enableBlobPublicAccess', $event)"
+              />
+            </template>
+          </v-tooltip>
         </v-col>
       </v-row>
     </v-card-text>

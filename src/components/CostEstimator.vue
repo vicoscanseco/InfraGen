@@ -52,18 +52,26 @@
       <!-- Total -->
       <v-row align="center" class="ma-0">
         <v-col cols="8" class="pa-0">
-          <div class="text-h6 font-weight-bold">
-            <v-icon class="mr-2" color="primary">mdi-cash-multiple</v-icon>
-            Total Estimado
-          </div>
+          <v-tooltip text="Este es el costo estimado mensual total para todos los recursos configurados, ajustado según la región seleccionada.">
+            <template v-slot:activator="{ props }">
+              <div v-bind="props" class="text-h6 font-weight-bold">
+                <v-icon class="mr-2" color="primary">mdi-cash-multiple</v-icon>
+                Total Estimado
+              </div>
+            </template>
+          </v-tooltip>
           <div class="text-body-2 text-grey-darken-1">
             {{ components.length }} {{ components.length === 1 ? 'recurso' : 'recursos' }} configurados
           </div>
-          <div class="text-caption text-grey-darken-2 mt-1" v-if="regionInfo.multiplier !== 1.0">
-            <v-icon size="12" class="mr-1">mdi-map-marker</v-icon>
-            {{ regionInfo.name }} ({{ (regionInfo.multiplier * 100 - 100).toFixed(0) }}{{ regionInfo.multiplier > 1 ? '+' : '' }}% vs East US)
-          </div>
-          <div class="text-caption text-grey-darken-2 mt-1" v-else>
+          <v-tooltip v-if="regionInfo.multiplier !== 1.0" text="Los precios varían según la región de Azure. Este ajuste refleja la diferencia de costos respecto a East US.">
+            <template v-slot:activator="{ props }">
+              <div v-bind="props" class="text-caption text-grey-darken-2 mt-1">
+                <v-icon size="12" class="mr-1">mdi-map-marker</v-icon>
+                {{ regionInfo.name }} ({{ (regionInfo.multiplier * 100 - 100).toFixed(0) }}{{ regionInfo.multiplier > 1 ? '+' : '' }}% vs East US)
+              </div>
+            </template>
+          </v-tooltip>
+          <div v-else class="text-caption text-grey-darken-2 mt-1">
             <v-icon size="12" class="mr-1">mdi-map-marker</v-icon>
             {{ regionInfo.name }} (precio base)
           </div>
