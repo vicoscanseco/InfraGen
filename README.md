@@ -6,7 +6,48 @@ Una aplicación web moderna construida con Vue.js 3 y Vuetify 3 que permite sele
 ![Vuetify](https://img.shields.io/badge/Vuetify-3.x-1867C0?style=flat-square&logo=vuetify)
 ![Azure](https://img.shields.io/badge/Azure-Bicep-0078D4?style=flat-square&logo=microsoft-azure)
 
-## 🚀 Características
+## � Tabla de Contenidos
+
+- [InfraGen - Generador de Infraestructura Azure](#infragen---generador-de-infraestructura-azure)
+  - [� Tabla de Contenidos](#-tabla-de-contenidos)
+  - [�🚀 Características](#-características)
+  - [🔒 Sistema de Validaciones](#-sistema-de-validaciones)
+    - [✅ Validaciones Principales](#-validaciones-principales)
+    - [🎯 Estados de los Botones](#-estados-de-los-botones)
+  - [📏 Convenciones de Nomenclatura](#-convenciones-de-nomenclatura)
+    - [🏷️ Formato General](#️-formato-general)
+    - [📋 Convenciones por Recurso](#-convenciones-por-recurso)
+    - [🔤 Reglas de Nomenclatura](#-reglas-de-nomenclatura)
+    - [📐 Ejemplo Completo](#-ejemplo-completo)
+  - [📋 Recursos Soportados](#-recursos-soportados)
+    - [🗄️ Storage Account](#️-storage-account)
+    - [🌐 App Service \& App Service Plan](#-app-service--app-service-plan)
+    - [🗃️ SQL Server \& SQL Database](#️-sql-server--sql-database)
+    - [⚡ Function App](#-function-app)
+    - [🧠 Cognitive Services](#-cognitive-services)
+    - [📊 Monitoring \& Alerts](#-monitoring--alerts)
+  - [🏗️ Arquitectura del Proyecto](#️-arquitectura-del-proyecto)
+  - [🛠️ Tecnologías Utilizadas](#️-tecnologías-utilizadas)
+  - [📦 Instalación y Uso](#-instalación-y-uso)
+    - [Prerrequisitos](#prerrequisitos)
+    - [Instalación](#instalación)
+    - [Uso de la Aplicación](#uso-de-la-aplicación)
+  - [🎯 Flujo de Trabajo con Validaciones](#-flujo-de-trabajo-con-validaciones)
+  - [🔧 Configuración Avanzada](#-configuración-avanzada)
+    - [Ambientes Personalizados](#ambientes-personalizados)
+    - [Regiones Adicionales](#regiones-adicionales)
+    - [Personalizar Validaciones](#personalizar-validaciones)
+  - [📊 Estadísticas del Proyecto](#-estadísticas-del-proyecto)
+  - [🚀 Características Técnicas Avanzadas](#-características-técnicas-avanzadas)
+    - [Sistema de Validaciones](#sistema-de-validaciones)
+    - [Generación de Código Bicep](#generación-de-código-bicep)
+    - [Interfaz de Usuario](#interfaz-de-usuario)
+  - [🤝 Contribuir](#-contribuir)
+    - [Estructura para Nuevos Componentes](#estructura-para-nuevos-componentes)
+  - [📝 Licencia](#-licencia)
+  - [👨‍💻 Autor](#-autor)
+
+## �🚀 Características
 
 - **Interfaz moderna**: UI intuitiva con Vuetify 3 y Material Design
 - **Configuración visual**: Selección y configuración de recursos Azure sin código
