@@ -205,26 +205,26 @@ InfraGen sigue convenciones estrictas y consistentes para garantizar nombres ún
 ### 🏷️ Formato General
 
 ```text
-{prefijo}{shortLocation}{appName}
+{prefijo}{shortLocation}{appName}{environment}
 ```
 
 ### 📋 Convenciones por Recurso
 
-| Recurso | Prefijo | Ejemplo | Formato Completo |
+| Recurso | Prefijo/Formato | Ejemplo | Formato Completo |
 |---------|---------|---------|------------------|
-| **Resource Group** | `rg` | `rgeusmyapp` | `rg{shortLocation}{appName}` |
-| **Storage Account** | `st` | `steusmyapp` | `st{shortLocation}{appName}` (sin guiones) |
-| **App Service** | `app` | `appeusmyapp` | `app{shortLocation}{appName}` |
-| **App Service Plan** | `asp` | `aspeusmyapp` | `asp{shortLocation}{appName}` |
-| **SQL Server** | `sql` | `sqleusmyapp` | `sql{shortLocation}{appName}` |
-| **SQL Database** | `sqldb` | `sqldbeusmyapp` | `sqldb{shortLocation}{appName}` |
-| **Function App** | `func` | `funceusmyapp` | `func{shortLocation}{appName}` |
-| **Cognitive Service** | `cog` | `cogeusmyapp` | `cog{shortLocation}{appName}` |
-| **Log Analytics** | `log` | `logeusmyapp` | `log{shortLocation}{appName}` |
+| **Resource Group** | `rg` | `rgeusmyappdev` | `rg{shortLocation}{appName}{environment}` |
+| **Storage Account** | `st` | `stmyappdev` | `st{appName}{environment}` (sin guiones) |
+| **App Service** | - | `myapp-dev` | `{appName}-{environment}` |
+| **App Service Plan** | `-asp` | `myappdev-asp` | `{appName}{environment}-asp` |
+| **SQL Server** | `sqls` | `sqlsmyappdev` / `sqlsmyapp` (prod) | `sqls{appName}{environment}` (prod sin env) |
+| **SQL Database** | `db-` | `db-myapp-dev` / `db-myapp` (prod) | `db-{appName}-{environment}` (prod sin env) |
+| **Function App** | `func` | `funceusmyappdev` | `func{shortLocation}{appName}{environment}` |
+| **Cognitive Service** | `cog` | `cogeusmyappdev` | `cog{shortLocation}{appName}{environment}` |
+| **Log Analytics** | `log` | `logeusmyappdev` | `log{shortLocation}{appName}{environment}` |
 
 ### 🔤 Reglas de Nomenclatura
 
-1. **Locations**: Se usan short names de 3 caracteres
+1. **Locations**: Se usan short names de 3 caracteres (solo para algunos recursos)
    - `East US` → `eus`
    - `West Europe` → `weu`
    - `Southeast Asia` → `sea`
@@ -235,23 +235,42 @@ InfraGen sigue convenciones estrictas y consistentes para garantizar nombres ún
    - Se convierte a minúsculas
    - Ejemplo: `"My Web App"` → `mywebapp`
 
-3. **Casos Especiales**:
+3. **Environments**: Se usan nombres cortos
+   - `Development` → `dev`
+   - `Testing` → `test`
+   - `Staging` → `stage`
+   - `Production` → `prod`
+
+4. **Casos Especiales**:
+   - **Storage Account**: Solo incluye appName + environment (sin location)
+   - **App Service**: Formato simple con guión: `{appName}-{environment}`
+   - **App Service Plan**: Environment concatenado + sufijo: `{appName}{environment}-asp`
+   - **SQL Server/Database (Production)**: Sin environment para recursos de producción
+   - **Resource Group**: Mantiene formato completo con location
+
+5. **Validaciones Azure**:
    - **Storage Account**: Solo letras minúsculas y números (limitación Azure)
    - **Resource Group**: Creación automática si no existe (targetScope = 'subscription')
    - **SQL Database**: Incluye referencia automática al SQL Server
 
 ### 📐 Ejemplo Completo
 
-Para una aplicación llamada `"MyWebApp"` en ubicación `"East US"`:
+Para una aplicación llamada `"MyWebApp"` en ubicación `"East US"` y environment `"Development"`:
 
 ```text
-Resource Group:     rgeusmywebapp
-Storage Account:    steusmywebapp
-App Service Plan:   aspeusmywebapp
-App Service:        appeusmywebapp
-SQL Server:         sqleusmywebapp
-SQL Database:       sqldbeusmywebapp
-Function App:       funceusmywebapp
+Resource Group:     rgeusmywebappdev
+Storage Account:    stmywebappdev
+App Service Plan:   mywebappdev-asp
+App Service:        mywebapp-dev
+SQL Server:         sqlsmywebappdev
+SQL Database:       db-mywebapp-dev
+Function App:       funceusmywebappdev
+```
+
+**Caso especial para Production:**
+```text
+SQL Server:         sqlsmywebapp (sin environment)
+SQL Database:       db-mywebapp (sin environment)
 ```
 
 ## 📋 Recursos Soportados

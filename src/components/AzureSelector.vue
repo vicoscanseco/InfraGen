@@ -55,7 +55,7 @@
             </v-tooltip>
           </v-col>
           <v-col cols="12" md="6">
-            <v-tooltip text="El grupo de recursos se genera automáticamente combinando ubicación y nombre de la aplicación. Contiene todos los recursos relacionados.">
+            <v-tooltip text="El grupo de recursos se genera automáticamente combinando ubicación, nombre de la aplicación y ambiente. Contiene todos los recursos relacionados.">
               <template v-slot:activator="{ props }">
                 <v-text-field
                   v-bind="props"
@@ -65,7 +65,7 @@
                   variant="outlined"
                   readonly
                   append-inner-icon="mdi-lock"
-                  hint="Se genera automáticamente: rg + ubicación + nombre de app"
+                  hint="Se genera automáticamente: rg + ubicación + nombre de app + ambiente"
                   persistent-hint
                 />
               </template>
@@ -319,11 +319,11 @@ const location = ref('mexicocentral')
 
 // Computed property para generar nombre de grupo de recursos
 const computedResourceGroupName = computed(() => {
-  if (!appName.value || !location.value) return ''
+  if (!appName.value || !location.value || !selectedEnv.value) return ''
   const currentLocation = locations.value.find(loc => loc.value === location.value)
   const shortName = currentLocation?.shortName || location.value.slice(0, 3)
   const cleanAppName = appName.value.toLowerCase().replace(/[^a-z0-9]/g, '')
-  return 'rg' + shortName + cleanAppName
+  return 'rg' + shortName + cleanAppName + selectedEnv.value
 })
 
 // Watch para actualizar el resourceGroup cuando cambie el computed
