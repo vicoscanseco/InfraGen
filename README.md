@@ -205,8 +205,8 @@ Modifica `src/data/locations.json` para incluir nuevas regiones Azure.
 
 ## 📊 Estadísticas del Proyecto
 
-- **Líneas de código**: ~1,655 líneas
-- **Componentes Vue**: 7 componentes
+- **Líneas de código**: ~1,612 líneas
+- **Componentes Vue**: 6 componentes
 - **Recursos Azure**: 4 tipos completamente configurables
 - **Validaciones**: 15+ patrones de validación
 - **Configuraciones**: 50+ opciones únicas
