@@ -1,90 +1,117 @@
 <template>
-  <v-container class="fill-height d-flex flex-column align-center justify-center pa-0" fluid>
-    <v-card class="mx-auto my-8 pa-6" max-width="600">
-      <v-card-title class="text-h5 mb-4 text-center">Generador de Infraestructura</v-card-title>
-      <v-divider class="mb-4" />
+  <v-container class="fill-height d-flex flex-column align-center justify-center pa-2" fluid>
+    <v-card class="mx-auto my-4 pa-4" max-width="800">
+      <v-card-title class="text-h5 mb-3 text-center">Generador de Infraestructura</v-card-title>
+      <v-divider class="mb-3" />
       <v-card-text>
-        <!-- Selector de ambiente -->
-        <v-row>
-          <v-col cols="12">
+        <!-- Campos principales en una fila -->
+        <v-row dense>
+          <v-col cols="12" md="4">
             <v-select
               v-model="selectedEnv"
               :items="environments"
               item-title="label"
               item-value="value"
-              label="Selecciona el ambiente"
-              density="comfortable"
+              label="Ambiente"
+              density="compact"
               variant="outlined"
               required
-              class="mb-4"
             />
           </v-col>
-        </v-row>
-        
-        <!-- Campo appName -->
-        <v-row>
-          <v-col cols="12">
+          <v-col cols="12" md="4">
             <v-text-field
               v-model="appName"
               label="Nombre de la aplicación"
-              density="comfortable"
+              density="compact"
               variant="outlined"
               :rules="[v => !!v || 'El nombre de la aplicación es obligatorio']"
               required
-              class="mb-4"
             />
           </v-col>
-        </v-row>
-        
-        <!-- Campo location -->
-        <v-row>
-          <v-col cols="12">
+          <v-col cols="12" md="4">
             <v-select
               v-model="location"
               :items="locations"
               item-title="label"
               item-value="value"
-              label="Ubicación (location)"
-              density="comfortable"
+              label="Ubicación"
+              density="compact"
               variant="outlined"
               :rules="[v => !!v || 'La ubicación es obligatoria']"
               required
-              class="mb-4"
             />
           </v-col>
         </v-row>
         
-        <!-- Selección de componentes -->
-        <v-row>
+        <!-- Listado de componentes disponibles -->
+        <v-row dense class="mt-2">
           <v-col cols="12">
-            <v-label class="mb-2 font-weight-bold">Selecciona los componentes:</v-label>
-            <v-selection-control-group v-model="selectedComponents" multiple>
-              <v-checkbox
-                v-for="comp in components"
+            <v-label class="mb-1 font-weight-bold">Componentes disponibles:</v-label>
+            <v-list lines="two" density="compact" class="pa-0">
+              <v-list-item
+                v-for="comp in availableComponents"
                 :key="comp.value"
-                :label="comp.label"
-                :value="comp.value"
-                color="primary"
-              />
-            </v-selection-control-group>
-            <v-alert v-if="errorMsg" type="error" class="mt-4">{{ errorMsg }}</v-alert>
+                :title="comp.label"
+                :subtitle="comp.description"
+                class="px-2"
+              >
+                <template v-slot:append>
+                  <v-btn
+                    color="primary"
+                    size="small"
+                    @click="addComponent(comp)"
+                  >
+                    Agregar
+                  </v-btn>
+                </template>
+              </v-list-item>
+            </v-list>
           </v-col>
         </v-row>
-        
-        <!-- Botón y popups de configuración -->
-        <v-row v-for="comp in selectedComponents" :key="comp">
-          <v-col cols="12" class="d-flex align-center">
-            <span class="me-2">{{ components.find(c => c.value === comp)?.label }}</span>
-            <v-btn size="small" color="primary" @click="openConfig(comp)">Configurar</v-btn>
+
+        <!-- Lista de componentes agregados -->
+        <v-row v-if="configuredComponents.length > 0" dense class="mt-2">
+          <v-col cols="12">
+            <v-label class="mb-1 font-weight-bold">Componentes configurados:</v-label>
+            <v-list lines="two" density="compact" class="pa-0">
+              <v-list-item
+                v-for="(item, index) in configuredComponents"
+                :key="index"
+                :title="item.label"
+                :subtitle="`Nombre: ${item.config.name} | Grupo: ${item.config.resourceGroup}`"
+                class="px-2"
+              >
+                <template v-slot:append>
+                  <v-btn
+                    color="warning"
+                    size="small"
+                    variant="outlined"
+                    @click="editComponent(item, index)"
+                    class="me-1"
+                  >
+                    Editar
+                  </v-btn>
+                  <v-btn
+                    color="error"
+                    size="small"
+                    variant="outlined"
+                    @click="removeComponent(index)"
+                  >
+                    Eliminar
+                  </v-btn>
+                </template>
+              </v-list-item>
+            </v-list>
+            <v-alert v-if="errorMsg" type="error" class="mt-2">{{ errorMsg }}</v-alert>
           </v-col>
         </v-row>
         
         <!-- Botón generar y resultado -->
-        <v-btn class="mt-6" color="primary" @click="generateBicep" block>Generar archivo Bicep</v-btn>
-        <div v-if="bicepContent && !errorMsg" class="bicep-output mt-6">
-          <v-divider class="mb-4" />
+        <v-btn class="mt-4" color="primary" @click="generateBicep" block>Generar archivo Bicep</v-btn>
+        <div v-if="bicepContent && !errorMsg" class="bicep-output mt-4">
+          <v-divider class="mb-3" />
           <div class="text-h6 mb-2">Archivo Bicep generado:</div>
-          <v-sheet color="#f0f4f8" rounded elevation="1" class="pa-4 mb-2">
+          <v-sheet color="#f0f4f8" rounded elevation="1" class="pa-3 mb-2">
             <pre style="white-space: pre-wrap; word-break: break-all;">{{ bicepContent }}</pre>
           </v-sheet>
           <v-btn color="primary" @click="downloadBicep">Descargar Bicep</v-btn>
@@ -93,19 +120,20 @@
     </v-card>
   </v-container>
 
-  <!-- Dialogs de configuración -->
-  <v-dialog v-for="comp in selectedComponents" :key="comp + '-dialog'" v-model="dialogs[comp]" max-width="500">
+  <!-- Dialog de configuración -->
+  <v-dialog v-model="configDialog" max-width="600" persistent>
     <v-card>
-      <v-card-title>Configurar {{ components.find(c => c.value === comp)?.label }}</v-card-title>
-      <v-card-text>
-        <StorageAccountConfig v-if="comp === 'StorageAccount' && componentConfig['StorageAccount']" :config="componentConfig['StorageAccount']" />
-        <AppServiceConfig v-if="comp === 'AppService' && componentConfig['AppService']" :config="componentConfig['AppService']" />
-        <SqlDatabaseConfig v-if="comp === 'SqlDatabase' && componentConfig['SqlDatabase']" :config="componentConfig['SqlDatabase']" />
-        <FunctionAppConfig v-if="comp === 'FunctionApp' && componentConfig['FunctionApp']" :config="componentConfig['FunctionApp']" />
+      <v-card-title class="py-3">Configurar {{ currentComponent?.label }}</v-card-title>
+      <v-card-text class="py-2">
+        <StorageAccountConfig v-if="currentComponent?.value === 'StorageAccount'" :config="currentConfig" />
+        <AppServiceConfig v-if="currentComponent?.value === 'AppService'" :config="currentConfig" />
+        <SqlDatabaseConfig v-if="currentComponent?.value === 'SqlDatabase'" :config="currentConfig" />
+        <FunctionAppConfig v-if="currentComponent?.value === 'FunctionApp'" :config="currentConfig" />
       </v-card-text>
-      <v-card-actions>
+      <v-card-actions class="py-2">
         <v-spacer />
-        <v-btn color="primary" @click="dialogs[comp] = false">Cerrar</v-btn>
+        <v-btn color="secondary" variant="outlined" @click="cancelConfig">Cancelar</v-btn>
+        <v-btn color="primary" @click="saveConfig">Guardar</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -154,45 +182,105 @@ onMounted(async () => {
   }
 })
 
-const components = [
-  { value: 'StorageAccount', label: 'Storage Account' },
-  { value: 'AppService', label: 'App Service' },
-  { value: 'SqlDatabase', label: 'SQL Database' },
-  { value: 'FunctionApp', label: 'Function App' }
+const availableComponents = [
+  { 
+    value: 'StorageAccount', 
+    label: 'Storage Account',
+    description: 'Almacenamiento de objetos escalable en la nube'
+  },
+  { 
+    value: 'AppService', 
+    label: 'App Service',
+    description: 'Plataforma para aplicaciones web y API'
+  },
+  { 
+    value: 'SqlDatabase', 
+    label: 'SQL Database',
+    description: 'Base de datos relacional completamente administrada'
+  },
+  { 
+    value: 'FunctionApp', 
+    label: 'Function App',
+    description: 'Computación sin servidor basada en eventos'
+  }
 ]
 
-const selectedComponents = ref([])
+const configuredComponents = ref([])
 const bicepContent = ref('')
-const componentConfig = reactive({})
 const errorMsg = ref('')
-const dialogs = reactive({})
+const configDialog = ref(false)
+const currentComponent = ref(null)
+const currentConfig = ref({})
+const editingIndex = ref(-1)
 
-function openConfig(comp) {
-  dialogs[comp] = true
+function addComponent(component) {
+  currentComponent.value = component
+  
+  // Configuración específica por tipo de componente
+  if (component.value === 'StorageAccount') {
+    currentConfig.value = {
+      name: component.value.toLowerCase(),
+      resourceGroup: 'myResourceGroup',
+      sku: 'Standard_LRS',
+      kind: 'StorageV2',
+      accessTier: 'Hot',
+      httpsOnly: true,
+      enableBlobPublicAccess: false
+    }
+  } else {
+    currentConfig.value = {
+      name: component.value.toLowerCase(),
+      resourceGroup: 'myResourceGroup'
+    }
+  }
+  
+  editingIndex.value = -1
+  configDialog.value = true
 }
 
-watch(selectedComponents, (newVal) => {
-  // Inicializa la configuración para cada componente seleccionado
-  newVal.forEach(comp => {
-    if (!componentConfig[comp]) {
-      componentConfig[comp] = {
-        name: comp.toLowerCase(),
-        resourceGroup: 'myResourceGroup'
-      }
-    }
-  })
-  // Elimina la configuración de los componentes no seleccionados
-  Object.keys(componentConfig).forEach(key => {
-    if (!newVal.includes(key)) {
-      delete componentConfig[key]
-    }
-  })
-})
+function editComponent(item, index) {
+  currentComponent.value = availableComponents.find(c => c.value === item.value)
+  currentConfig.value = { ...item.config }
+  editingIndex.value = index
+  configDialog.value = true
+}
+
+function removeComponent(index) {
+  configuredComponents.value.splice(index, 1)
+}
+
+function saveConfig() {
+  if (!currentConfig.value.name || !currentConfig.value.resourceGroup) {
+    errorMsg.value = 'Todos los campos son obligatorios.'
+    return
+  }
+
+  const componentData = {
+    value: currentComponent.value.value,
+    label: currentComponent.value.label,
+    config: { ...currentConfig.value }
+  }
+
+  if (editingIndex.value >= 0) {
+    // Editando componente existente
+    configuredComponents.value[editingIndex.value] = componentData
+  } else {
+    // Agregando nuevo componente
+    configuredComponents.value.push(componentData)
+  }
+
+  configDialog.value = false
+  errorMsg.value = ''
+}
+
+function cancelConfig() {
+  configDialog.value = false
+  errorMsg.value = ''
+}
 
 function generateBicep() {
   let content = ''
   errorMsg.value = ''
-  let hasError = false
 
   if (!appName.value) {
     errorMsg.value = 'El nombre de la aplicación es obligatorio.'
@@ -203,39 +291,40 @@ function generateBicep() {
     return
   }
 
-  selectedComponents.value.forEach(comp => {
-    const cfg = componentConfig[comp]
-    if (!cfg || !cfg.name || !cfg.resourceGroup) {
-      hasError = true
-    }
-  })
-
-  if (hasError || selectedComponents.value.length === 0) {
+  if (configuredComponents.value.length === 0) {
     bicepContent.value = ''
-    errorMsg.value = 'Completa todos los campos de nombre y grupo de recursos para cada componente.'
+    errorMsg.value = 'Agrega al menos un componente para generar el archivo Bicep.'
     return
   }
 
-  selectedComponents.value.forEach(comp => {
-    const cfg = componentConfig[comp]
-    if (comp === 'StorageAccount') {
-      content += `resource storageAccount 'Microsoft.Storage/storageAccounts@2022-09-01' = {
+  configuredComponents.value.forEach(item => {
+    const cfg = item.config
+    if (item.value === 'StorageAccount') {
+      content += `resource storageAccount_${cfg.name} 'Microsoft.Storage/storageAccounts@2022-09-01' = {
   name: '${cfg.name}'
   location: '${location.value}'
-  resourceGroup: '${cfg.resourceGroup}'
   sku: {
-    name: 'Standard_LRS'
+    name: '${cfg.sku || 'Standard_LRS'}'
   }
-  kind: 'StorageV2'
+  kind: '${cfg.kind || 'StorageV2'}'
+  properties: {
+    accessTier: '${cfg.accessTier || 'Hot'}'
+    supportsHttpsTrafficOnly: ${cfg.httpsOnly !== false}
+    allowBlobPublicAccess: ${cfg.enableBlobPublicAccess === true}
+    minimumTlsVersion: 'TLS1_2'
+  }
+  tags: {
+    Environment: '${selectedEnv.value}'
+    Application: '${appName.value}'
+  }
 }
 
 `
     }
-    if (comp === 'AppService') {
-      content += `resource appService 'Microsoft.Web/sites@2022-03-01' = {
+    if (item.value === 'AppService') {
+      content += `resource appService_${cfg.name} 'Microsoft.Web/sites@2022-03-01' = {
   name: '${cfg.name}'
   location: '${location.value}'
-  resourceGroup: '${cfg.resourceGroup}'
   properties: {
     serverFarmId: '${cfg.name}plan'
   }
@@ -243,11 +332,10 @@ function generateBicep() {
 
 `
     }
-    if (comp === 'SqlDatabase') {
-      content += `resource sqlDatabase 'Microsoft.Sql/servers/databases@2022-02-01-preview' = {
+    if (item.value === 'SqlDatabase') {
+      content += `resource sqlDatabase_${cfg.name} 'Microsoft.Sql/servers/databases@2022-02-01-preview' = {
   name: '${cfg.name}'
   location: '${location.value}'
-  resourceGroup: '${cfg.resourceGroup}'
   properties: {
     edition: 'Basic'
   }
@@ -255,11 +343,10 @@ function generateBicep() {
 
 `
     }
-    if (comp === 'FunctionApp') {
-      content += `resource functionApp 'Microsoft.Web/sites@2022-03-01' = {
+    if (item.value === 'FunctionApp') {
+      content += `resource functionApp_${cfg.name} 'Microsoft.Web/sites@2022-03-01' = {
   name: '${cfg.name}'
   location: '${location.value}'
-  resourceGroup: '${cfg.resourceGroup}'
   kind: 'functionapp'
   properties: {
     serverFarmId: '${cfg.name}plan'
