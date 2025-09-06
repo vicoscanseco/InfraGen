@@ -244,6 +244,11 @@
       {{ errorMsg }}
     </v-alert>
 
+    <!-- Mensaje informativo -->
+    <v-alert v-if="infoMsg" type="info" class="mt-4" dismissible @click:close="infoMsg = ''">
+      {{ infoMsg }}
+    </v-alert>
+
     <!-- Dialog de configuración -->
     <v-dialog v-model="configDialog" max-width="900px" persistent>
       <v-card>
@@ -260,6 +265,7 @@
             :app-name="appName"
             :environment="selectedEnv"
             :sql-server-name="sqlServerName"
+            :available-app-service-plans="availableAppServicePlans"
             @update="updateCurrentConfig"
             @update:config="updateCurrentConfig"
             @update:model-value="updateCurrentConfig"
@@ -400,6 +406,7 @@ const availableComponents = [
 const configuredComponents = ref([])
 const bicepContent = ref('')
 const errorMsg = ref('')
+const infoMsg = ref('')
 const configDialog = ref(false)
 const currentComponent = ref(null)
 const currentConfig = ref({})
@@ -425,6 +432,15 @@ const hasSQLServer = computed(() => {
 const sqlServerName = computed(() => {
   const sqlServerComponent = configuredComponents.value.find(item => item.value === 'SQLServer')
   return sqlServerComponent?.config?.name || ''
+})
+
+const availableAppServicePlans = computed(() => {
+  return configuredComponents.value
+    .filter(item => item.value === 'AppServicePlan')
+    .map(item => ({
+      name: item.config.name,
+      config: item.config
+    }))
 })
 
 const canAddComponent = (componentValue) => {
@@ -468,6 +484,10 @@ const addComponent = (component) => {
     return
   }
   
+  // Limpiar mensajes anteriores
+  errorMsg.value = ''
+  infoMsg.value = ''
+  
   currentComponent.value = component
   currentConfig.value = {}
   editingIndex.value = -1
@@ -475,6 +495,10 @@ const addComponent = (component) => {
 }
 
 const editComponent = (index) => {
+  // Limpiar mensajes anteriores
+  errorMsg.value = ''
+  infoMsg.value = ''
+  
   const item = configuredComponents.value[index]
   currentComponent.value = availableComponents.find(comp => comp.value === item.value)
   currentConfig.value = { ...item.config }
@@ -483,6 +507,49 @@ const editComponent = (index) => {
 }
 
 const removeComponent = (index) => {
+  const componentToRemove = configuredComponents.value[index]
+  
+  // Limpiar mensajes anteriores
+  errorMsg.value = ''
+  infoMsg.value = ''
+  
+  // Si se elimina un App Service Plan, también eliminar los App Services asociados
+  if (componentToRemove.value === 'AppServicePlan') {
+    const appServicePlanName = componentToRemove.config.name
+    
+    // Encontrar todos los App Services que usan este App Service Plan
+    const associatedAppServices = []
+    
+    // Buscar App Services asociados y guardar su información antes de eliminarlos
+    for (let i = configuredComponents.value.length - 1; i >= 0; i--) {
+      const comp = configuredComponents.value[i]
+      
+      if (comp.value === 'AppService') {
+        // Verificar múltiples propiedades posibles para la referencia del plan
+        const planRef = comp.config.appServicePlan || 
+                       comp.config.appServicePlanReference || 
+                       comp.config.plan ||
+                       comp.config.planName
+        
+        if (planRef === appServicePlanName) {
+          associatedAppServices.push(comp.config.name || `App Service ${i}`)
+          configuredComponents.value.splice(i, 1)
+          // Ajustar el índice del componente principal si es necesario
+          if (i < index) {
+            index--
+          }
+        }
+      }
+    }
+    
+    // Mostrar mensaje informativo si se eliminaron App Services
+    if (associatedAppServices.length > 0) {
+      const appServiceNames = associatedAppServices.join(', ')
+      infoMsg.value = `Se eliminaron automáticamente ${associatedAppServices.length} App Service(s) asociados: ${appServiceNames}. Los App Services dependen del App Service Plan "${appServicePlanName}".`
+    }
+  }
+  
+  // Eliminar el componente principal
   configuredComponents.value.splice(index, 1)
 }
 

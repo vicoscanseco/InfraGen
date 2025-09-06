@@ -168,6 +168,10 @@ export default {
       type: String,
       required: true,
       default: 'dev'
+    },
+    availableAppServicePlans: {
+      type: Array,
+      default: () => []
     }
   },
   emits: ['update', 'update:config'],
@@ -205,11 +209,22 @@ export default {
           return regex.test(value) || 'Solo letras, números y guiones, 2-60 caracteres. Debe empezar y terminar con letra o número'
         }
       }
+    },
+    assignedAppServicePlan() {
+      // Automáticamente asignar el primer App Service Plan disponible
+      return this.availableAppServicePlans.length > 0 ? this.availableAppServicePlans[0].name : null
     }
   },
   watch: {
     localAppBaseName(newValue) {
       this.updateConfig('name', this.computedAppName)
+    },
+    assignedAppServicePlan(newPlan) {
+      // Automáticamente asignar el App Service Plan cuando cambie
+      if (newPlan) {
+        this.localConfig.appServicePlanReference = newPlan
+        this.updateConfig('appServicePlan', newPlan)
+      }
     },
     config: {
       handler(newConfig) {
@@ -246,6 +261,12 @@ export default {
     } else {
       // Set default app base name if none exists
       this.localAppBaseName = 'myapp'
+    }
+    
+    // Establecer automáticamente la referencia al App Service Plan si está disponible
+    if (this.assignedAppServicePlan && !this.config.appServicePlan) {
+      this.localConfig.appServicePlanReference = this.assignedAppServicePlan
+      this.updateConfig('appServicePlan', this.assignedAppServicePlan)
     }
   },
   methods: {
