@@ -266,6 +266,7 @@
             :environment="selectedEnv"
             :sql-server-name="sqlServerName"
             :available-app-service-plans="availableAppServicePlans"
+            :available-sql-servers="availableSqlServers"
             @update="updateCurrentConfig"
             @update:config="updateCurrentConfig"
             @update:model-value="updateCurrentConfig"
@@ -443,6 +444,15 @@ const availableAppServicePlans = computed(() => {
     }))
 })
 
+const availableSqlServers = computed(() => {
+  return configuredComponents.value
+    .filter(item => item.value === 'SQLServer')
+    .map(item => ({
+      name: item.config.name,
+      config: item.config
+    }))
+})
+
 const canAddComponent = (componentValue) => {
   // Validación 1: Información básica requerida para todos los componentes
   if (!isBasicInfoComplete.value) {
@@ -546,6 +556,42 @@ const removeComponent = (index) => {
     if (associatedAppServices.length > 0) {
       const appServiceNames = associatedAppServices.join(', ')
       infoMsg.value = `Se eliminaron automáticamente ${associatedAppServices.length} App Service(s) asociados: ${appServiceNames}. Los App Services dependen del App Service Plan "${appServicePlanName}".`
+    }
+  }
+  
+  // Si se elimina un SQL Server, también eliminar las SQL Databases asociadas
+  if (componentToRemove.value === 'SQLServer') {
+    const sqlServerName = componentToRemove.config.name
+    
+    // Encontrar todas las SQL Databases que usan este SQL Server
+    const associatedDatabases = []
+    
+    // Buscar SQL Databases asociadas y guardar su información antes de eliminarlas
+    for (let i = configuredComponents.value.length - 1; i >= 0; i--) {
+      const comp = configuredComponents.value[i]
+      
+      if (comp.value === 'SQLDatabase') {
+        // Verificar múltiples propiedades posibles para la referencia del servidor
+        const serverRef = comp.config.sqlServer || 
+                         comp.config.sqlServerReference || 
+                         comp.config.server ||
+                         comp.config.serverName
+        
+        if (serverRef === sqlServerName) {
+          associatedDatabases.push(comp.config.name || `SQL Database ${i}`)
+          configuredComponents.value.splice(i, 1)
+          // Ajustar el índice del componente principal si es necesario
+          if (i < index) {
+            index--
+          }
+        }
+      }
+    }
+    
+    // Mostrar mensaje informativo si se eliminaron SQL Databases
+    if (associatedDatabases.length > 0) {
+      const databaseNames = associatedDatabases.join(', ')
+      infoMsg.value = `Se eliminaron automáticamente ${associatedDatabases.length} SQL Database(s) asociadas: ${databaseNames}. Las SQL Databases dependen del SQL Server "${sqlServerName}".`
     }
   }
   
@@ -821,7 +867,6 @@ const generateBicep = () => {
       }
       
       if (item.value === 'SQLDatabase') {
-        console.log('SQLDatabase item config:', item.config)
         if (!cfg.name) throw new Error('SQLDatabase configuration is missing a name')
         content += '// SQL Database ' + cfg.name + '\n'
         content += 'resource sqlDatabase_' + cfg.name.replace(/[^a-zA-Z0-9]/g, '') + ' \'Microsoft.Sql/servers/databases@2022-05-01-preview\' = {\n'

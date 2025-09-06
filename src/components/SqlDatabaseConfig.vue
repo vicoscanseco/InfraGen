@@ -293,6 +293,10 @@ export default {
     sqlServerName: {
       type: String,
       default: ''
+    },
+    availableSqlServers: {
+      type: Array,
+      default: () => []
     }
   },
   emits: ['update:config', 'update:model-value'],
@@ -448,7 +452,10 @@ export default {
         name: this.computedDatabaseName,
         sqlServer: this.computedServerName,
         databaseName: this.computedDatabaseName,
-        serverName: this.computedServerName
+        serverName: this.computedServerName,
+        // Mapear las propiedades del componente a las propiedades de Azure Bicep
+        sku: this.localConfig.serviceObjective || 'Basic', // serviceObjective -> sku
+        tier: this.localConfig.edition || 'Basic'          // edition -> tier
       }
       
       this.$emit('update:config', fullConfig)
@@ -459,7 +466,18 @@ export default {
   methods: {
     updateConfig(key, value) {
       // Emitir la configuración completa con el nuevo valor
-      const updatedConfig = { ...this.localConfig, [key]: value }
+      const updatedConfig = { 
+        ...this.localConfig, 
+        [key]: value,
+        // Asegurar que siempre se incluyan los nombres
+        name: this.computedDatabaseName,
+        sqlServer: this.computedServerName,
+        databaseName: this.computedDatabaseName,
+        serverName: this.computedServerName,
+        // Mapear las propiedades del componente a las propiedades de Azure Bicep
+        sku: this.localConfig.serviceObjective || 'Basic', // serviceObjective -> sku
+        tier: this.localConfig.edition || 'Basic'          // edition -> tier
+      }
       console.log(`SqlDatabaseConfig updateConfig(${key}, ${value}) - emitting:`, updatedConfig)
       this.$emit('update:config', updatedConfig)
       this.$emit('update:model-value', updatedConfig)
@@ -467,7 +485,6 @@ export default {
     updateConfigField(key, value) {
       // Actualizar localConfig directamente y emitir cambios
       this.localConfig[key] = value
-      this.updateConfig(key, value)
       
       // Manejar lógica especial para edition
       if (key === 'edition') {
@@ -475,6 +492,8 @@ export default {
         this.localConfig.serviceObjective = firstOption
         this.updateConfig('serviceObjective', firstOption)
       }
+      
+      this.updateConfig(key, value)
     },
     updateDatabaseBaseName(value) {
       this.localDatabaseBaseName = value
