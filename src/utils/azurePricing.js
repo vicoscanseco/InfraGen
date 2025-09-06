@@ -77,62 +77,63 @@ export const azurePricing = {
   },
 
   // App Service Plans - precios por mes
+  // Los precios de Linux son aproximadamente 10-15% más baratos que Windows
   AppServicePlan: {
     'F1': {
-      basePrice: 0, // Gratis
-      description: 'Free (1GB RAM, 60 min/día)'
+      Windows: { basePrice: 0, description: 'Free (1GB RAM, 60 min/día)' }, // Gratis para ambos
+      Linux: { basePrice: 0, description: 'Free (1GB RAM, 60 min/día)' }
     },
     'D1': {
-      basePrice: 9.49, // $9.49/mes
-      description: 'Shared (1GB RAM, 240 min/día)'
+      Windows: { basePrice: 9.49, description: 'Shared (1GB RAM, 240 min/día)' },
+      Linux: { basePrice: 9.49, description: 'Shared (1GB RAM, 240 min/día)' } // Shared no disponible en Linux, mismo precio
     },
     'B1': {
-      basePrice: 13.14, // $13.14/mes
-      description: 'Basic (1.75GB RAM, 1 core)'
+      Windows: { basePrice: 13.14, description: 'Basic (1.75GB RAM, 1 core)' },
+      Linux: { basePrice: 12.02, description: 'Basic (1.75GB RAM, 1 core)' } // ~8.5% más barato
     },
     'B2': {
-      basePrice: 26.28, // $26.28/mes
-      description: 'Basic (3.5GB RAM, 2 cores)'
+      Windows: { basePrice: 26.28, description: 'Basic (3.5GB RAM, 2 cores)' },
+      Linux: { basePrice: 24.05, description: 'Basic (3.5GB RAM, 2 cores)' } // ~8.5% más barato
     },
     'B3': {
-      basePrice: 52.56, // $52.56/mes
-      description: 'Basic (7GB RAM, 4 cores)'
+      Windows: { basePrice: 52.56, description: 'Basic (7GB RAM, 4 cores)' },
+      Linux: { basePrice: 48.09, description: 'Basic (7GB RAM, 4 cores)' } // ~8.5% más barato
     },
     'S1': {
-      basePrice: 56.94, // $56.94/mes
-      description: 'Standard (1.75GB RAM, 1 core)'
+      Windows: { basePrice: 56.94, description: 'Standard (1.75GB RAM, 1 core)' },
+      Linux: { basePrice: 52.10, description: 'Standard (1.75GB RAM, 1 core)' } // ~8.5% más barato
     },
     'S2': {
-      basePrice: 113.88, // $113.88/mes
-      description: 'Standard (3.5GB RAM, 2 cores)'
+      Windows: { basePrice: 113.88, description: 'Standard (3.5GB RAM, 2 cores)' },
+      Linux: { basePrice: 104.20, description: 'Standard (3.5GB RAM, 2 cores)' } // ~8.5% más barato
     },
     'S3': {
-      basePrice: 227.76, // $227.76/mes
-      description: 'Standard (7GB RAM, 4 cores)'
+      Windows: { basePrice: 227.76, description: 'Standard (7GB RAM, 4 cores)' },
+      Linux: { basePrice: 208.40, description: 'Standard (7GB RAM, 4 cores)' } // ~8.5% más barato
     },
     'P1V2': {
-      basePrice: 82.13, // $82.13/mes
-      description: 'Premium v2 (3.5GB RAM, 1 core)'
+      Windows: { basePrice: 82.13, description: 'Premium v2 (3.5GB RAM, 1 core)' },
+      Linux: { basePrice: 75.15, description: 'Premium v2 (3.5GB RAM, 1 core)' } // ~8.5% más barato
     },
     'P2V2': {
-      basePrice: 164.25, // $164.25/mes
-      description: 'Premium v2 (7GB RAM, 2 cores)'
+      Windows: { basePrice: 164.25, description: 'Premium v2 (7GB RAM, 2 cores)' },
+      Linux: { basePrice: 150.29, description: 'Premium v2 (7GB RAM, 2 cores)' } // ~8.5% más barato
     },
     'P3V2': {
-      basePrice: 328.5, // $328.5/mes
-      description: 'Premium v2 (14GB RAM, 4 cores)'
+      Windows: { basePrice: 328.5, description: 'Premium v2 (14GB RAM, 4 cores)' },
+      Linux: { basePrice: 300.58, description: 'Premium v2 (14GB RAM, 4 cores)' } // ~8.5% más barato
     },
     'P1V3': {
-      basePrice: 62.05, // $62.05/mes
-      description: 'Premium v3 (4GB RAM, 2 cores)'
+      Windows: { basePrice: 62.05, description: 'Premium v3 (4GB RAM, 2 cores)' },
+      Linux: { basePrice: 56.78, description: 'Premium v3 (4GB RAM, 2 cores)' } // ~8.5% más barato
     },
     'P2V3': {
-      basePrice: 124.1, // $124.1/mes
-      description: 'Premium v3 (8GB RAM, 4 cores)'
+      Windows: { basePrice: 124.1, description: 'Premium v3 (8GB RAM, 4 cores)' },
+      Linux: { basePrice: 113.55, description: 'Premium v3 (8GB RAM, 4 cores)' } // ~8.5% más barato
     },
     'P3V3': {
-      basePrice: 248.2, // $248.2/mes
-      description: 'Premium v3 (16GB RAM, 8 cores)'
+      Windows: { basePrice: 248.2, description: 'Premium v3 (16GB RAM, 8 cores)' },
+      Linux: { basePrice: 227.10, description: 'Premium v3 (16GB RAM, 8 cores)' } // ~8.5% más barato
     }
   },
 
@@ -225,7 +226,12 @@ export function calculateComponentCost(component, region = 'eastus') {
 
     case 'AppServicePlan':
       const aspPricing = azurePricing.AppServicePlan[config.sku]
-      return aspPricing ? (aspPricing.basePrice * regionMultiplier) : (15.0 * regionMultiplier)
+      if (aspPricing) {
+        const os = config.os || 'Windows' // Default a Windows si no se especifica
+        const osPricing = aspPricing[os]
+        return osPricing ? (osPricing.basePrice * regionMultiplier) : (15.0 * regionMultiplier)
+      }
+      return 15.0 * regionMultiplier
 
     case 'AppService':
       // App Service no tiene costo adicional, usa el del Plan
@@ -269,7 +275,12 @@ export function getPriceDescription(component) {
 
     case 'AppServicePlan':
       const aspPricing = azurePricing.AppServicePlan[config.sku]
-      return aspPricing ? aspPricing.description : 'App Service Plan'
+      if (aspPricing) {
+        const os = config.os || 'Windows' // Default a Windows si no se especifica
+        const osPricing = aspPricing[os]
+        return osPricing ? `${osPricing.description} - ${os}` : 'App Service Plan'
+      }
+      return 'App Service Plan'
 
     case 'AppService':
       return 'Incluido en App Service Plan'

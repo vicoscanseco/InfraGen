@@ -675,6 +675,36 @@ const generateBicep = () => {
         if (cfg.alwaysOn !== undefined) {
           content += '      alwaysOn: ' + cfg.alwaysOn + '\n'
         }
+        // Runtime Stack configuration
+        if (cfg.runtimeStack) {
+          // Determine if the App Service Plan is Linux or Windows
+          const appServicePlanComponent = configuredComponents.value.find(comp => comp.value === 'AppServicePlan')
+          const isLinux = appServicePlanComponent && appServicePlanComponent.config.os === 'Linux'
+          
+          if (isLinux) {
+            content += '      linuxFxVersion: \'' + cfg.runtimeStack + '\'\n'
+          } else {
+            // For Windows, we need to handle different runtime stacks differently
+            if (cfg.runtimeStack.startsWith('DOTNETCORE')) {
+              content += '      netFrameworkVersion: \'v8.0\'\n'
+            } else if (cfg.runtimeStack.startsWith('ASPNET')) {
+              const version = cfg.runtimeStack.split('|')[1] || '4.8'
+              content += '      netFrameworkVersion: \'v' + version + '\'\n'
+            } else if (cfg.runtimeStack.startsWith('NODE')) {
+              const version = cfg.runtimeStack.split('|')[1] || '20-lts'
+              content += '      nodeVersion: \'' + version + '\'\n'
+            } else if (cfg.runtimeStack.startsWith('PYTHON')) {
+              const version = cfg.runtimeStack.split('|')[1] || '3.11'
+              content += '      pythonVersion: \'' + version + '\'\n'
+            } else if (cfg.runtimeStack.startsWith('JAVA')) {
+              const version = cfg.runtimeStack.split('|')[1] || '17-java17'
+              content += '      javaVersion: \'' + version + '\'\n'
+            } else if (cfg.runtimeStack.startsWith('PHP')) {
+              const version = cfg.runtimeStack.split('|')[1] || '8.2'
+              content += '      phpVersion: \'' + version + '\'\n'
+            }
+          }
+        }
         content += '    }\n'
         content += '    httpsOnly: ' + (cfg.httpsOnly !== false) + '\n'
         content += '    clientAffinityEnabled: ' + (cfg.clientAffinityEnabled !== false) + '\n'
