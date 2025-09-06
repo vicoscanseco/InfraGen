@@ -884,14 +884,22 @@ const generateBicep = () => {
         }
         content += '  }\n'
         content += '  properties: {\n'
+        if (cfg.collation) {
+          content += '    collation: \'' + cfg.collation + '\'\n'
+        }
         if (cfg.maxSizeBytes) {
           content += '    maxSizeBytes: ' + cfg.maxSizeBytes + '\n'
         }
         if (cfg.readScale) {
           content += '    readScale: \'' + cfg.readScale + '\'\n'
         }
-        if (cfg.zoneRedundant) {
+        if (cfg.zoneRedundant !== undefined) {
           content += '    zoneRedundant: ' + cfg.zoneRedundant + '\n'
+        }
+        if (cfg.enableThreatDetection !== undefined) {
+          content += '    threatDetectionSettings: {\n'
+          content += '      state: \'' + (cfg.enableThreatDetection ? 'Enabled' : 'Disabled') + '\'\n'
+          content += '    }\n'
         }
         content += '  }\n'
         content += '  tags: tags\n'

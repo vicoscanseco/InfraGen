@@ -203,6 +203,45 @@
         </v-col>
       </v-row>
 
+      <v-row class="mb-2">
+        <v-col cols="12" md="6">
+          <v-tooltip location="top">
+            <template v-slot:activator="{ props }">
+              <v-text-field 
+                v-bind="props"
+                v-model="localConfig.maxSizeBytes" 
+                label="Tamaño Máximo (bytes)" 
+                placeholder="Ej: 1073741824 (1GB)"
+                density="comfortable" 
+                variant="outlined"
+                hint="Tamaño máximo de la base de datos en bytes (opcional)"
+                persistent-hint
+                type="number"
+                @input="updateConfigField('maxSizeBytes', $event.target.value)"
+              />
+            </template>
+            <span>Tamaño máximo de la base de datos en bytes. Por ejemplo: 1073741824 = 1GB, 2147483648 = 2GB. Si se deja vacío, usa el tamaño por defecto de la edición seleccionada</span>
+          </v-tooltip>
+        </v-col>
+        <v-col cols="12" md="6">
+          <v-tooltip location="top">
+            <template v-slot:activator="{ props }">
+              <v-switch
+                v-bind="props"
+                v-model="localConfig.zoneRedundant"
+                label="Zone Redundant"
+                color="primary"
+                density="comfortable"
+                hint="Habilitar redundancia de zona para alta disponibilidad"
+                persistent-hint
+                @update:model-value="updateConfigField('zoneRedundant', $event)"
+              />
+            </template>
+            <span>Habilita la redundancia de zona para proporcionar alta disponibilidad mediante la replicación en múltiples zonas de disponibilidad</span>
+          </v-tooltip>
+        </v-col>
+      </v-row>
+
       <v-row class="mb-2" v-if="localConfig.enableFirewallRules">
         <v-col cols="12">
           <v-tooltip location="top">
@@ -312,6 +351,10 @@ export default {
         enableFirewallRules: true,
         enableThreatDetection: false,
         allowedIpRanges: '0.0.0.0-0.0.0.0',
+        maxSizeBytes: null,
+        readScale: 'Disabled',
+        zoneRedundant: false,
+        capacity: null,
         ...this.config
       }
     }
@@ -445,6 +488,8 @@ export default {
       this.updateConfig('sqlServer', this.computedServerName)
       this.updateConfig('databaseName', this.computedDatabaseName)
       this.updateConfig('serverName', this.computedServerName)
+      this.updateConfig('collation', this.localConfig.collation)
+      this.updateConfig('enableThreatDetection', this.localConfig.enableThreatDetection)
       
       // Forzar emisión de la configuración completa inicial
       const fullConfig = {
@@ -478,7 +523,6 @@ export default {
         sku: this.localConfig.serviceObjective || 'Basic', // serviceObjective -> sku
         tier: this.localConfig.edition || 'Basic'          // edition -> tier
       }
-      console.log(`SqlDatabaseConfig updateConfig(${key}, ${value}) - emitting:`, updatedConfig)
       this.$emit('update:config', updatedConfig)
       this.$emit('update:model-value', updatedConfig)
     },
