@@ -17,12 +17,12 @@
                 density="comfortable" 
                 variant="outlined"
                 :rules="[rules.required, rules.databaseNameFormat]"
-                hint="Solo letras, números, guiones y guiones bajos. Se agregará automáticamente 'db-' y el environment"
+                hint="Solo letras, números, guiones y guiones bajos. Se agregará automáticamente 'db-' y el environment (excepto en producción)"
                 persistent-hint
                 @input="updateDatabaseBaseName($event.target.value)"
               />
             </template>
-            <span>Nombre base de la base de datos. Se generará el nombre completo agregando prefijo 'db-' y sufijo del entorno (dev/prod). Solo letras, números, guiones y guiones bajos</span>
+            <span>Nombre base de la base de datos. Se generará el nombre completo agregando prefijo 'db-' y sufijo del entorno (dev/test/stage). En producción no se incluye el environment. Solo letras, números, guiones y guiones bajos</span>
           </v-tooltip>
           <v-chip 
             v-if="computedDatabaseName"
@@ -39,18 +39,16 @@
             <template v-slot:activator="{ props }">
               <v-text-field 
                 v-bind="props"
-                v-model="localServerBaseName" 
-                label="Nombre Base del SQL Server" 
-                placeholder="Ej: myserver" 
+                v-model="computedServerName" 
+                label="SQL Server Asociado" 
                 density="comfortable" 
                 variant="outlined"
-                :rules="[rules.required, rules.serverNameFormat]"
-                hint="Solo letras minúsculas, números y guiones. Se agregará automáticamente 'sqls-' y el environment"
+                readonly
+                hint="Referencia automática al SQL Server configurado"
                 persistent-hint
-                @input="updateServerBaseName($event.target.value)"
               />
             </template>
-            <span>Nombre base del servidor SQL. Se generará el nombre completo con prefijo 'sqls-' y sufijo del entorno. Debe ser único globalmente en Azure (nombreservidor.database.windows.net)</span>
+            <span>Nombre del SQL Server al que se asociará esta base de datos. Se obtiene automáticamente del componente SQL Server configurado en la infraestructura</span>
           </v-tooltip>
           <v-chip 
             v-if="computedServerName"
@@ -59,7 +57,7 @@
             variant="outlined" 
             class="mt-1"
           >
-            Nombre completo: {{ computedServerName }}
+            Server: {{ computedServerName }}
           </v-chip>
         </v-col>
       </v-row>
@@ -291,12 +289,15 @@ export default {
       type: String,
       required: true,
       default: 'dev'
+    },
+    sqlServerName: {
+      type: String,
+      default: ''
     }
   },
   emits: ['update:config', 'update:model-value'],
   data() {
     return {
-      localServerBaseName: 'myserver',
       localDatabaseBaseName: 'mydb',
       localConfig: {
         adminUsername: 'sqladmin',
@@ -313,11 +314,14 @@ export default {
   },
   computed: {
     computedServerName() {
-      const env = this.environment || 'dev'
-      return this.localServerBaseName ? `sqls-${this.localServerBaseName}-${env}` : ''
+      // Usar el nombre del SQL Server que viene del componente padre
+      return this.sqlServerName || ''
     },
     computedDatabaseName() {
       const env = this.environment || 'dev'
+      if (env === 'prod') {
+        return this.localDatabaseBaseName ? `db-${this.localDatabaseBaseName}` : ''
+      }
       return this.localDatabaseBaseName ? `db-${this.localDatabaseBaseName}-${env}` : ''
     },
     editionOptions() {
@@ -364,10 +368,13 @@ export default {
     }
   },
   watch: {
-    localServerBaseName(newValue) {
-      if (newValue) {
-        this.updateConfig('serverName', this.computedServerName)
-        this.updateConfig('sqlServer', this.computedServerName) // Para generateBicep
+    sqlServerName: {
+      immediate: true,
+      handler(newValue) {
+        if (newValue) {
+          this.updateConfig('sqlServer', newValue)
+          this.updateConfig('serverName', newValue)
+        }
       }
     },
     localDatabaseBaseName(newValue) {
@@ -405,44 +412,26 @@ export default {
     
     // Forzar inicialización inmediata de nombres
     setTimeout(() => {
-      // Solo sobrescribir si hay valores existentes en config
-      if (this.config.serverName) {
-        const env = this.environment || 'dev'
-        const fullSuffix = `-${env}`
-        const prefix = 'sqls-'
-        
-        let baseName = this.config.serverName
-        
-        // Remove environment suffix if present
-        if (baseName.endsWith(fullSuffix)) {
-          baseName = baseName.replace(fullSuffix, '')
-        }
-        
-        // Remove sqls prefix if present
-        if (baseName.startsWith(prefix)) {
-          baseName = baseName.replace(prefix, '')
-        }
-        
-        this.localServerBaseName = baseName
-      }
-
       // Initialize localDatabaseBaseName from existing databaseName
       if (this.config.databaseName) {
         const env = this.environment || 'dev'
-        const fullSuffix = `-${env}`
         const prefix = 'db-'
         
         let baseName = this.config.databaseName
         
-        // Remove environment suffix if present
-        if (baseName.endsWith(fullSuffix)) {
-          baseName = baseName.replace(fullSuffix, '')
-        }
-        
         // Remove db prefix if present
         if (baseName.startsWith(prefix)) {
-          baseName = baseName.replace(prefix, '')
+          baseName = baseName.slice(prefix.length)
         }
+        
+        // For non-production environments, remove environment suffix if present
+        if (env !== 'prod') {
+          const fullSuffix = `-${env}`
+          if (baseName.endsWith(fullSuffix)) {
+            baseName = baseName.slice(0, -fullSuffix.length)
+          }
+        }
+        // For production, the name after removing 'db-' is already the base name
         
         this.localDatabaseBaseName = baseName
       }
@@ -486,9 +475,6 @@ export default {
         this.localConfig.serviceObjective = firstOption
         this.updateConfig('serviceObjective', firstOption)
       }
-    },
-    updateServerBaseName(value) {
-      this.localServerBaseName = value
     },
     updateDatabaseBaseName(value) {
       this.localDatabaseBaseName = value

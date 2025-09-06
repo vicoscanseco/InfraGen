@@ -8,13 +8,13 @@
       <v-row>
         <!-- Name (Auto-generated) -->
         <v-col cols="12" md="6">
-          <v-tooltip text="Nombre del plan de App Service generado automáticamente basado en tu aplicación y entorno. Define los recursos compartidos para todas las apps del plan.">
+          <v-tooltip text="Nombre del plan de App Service generado automáticamente basado en tu aplicación y entorno. Define los recursos compartidos para todas las apps del plan. En producción no incluye el environment.">
             <template v-slot:activator="{ props }">
               <v-text-field
                 v-bind="props"
                 v-model="config.name"
                 label="App Service Plan Name"
-                hint="Format: appname-environment-asp"
+                hint="Format: appname-environment-asp (production: appname-asp)"
                 persistent-hint
                 readonly
                 prepend-icon="mdi-tag"
@@ -220,7 +220,13 @@ export default {
     updateName() {
       const appName = this.appName.toLowerCase().replace(/[^a-z0-9]/g, '')
       const env = this.environment.toLowerCase()
-      const newName = `${appName}-${env}-asp`
+      
+      let newName
+      if (env === 'prod') {
+        newName = `${appName}-asp`
+      } else {
+        newName = `${appName}-${env}-asp`
+      }
       
       // Solo actualizar si el nombre realmente ha cambiado
       if (this.config.name !== newName) {

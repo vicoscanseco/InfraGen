@@ -7,7 +7,7 @@
     <v-card-text>
       <v-row dense class="mt-3">
         <v-col cols="12" md="6">
-          <v-tooltip text="Define el nombre base de tu Storage Account. Se combinará automáticamente con 'sta' y el entorno. Debe ser único globalmente en Azure.">
+          <v-tooltip text="Define el nombre base de tu Storage Account. Se combinará automáticamente con 'sta' y el entorno. Debe ser único globalmente en Azure. En producción no se incluye el environment.">
             <template v-slot:activator="{ props }">
               <v-text-field 
                 v-bind="props"
@@ -17,7 +17,7 @@
                 density="compact" 
                 variant="outlined" 
                 :rules="[rules.required, rules.storageNameFormat]"
-                hint="Solo letras minúsculas y números, 3-24 caracteres. Se agregará automáticamente 'sta' y el environment"
+                hint="Solo letras minúsculas y números, 3-24 caracteres. Se agregará automáticamente 'sta' y el environment (excepto en producción)"
                 persistent-hint
                 @input="updateStorageBaseName($event.target.value)"
               />
@@ -186,6 +186,9 @@ export default {
     computedStorageName() {
       const env = this.environment || 'dev'
       // Storage accounts no pueden tener guiones, solo letras minúsculas y números
+      if (env === 'prod') {
+        return this.localStorageBaseName ? `sta${this.localStorageBaseName}` : ''
+      }
       return this.localStorageBaseName ? `sta${this.localStorageBaseName}${env}` : ''
     },
     skuOptions() {
@@ -235,15 +238,16 @@ export default {
       
       let baseName = this.config.name
       
-      // Remove environment suffix if present
-      if (baseName.endsWith(env)) {
-        baseName = baseName.slice(0, -env.length)
-      }
-      
       // Remove sta prefix if present
       if (baseName.startsWith(prefix)) {
         baseName = baseName.slice(prefix.length)
       }
+      
+      // For non-production environments, remove environment suffix if present
+      if (env !== 'prod' && baseName.endsWith(env)) {
+        baseName = baseName.slice(0, -env.length)
+      }
+      // For production, the name after removing 'sta' is already the base name
       
       this.localStorageBaseName = baseName
     } else {

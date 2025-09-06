@@ -212,10 +212,10 @@ InfraGen sigue convenciones estrictas y consistentes para garantizar nombres ún
 
 | Recurso | Prefijo/Formato | Ejemplo | Formato Completo |
 |---------|---------|---------|------------------|
-| **Resource Group** | `rg` | `rgeusmyappdev` | `rg{shortLocation}{appName}{environment}` |
-| **Storage Account** | `st` | `stmyappdev` | `st{appName}{environment}` (sin guiones) |
-| **App Service** | - | `myapp-dev` | `{appName}-{environment}` |
-| **App Service Plan** | `-asp` | `myappdev-asp` | `{appName}{environment}-asp` |
+| **Resource Group** | `rg` | `rgeusmyappdev` / `rgeusmyapp` (prod) | `rg{shortLocation}{appName}{environment}` (prod sin env) |
+| **Storage Account** | `sta` | `stamyappdev` / `stamyapp` (prod) | `sta{appName}{environment}` (prod sin env) |
+| **App Service** | - | `myapp-dev` / `myapp` (prod) | `{appName}-{environment}` (prod sin env) |
+| **App Service Plan** | `-asp` | `myapp-dev-asp` / `myapp-asp` (prod) | `{appName}-{environment}-asp` (prod sin env) |
 | **SQL Server** | `sqls` | `sqls-myapp-dev` / `sqls-myapp` (prod) | `sqls-{appName}-{environment}` (prod sin env) |
 | **SQL Database** | `db-` | `db-myapp-dev` / `db-myapp` (prod) | `db-{appName}-{environment}` (prod sin env) |
 | **Function App** | `func` | `funceusmyappdev` | `func{shortLocation}{appName}{environment}` |
@@ -242,12 +242,12 @@ InfraGen sigue convenciones estrictas y consistentes para garantizar nombres ún
    - `Production` → `prod`
 
 4. **Casos Especiales**:
-   - **Storage Account**: Solo incluye appName + environment (sin location)
-   - **App Service**: Formato simple con guión: `{appName}-{environment}`
-   - **App Service Plan**: Environment concatenado + sufijo: `{appName}{environment}-asp`
-   - **SQL Server**: Formato con guiones: `sqls-{appName}-{environment}`
-   - **SQL Server/Database (Production)**: Sin environment para recursos de producción
-   - **Resource Group**: Mantiene formato completo con location
+   - **Storage Account**: Solo incluye appName + environment (sin location, sin guiones, prod sin env)
+   - **App Service**: Formato simple con guión: `{appName}-{environment}` (sin environment en prod)
+   - **App Service Plan**: Formato con guiones: `{appName}-{environment}-asp` (sin environment en prod)
+   - **SQL Server**: Formato con guiones: `sqls-{appName}-{environment}` (sin environment en prod)
+   - **Resource Group/Storage Account/App Service/App Service Plan/SQL Server/Database (Production)**: Sin environment para recursos de producción
+   - **Resource Group**: Mantiene formato completo con location, excepto en producción
 
 5. **Validaciones Azure**:
    - **Storage Account**: Solo letras minúsculas y números (limitación Azure)
@@ -260,8 +260,8 @@ Para una aplicación llamada `"MyWebApp"` en ubicación `"East US"` y environmen
 
 ```text
 Resource Group:     rgeusmywebappdev
-Storage Account:    stmywebappdev
-App Service Plan:   mywebappdev-asp
+Storage Account:    stamywebappdev
+App Service Plan:   mywebapp-dev-asp
 App Service:        mywebapp-dev
 SQL Server:         sqls-mywebapp-dev
 SQL Database:       db-mywebapp-dev
@@ -270,6 +270,10 @@ Function App:       funceusmywebappdev
 
 **Caso especial para Production:**
 ```text
+Resource Group:     rgeusmywebapp (sin environment)
+Storage Account:    stamywebapp (sin environment)
+App Service Plan:   mywebapp-asp (sin environment)
+App Service:        mywebapp (sin environment)
 SQL Server:         sqls-mywebapp (sin environment)
 SQL Database:       db-mywebapp (sin environment)
 ```

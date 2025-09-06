@@ -55,7 +55,7 @@
             </v-tooltip>
           </v-col>
           <v-col cols="12" md="6">
-            <v-tooltip text="El grupo de recursos se genera automáticamente combinando ubicación, nombre de la aplicación y ambiente. Contiene todos los recursos relacionados.">
+            <v-tooltip text="El grupo de recursos se genera automáticamente combinando ubicación, nombre de la aplicación y ambiente. Para producción se omite el ambiente. Contiene todos los recursos relacionados.">
               <template v-slot:activator="{ props }">
                 <v-text-field
                   v-bind="props"
@@ -65,7 +65,7 @@
                   variant="outlined"
                   readonly
                   append-inner-icon="mdi-lock"
-                  hint="Se genera automáticamente: rg + ubicación + nombre de app + ambiente"
+                  hint="Se genera automáticamente: rg + ubicación + nombre de app + ambiente (prod sin ambiente)"
                   persistent-hint
                 />
               </template>
@@ -259,6 +259,7 @@
             :model-value="currentConfig"
             :app-name="appName"
             :environment="selectedEnv"
+            :sql-server-name="sqlServerName"
             @update="updateCurrentConfig"
             @update:config="updateCurrentConfig"
             @update:model-value="updateCurrentConfig"
@@ -323,7 +324,13 @@ const computedResourceGroupName = computed(() => {
   const currentLocation = locations.value.find(loc => loc.value === location.value)
   const shortName = currentLocation?.shortName || location.value.slice(0, 3)
   const cleanAppName = appName.value.toLowerCase().replace(/[^a-z0-9]/g, '')
-  return 'rg' + shortName + cleanAppName + selectedEnv.value
+  
+  // Para producción, no incluir environment
+  if (selectedEnv.value === 'prod') {
+    return 'rg' + shortName + cleanAppName
+  } else {
+    return 'rg' + shortName + cleanAppName + selectedEnv.value
+  }
 })
 
 // Watch para actualizar el resourceGroup cuando cambie el computed
@@ -413,6 +420,11 @@ const hasAppServicePlan = computed(() => {
 
 const hasSQLServer = computed(() => {
   return configuredComponents.value.some(item => item.value === 'SQLServer')
+})
+
+const sqlServerName = computed(() => {
+  const sqlServerComponent = configuredComponents.value.find(item => item.value === 'SQLServer')
+  return sqlServerComponent?.config?.name || ''
 })
 
 const canAddComponent = (componentValue) => {

@@ -7,7 +7,7 @@
     <v-card-text>
       <v-row dense class="mt-3">
         <v-col cols="12" md="6">
-          <v-tooltip text="Define el nombre base de tu App Service. Se combinará automáticamente con el entorno (dev, prod, etc.) para crear el nombre final único en Azure.">
+          <v-tooltip text="Define el nombre base de tu App Service. Se combinará automáticamente con el entorno (dev, test, stage) para crear el nombre final único en Azure. En producción no se incluye el environment.">
             <template v-slot:activator="{ props }">
               <v-text-field 
                 v-bind="props"
@@ -17,7 +17,7 @@
                 density="compact" 
                 variant="outlined"
                 :rules="[rules.required, rules.appServiceNameFormat]"
-                hint="Solo letras, números y guiones. Se agregará automáticamente '-' y el environment"
+                hint="Solo letras, números y guiones. Se agregará automáticamente '-' y el environment (excepto en producción)"
                 persistent-hint
                 @input="updateAppBaseName($event.target.value)"
               />
@@ -188,6 +188,9 @@ export default {
   computed: {
     computedAppName() {
       const env = this.environment || 'dev'
+      if (env === 'prod') {
+        return this.localAppBaseName || ''
+      }
       return this.localAppBaseName ? `${this.localAppBaseName}-${env}` : ''
     },
     runtimeStackOptions() {
@@ -228,14 +231,16 @@ export default {
     // Initialize localAppBaseName from existing name
     if (this.config.name) {
       const env = this.environment || 'dev'
-      const suffix = `-${env}`
-      
       let baseName = this.config.name
       
-      // Remove environment suffix if present
-      if (baseName.endsWith(suffix)) {
-        baseName = baseName.replace(suffix, '')
+      // For non-production environments, remove environment suffix if present
+      if (env !== 'prod') {
+        const suffix = `-${env}`
+        if (baseName.endsWith(suffix)) {
+          baseName = baseName.replace(suffix, '')
+        }
       }
+      // For production, the name is already the base name
       
       this.localAppBaseName = baseName
     } else {
