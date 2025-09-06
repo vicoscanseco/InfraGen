@@ -68,7 +68,7 @@ Aplicación web moderna construida con Vue.js 3 y Vuetify 3 que permite seleccio
 ![Vue.js](https://img.shields.io/badge/Vue.js-3.x-4FC08D?style=flat-square&logo=vue.js)
 ![Vuetify](https://img.shields.io/badge/Vuetify-3.x-1867C0?style=flat-square&logo=vuetify)
 ![Azure](https://img.shields.io/badge/Azure-Bicep-0078D4?style=flat-square&logo=microsoft-azure)
-![Version](https://img.shields.io/badge/Version-1.1.0-brightgreen?style=flat-square)
+![Version](https://img.shields.io/badge/Version-2.0.0-brightgreen?style=flat-square)
 
 ## 🚀 Características
 
@@ -80,6 +80,10 @@ Aplicación web moderna construida con Vue.js 3 y Vuetify 3 que permite seleccio
 - **📊 Análisis de costos**: Desglose por categorías y recomendaciones de optimización
 - **📁 Múltiples formatos**: Descarga de reportes en CSV, Excel, JSON e impresión
 - **Validaciones inteligentes**: Sistema completo de validaciones con dependencias
+- **🔗 Eliminación en cascada**: Validación automática de dependencias App Service ↔ App Service Plan y SQL Server ↔ SQL Database  
+- **🔄 Asignación automática**: Los componentes dependientes se asocian automáticamente a sus recursos padre
+- **📋 Mapeo de propiedades**: Traducción automática entre propiedades de UI y Azure Bicep
+- **🎯 Configuración completa**: Todas las propiedades importantes configurables en la interfaz
 - **Nomenclatura automática**: Convenciones consistentes para todos los recursos
 - **Sistema modular**: Componentes especializados para cada tipo de recurso
 - **Vista previa de código**: Visualización con tema oscuro tipo VS Code
@@ -180,6 +184,17 @@ InfraGen incluye un sistema robusto de validaciones que asegura configuraciones 
    - 📝 Tooltips explicativos al hacer hover
    - ⚠️ Alertas informativas contextuales
    - 🎨 Atenuación visual (opacity) para elementos deshabilitados
+
+4. **🔗 Eliminación en Cascada (Nuevo)**
+   - **App Service Plan** → Elimina automáticamente todos los **App Services** asociados
+   - **SQL Server** → Elimina automáticamente todas las **SQL Databases** asociadas
+   - **Visual**: Mensajes informativos detallados con nombres específicos
+   - **Inteligente**: Detecta múltiples propiedades de referencia para máxima compatibilidad
+
+5. **🔄 Asignación Automática de Dependencias (Nuevo)**
+   - **App Service** → Se asocia automáticamente al **App Service Plan** disponible
+   - **SQL Database** → Se asocia automáticamente al **SQL Server** disponible
+   - **Reactive**: Actualización en tiempo real cuando se agregan recursos padre
 
 ### 🎯 Estados de los Botones
 
@@ -372,6 +387,10 @@ Sistema completo de base de datos SQL con servidor, configuraciones de seguridad
 - 50+ collations disponibles
 - Configuración DTU/vCore
 - Threat Detection habilitado
+- **🆕 Max Size configurable**: Tamaño máximo en bytes
+- **🆕 Zone Redundant**: Alta disponibilidad con múltiples zonas
+- **🆕 Mapeo automático**: Propiedades UI → Azure Bicep (edition→tier, serviceObjective→sku)
+- **🆕 Asignación automática**: Referencia automática al SQL Server configurado
 - Validación robusta de contraseñas
 
 **Valores por Defecto:**
@@ -632,12 +651,14 @@ hasSQLServer() {
 
 ## 📊 Estadísticas del Proyecto
 
-- **Líneas de código**: ~3,200+ líneas (incluye estimador de costos)
+- **Líneas de código**: ~4,500+ líneas (incluye estimador de costos y validaciones avanzadas)
 - **Componentes Vue**: 9 componentes especializados
 - **Recursos Azure**: 8 tipos completamente configurables
-- **Validaciones**: 20+ patrones de validación
-- **Configuraciones**: 80+ opciones únicas
-- **Nomenclatura**: Convenciones automáticas para todos los recursos
+- **Validaciones**: 25+ patrones de validación incluido sistema de dependencias
+- **Configuraciones**: 100+ opciones únicas
+- **🔗 Dependencias**: Sistema completo de eliminación en cascada y asignación automática
+- **📋 Mapeo de propiedades**: Traducción automática UI ↔ Azure Bicep
+- **Nomenclatura**: Convenciones automáticas para todos los recursos con casos especiales para producción
 - **💰 Sistema de Costos**: 35+ regiones con multiplicadores precisos
 - **📊 Análisis de Costos**: 6 categorías de recursos con recomendaciones
 - **📁 Formatos de Export**: 4 formatos de descarga (CSV, Excel, JSON, Print)
@@ -728,4 +749,4 @@ Victor Canseco
 
 ⭐ Si este proyecto te fue útil, no olvides darle una estrella en GitHub!
 
-**Versión 1.1.0** - Actualizada con estimador de costos, precios por región y exportación de reportes.
+**Versión 2.0.0** - Actualizada con sistema de dependencias avanzado, eliminación en cascada, asignación automática de recursos, mapeo completo de propiedades SQL Database y mejoras en nomenclatura para producción.
