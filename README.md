@@ -6,6 +6,7 @@
   - [📋 Tabla de Contenidos](#-tabla-de-contenidos)
   - [📝 Descripción](#-descripción)
   - [🚀 Características](#-características)
+    - [🗺️ Vista de Arquitectura Visual](#️-vista-de-arquitectura-visual)
   - [💰 Estimador de Costos](#-estimador-de-costos)
     - [🌍 Precios por Región](#-precios-por-región)
     - [📊 Análisis de Costos](#-análisis-de-costos)
@@ -70,7 +71,15 @@ Aplicación web moderna construida con Vue.js 3 y Vuetify 3 que permite seleccio
 ![Azure](https://img.shields.io/badge/Azure-Bicep-0078D4?style=flat-square&logo=microsoft-azure)
 ![Version](https://img.shields.io/badge/Version-2.0.0-brightgreen?style=flat-square)
 
+
 ## 🚀 Características
+
+### 🗺️ Vista de Arquitectura Visual
+
+- Visualiza la arquitectura generada de tus recursos Azure en un diagrama interactivo.
+- Cada recurso se muestra como un nodo, indicando el tipo y el nombre generado (en una línea separada).
+- Las dependencias lógicas (App Service → App Service Plan, SQL Database → SQL Server) se representan con conexiones automáticas.
+- Implementado con vue-flow y modal responsive.
 
 - **Interfaz moderna**: UI intuitiva con Vuetify 3 y Material Design
 - **Configuración visual**: Selección y configuración de recursos Azure sin código
