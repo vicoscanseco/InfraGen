@@ -157,11 +157,14 @@ properties: {
 - **Recomendaciones contextuales**: Sugerencias basadas en selecciones
 - **Undo/Redo**: Historial de cambios
 
-#### **Vista de Arquitectura** 🟡 **PLANIFICADO**
-- **Diagrama visual**: Representación gráfica de la infraestructura
-- **Conexiones**: Visualizar dependencias entre recursos
-- **Export a Visio**: Generar diagramas profesionales
-- **Interactive diagram**: Editar desde la vista visual
+#### **Vista de Arquitectura** 🟢 **COMPLETADO**
+
+- **Diagrama visual interactivo**: Cada recurso Azure (App Service, SQL, Storage, etc.) se muestra como un nodo, indicando el tipo y el nombre generado (en una línea separada).
+- **Conexiones automáticas**: Las dependencias lógicas (App Service → App Service Plan, SQL Database → SQL Server) se representan con líneas entre los nodos.
+- **Layout automático y responsive**: El diagrama se organiza automáticamente y soporta zoom y desplazamiento.
+- **Modal dedicado**: La vista se muestra en un modal responsive desde la UI principal.
+- **Implementación real**: Usando vue-flow, con soporte para saltos de línea y estilos diferenciados en los nodos.
+- **Objetivo logrado**: El usuario puede entender de un vistazo la arquitectura, dependencias y compartir el diagrama visual fácilmente.
 
 ---
 
