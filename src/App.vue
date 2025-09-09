@@ -1,12 +1,22 @@
 
+
 <script setup>
+import { ref } from 'vue'
 import AzureSelector from './components/AzureSelector.vue'
+import ArchitectureView from './components/ArchitectureView.vue'
+const page = ref('main')
 </script>
 
 <template>
   <v-app>
+    <v-app-bar color="primary" dark>
+      <v-toolbar-title>InfraGen</v-toolbar-title>
+      <v-spacer />
+  <v-btn variant="text" :active="page === 'main'" @click="page = 'main'">Constructor clásico</v-btn>
+    </v-app-bar>
     <v-main class="d-flex flex-column min-height-screen">
-      <AzureSelector />
+      <AzureSelector v-if="page === 'main'" />
+      <ArchitectureView v-else />
     </v-main>
   </v-app>
 </template>

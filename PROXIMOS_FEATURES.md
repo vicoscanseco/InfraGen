@@ -182,10 +182,13 @@ properties: {
 - **Undo/Redo**: Historial de cambios
 
 #### **Vista de Arquitectura** 🟡 **PLANIFICADO**
-- **Diagrama visual**: Representación gráfica de la infraestructura
-- **Conexiones**: Visualizar dependencias entre recursos
-- **Export a Visio**: Generar diagramas profesionales
-- **Interactive diagram**: Editar desde la vista visual
+- **Diagrama visual**: Cada recurso Azure (App Service, SQL, Storage, etc.) se muestra como un nodo o tarjeta con su nombre y tipo.
+- **Conexiones**: Las dependencias (por ejemplo, un App Service conectado a un App Service Plan, o una SQL Database dentro de un SQL Server) se representan como líneas o flechas entre los nodos.
+- **Layout automático**: El diagrama se organiza automáticamente (tipo grafo/organigrama), con soporte para mover y hacer zoom.
+- **Interactividad**: Al hacer clic en un recurso, se pueden ver detalles o editarlo desde el diagrama.
+- **Exportar**: Opción para exportar el diagrama a Visio, PNG o SVG.
+- **Tecnologías sugeridas**: vue-flow, vue3-dagre, Cytoscape.js o GoJS para la visualización.
+- **Objetivo**: Que el usuario entienda de un vistazo la arquitectura, dependencias y pueda compartir el diagrama visual fácilmente.
 
 ---
 

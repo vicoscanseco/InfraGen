@@ -189,7 +189,7 @@
         <!-- Estimador de costos -->
         <CostEstimator :components="configuredComponents" :region="location" />
         
-        <!-- Botón para generar -->
+        <!-- Botones para generar y ver arquitectura -->
         <v-row class="mt-4">
           <v-col cols="12" class="text-center">
             <v-tooltip text="Genera el código Bicep para desplegar tu infraestructura en Azure. Requiere al menos un componente configurado.">
@@ -203,6 +203,22 @@
                 >
                   <v-icon left>mdi-cog</v-icon>
                   Generar Infraestructura
+                </v-btn>
+              </template>
+            </v-tooltip>
+            
+            <v-tooltip text="Muestra la vista de arquitectura de los recursos configurados.">
+              <template v-slot:activator="{ props }">
+                <v-btn
+                  v-bind="props"
+                  color="secondary"
+                  size="large"
+                  class="ml-4"
+                  :disabled="configuredComponents.length === 0"
+                  @click="showArchDialog = true"
+                >
+                  <v-icon left>mdi-graph</v-icon>
+                  Vista de Arquitectura
                 </v-btn>
               </template>
             </v-tooltip>
@@ -283,6 +299,20 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- Dialog de arquitectura -->
+    <v-dialog v-model="showArchDialog" max-width="1000px">
+      <v-card>
+        <v-card-title class="text-h6">Vista de Arquitectura</v-card-title>
+        <v-card-text style="min-height: 520px;">
+          <ArchitectureView :components="configuredComponents" />
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn color="primary" @click="showArchDialog = false">Cerrar</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
     
     <!-- Footer -->
     <v-footer class="text-center d-flex flex-column mt-8">
@@ -305,6 +335,7 @@ import CognitiveServiceConfig from './CognitiveServiceConfig.vue'
 import SQLServerConfig from './SQLServerConfig.vue'
 import MonitoringAlertsConfig from './MonitoringAlertsConfig.vue'
 import CostEstimator from './CostEstimator.vue'
+import ArchitectureView from './ArchitectureView.vue'
 
 // Mapeo de componentes
 const componentMapping = {
@@ -324,6 +355,7 @@ const selectedEnv = ref('dev')
 const appName = ref('')
 const resourceGroup = ref('')
 const location = ref('mexicocentral')
+const showArchDialog = ref(false)
 
 // Computed property para generar nombre de grupo de recursos
 const computedResourceGroupName = computed(() => {
