@@ -28,7 +28,7 @@
       - [**Análisis Avanzado** 🟡 **PLANIFICADO**](#análisis-avanzado--planificado)
     - [🎨 Mejoras de UX](#-mejoras-de-ux)
       - [**Wizard de Configuración** 🟡 **PLANIFICADO**](#wizard-de-configuración--planificado)
-      - [**Vista de Arquitectura** 🟡 **PLANIFICADO**](#vista-de-arquitectura--planificado)
+      - [**Vista de Arquitectura** � **COMPLETADO**](#vista-de-arquitectura--completado)
   - [🚀 Características Futuras (v3.0.0)](#-características-futuras-v300)
     - [🏗️ Arquitecturas Predefinidas](#️-arquitecturas-predefinidas)
       - [**Azure Well-Architected Framework** 🔴 **INVESTIGACIÓN**](#azure-well-architected-framework--investigación)
@@ -181,14 +181,13 @@ properties: {
 - **Recomendaciones contextuales**: Sugerencias basadas en selecciones
 - **Undo/Redo**: Historial de cambios
 
-#### **Vista de Arquitectura** 🟡 **PLANIFICADO**
-- **Diagrama visual**: Cada recurso Azure (App Service, SQL, Storage, etc.) se muestra como un nodo o tarjeta con su nombre y tipo.
-- **Conexiones**: Las dependencias (por ejemplo, un App Service conectado a un App Service Plan, o una SQL Database dentro de un SQL Server) se representan como líneas o flechas entre los nodos.
-- **Layout automático**: El diagrama se organiza automáticamente (tipo grafo/organigrama), con soporte para mover y hacer zoom.
-- **Interactividad**: Al hacer clic en un recurso, se pueden ver detalles o editarlo desde el diagrama.
-- **Exportar**: Opción para exportar el diagrama a Visio, PNG o SVG.
-- **Tecnologías sugeridas**: vue-flow, vue3-dagre, Cytoscape.js o GoJS para la visualización.
-- **Objetivo**: Que el usuario entienda de un vistazo la arquitectura, dependencias y pueda compartir el diagrama visual fácilmente.
+#### **Vista de Arquitectura** � **COMPLETADO**
+- **Diagrama visual interactivo**: Cada recurso Azure (App Service, SQL, Storage, etc.) se muestra como un nodo, indicando el tipo y el nombre generado (en una línea separada).
+- **Conexiones automáticas**: Las dependencias lógicas (App Service → App Service Plan, SQL Database → SQL Server) se representan con líneas entre los nodos.
+- **Layout automático y responsive**: El diagrama se organiza automáticamente y soporta zoom y desplazamiento.
+- **Modal dedicado**: La vista se muestra en un modal responsive desde la UI principal.
+- **Implementación real**: Usando vue-flow, con soporte para saltos de línea y estilos diferenciados en los nodos.
+- **Objetivo logrado**: El usuario puede entender de un vistazo la arquitectura, dependencias y compartir el diagrama visual fácilmente.
 
 ---
 
