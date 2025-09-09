@@ -283,6 +283,7 @@
             :sql-server-name="sqlServerName"
             :available-app-service-plans="availableAppServicePlans"
             :available-sql-servers="availableSqlServers"
+            :app-service-number="appServiceNumberForDialog"
             @update="updateCurrentConfig"
             @update:config="updateCurrentConfig"
             @update:model-value="updateCurrentConfig"
@@ -445,6 +446,9 @@ const currentComponent = ref(null)
 const currentConfig = ref({})
 const editingIndex = ref(-1)
 
+// Nueva ref para el número sugerido
+const appServiceNumberForDialog = ref(1)
+
 const updateCurrentConfig = (newConfig) => {
   currentConfig.value = newConfig
 }
@@ -516,23 +520,22 @@ const canAddComponent = (componentValue) => {
 // Funciones del componente
 const addComponent = (component) => {
   const validation = canAddComponent(component.value)
-  
   if (!validation.allowed) {
-    // Mostrar mensaje de error
     errorMsg.value = validation.reason
-    setTimeout(() => {
-      errorMsg.value = ''
-    }, 5000)
+    setTimeout(() => { errorMsg.value = '' }, 5000)
     return
   }
-  
-  // Limpiar mensajes anteriores
   errorMsg.value = ''
   infoMsg.value = ''
-  
   currentComponent.value = component
   currentConfig.value = {}
   editingIndex.value = -1
+  // Calcular número de App Services existentes + 1 si es AppService
+  let appServiceNumber = 1
+  if (component.value === 'AppService') {
+    appServiceNumber = configuredComponents.value.filter(c => c.value === 'AppService').length + 1
+  }
+  appServiceNumberForDialog.value = appServiceNumber
   configDialog.value = true
 }
 

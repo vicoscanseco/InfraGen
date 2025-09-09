@@ -13,11 +13,11 @@
                 v-bind="props"
                 v-model="localAppBaseName" 
                 label="Nombre Base del App Service" 
-                placeholder="Ej: myappservice" 
+                :placeholder="appServiceNumber === 1 ? 'Ej: myapp' : `Ej: myapp${appServiceNumber}`"
                 density="compact" 
                 variant="outlined"
                 :rules="[rules.required, rules.appServiceNameFormat]"
-                hint="Solo letras, números y guiones. Se agregará automáticamente '-' y el environment (excepto en producción)"
+                :hint="appServiceNumber === 1 ? 'Solo letras, números y guiones. Se agregará automáticamente el environment. Sugerido: myapp' : `Solo letras, números y guiones. Se agregará automáticamente el environment. Sugerido: myapp${appServiceNumber}`"
                 persistent-hint
                 @input="updateAppBaseName($event.target.value)"
               />
@@ -172,6 +172,10 @@ export default {
     availableAppServicePlans: {
       type: Array,
       default: () => []
+    },
+    appServiceNumber: {
+      type: Number,
+      default: 1
     }
   },
   emits: ['update', 'update:config'],
@@ -247,22 +251,17 @@ export default {
     if (this.config.name) {
       const env = this.environment || 'dev'
       let baseName = this.config.name
-      
-      // For non-production environments, remove environment suffix if present
       if (env !== 'prod') {
         const suffix = `-${env}`
         if (baseName.endsWith(suffix)) {
           baseName = baseName.replace(suffix, '')
         }
       }
-      // For production, the name is already the base name
-      
       this.localAppBaseName = baseName
     } else {
       // Set default app base name if none exists
-      this.localAppBaseName = 'myapp'
+      this.localAppBaseName = this.appServiceNumber === 1 ? 'myapp' : `myapp${this.appServiceNumber}`
     }
-    
     // Establecer automáticamente la referencia al App Service Plan si está disponible
     if (this.assignedAppServicePlan && !this.config.appServicePlan) {
       this.localConfig.appServicePlanReference = this.assignedAppServicePlan
