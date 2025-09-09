@@ -10,9 +10,7 @@ const page = ref('main')
 <template>
   <v-app>
     <v-app-bar color="primary" dark>
-      <v-toolbar-title>InfraGen</v-toolbar-title>
-      <v-spacer />
-  <v-btn variant="text" :active="page === 'main'" @click="page = 'main'">Constructor clásico</v-btn>
+      <v-toolbar-title>InfraGen v2.0</v-toolbar-title>
     </v-app-bar>
     <v-main class="d-flex flex-column min-height-screen">
       <AzureSelector v-if="page === 'main'" />

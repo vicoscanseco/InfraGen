@@ -352,6 +352,7 @@ Configuración detallada de App Services con planes de servicio y configuracione
 - Configuración de versiones específicas
 - Always On habilitado
 - HTTPS Only forzado
+- Sugerencia inteligente de nombre base: el primer App Service sugiere "myapp", los siguientes "myapp2", "myapp3", etc. El usuario puede editar el nombre base libremente.
 
 **Valores por Defecto:**
 
