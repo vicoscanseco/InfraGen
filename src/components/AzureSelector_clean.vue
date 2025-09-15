@@ -340,11 +340,8 @@ const generateBicep = () => {
       return
     }
 
-    // Configuración del scope a nivel de suscripción para crear el grupo de recursos
-    let content = 'targetScope = \'subscription\'\n\n'
-    
     // Parámetros de la infraestructura
-    content += '// Parámetros de la infraestructura\n'
+    let content = '// Parámetros de la infraestructura\n'
     content += '@description(\'Nombre de la aplicación\')\n'
     content += 'param appName string = \'' + appName.value + '\'\n\n'
     
@@ -354,9 +351,6 @@ const generateBicep = () => {
     content += '@description(\'Ubicación de los recursos\')\n'
     content += 'param location string = \'' + location.value + '\'\n\n'
     
-    content += '@description(\'Grupo de recursos donde se crearán los componentes\')\n'
-    content += 'param resourceGroupName string = \'' + resourceGroup.value + '\'\n\n'
-    
     content += '@description(\'Tags comunes para todos los recursos\')\n'
     content += 'param tags object = {\n'
     content += '  Environment: environment\n'
@@ -364,19 +358,9 @@ const generateBicep = () => {
     content += '  ManagedBy: \'©CodeLand - Bicep Generator\'\n'
     content += '}\n\n'
     
-    // Crear grupo de recursos si no existe
+    // Recursos de la infraestructura
     content += '// ============================================================================\n'
-    content += '// CREAR GRUPO DE RECURSOS SI NO EXISTE\n'
-    content += '// ============================================================================\n'
-    content += 'resource resourceGroup \'Microsoft.Resources/resourceGroups@2021-04-01\' = {\n'
-    content += '  name: resourceGroupName\n'
-    content += '  location: location\n'
-    content += '  tags: tags\n'
-    content += '}\n\n'
-    
-    // Recursos dentro del grupo de recursos
-    content += '// ============================================================================\n'
-    content += '// RECURSOS DENTRO DEL GRUPO DE RECURSOS\n'
+    content += '// RECURSOS DE LA INFRAESTRUCTURA\n'
     content += '// ============================================================================\n\n'
 
     configuredComponents.value.forEach(item => {
@@ -497,7 +481,6 @@ const generateBicep = () => {
       if (item.value === 'SQLServer') {
         content += '// SQL Server ' + cfg.name + '\n'
         content += 'resource sqlServer_' + cfg.name.replace(/[^a-zA-Z0-9]/g, '') + ' \'Microsoft.Sql/servers@2022-05-01-preview\' = {\n'
-        content += '  scope: resourceGroup\n'
         content += '  name: \'' + cfg.name + '\'\n'
         content += '  location: location\n'
         content += '  properties: {\n'
@@ -514,7 +497,6 @@ const generateBicep = () => {
       if (item.value === 'SQLDatabase') {
         content += '// SQL Database ' + cfg.name + '\n'
         content += 'resource sqlDatabase_' + cfg.name.replace(/[^a-zA-Z0-9]/g, '') + ' \'Microsoft.Sql/servers/databases@2022-05-01-preview\' = {\n'
-        content += '  scope: resourceGroup\n'
         if (cfg.sqlServer) {
           content += '  parent: sqlServer_' + cfg.sqlServer.replace(/[^a-zA-Z0-9]/g, '') + '\n'
         }

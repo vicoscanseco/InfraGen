@@ -340,9 +340,6 @@ const generateBicep = () => {
   }
 
   // Header del archivo Bicep
-  content += `targetScope = 'subscription'
-
-`;
   content += `// Variables comunes
 `;
   content += `var location = '${location.value}'
@@ -350,8 +347,6 @@ const generateBicep = () => {
   content += `var appName = '${appName.value}'
 `;
   content += `var environment = '${environment.value}'
-`;
-  content += `var resourceGroupName = '${resourceGroup.value}'
 `;
   content += `var tags = {
 `;
@@ -484,7 +479,6 @@ resource appService_${cfg.name.replace(/[^a-zA-Z0-9]/g, '')} 'Microsoft.Web/site
     if (item.value === 'SqlServer') {
       content += `// SQL Server ${cfg.name}
 resource sqlServer_${cfg.name.replace(/[^a-zA-Z0-9]/g, '')} 'Microsoft.Sql/servers@2022-05-01-preview' = {
-  scope: resourceGroup
   name: '${cfg.name}'
   location: location
   properties: {
