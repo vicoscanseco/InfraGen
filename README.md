@@ -25,7 +25,7 @@
     - [🗃️ SQL Server \& SQL Database](#️-sql-server--sql-database)
     - [⚡ Function App](#-function-app)
     - [🧠 Cognitive Services](#-cognitive-services)
-    - [📊 Monitoring \& Alerts](#-monitoring--alerts)
+    - [📊 Monitoring \& Alerts (Application Insights)](#-monitoring--alerts-application-insights)
   - [🏗️ Arquitectura del Proyecto](#️-arquitectura-del-proyecto)
   - [🛠️ Tecnologías Utilizadas](#️-tecnologías-utilizadas)
   - [📦 Instalación y Uso](#-instalación-y-uso)
@@ -48,12 +48,14 @@
   - [📝 Licencia](#-licencia)
   - [👨‍💻 Autor](#-autor)
 
-## 📝 Descripción 
+## 📝 Descripción
+
 InfraGen es una aplicación web avanzada diseñada para facilitar la creación, configuración y estimación de costos de infraestructuras en Microsoft Azure de manera visual, rápida y sin necesidad de escribir código manualmente. Su objetivo principal es permitir a desarrolladores, arquitectos y equipos de TI seleccionar, personalizar y validar recursos Azure siguiendo las mejores prácticas, generando automáticamente código Bicep listo para despliegue.
 
 La plataforma integra un sistema inteligente de validaciones y dependencias, asegurando configuraciones correctas y nomenclatura consistente para todos los recursos. Además, InfraGen ofrece un estimador de costos en tiempo real basado en precios oficiales de Azure, con análisis detallado por región y recomendaciones de optimización.
 
 Entre sus principales funcionalidades destacan:
+
 - Interfaz intuitiva basada en Vuetify 3 y Material Design.
 - Selección visual de recursos Azure (Storage, App Service, SQL, Functions, Cognitive Services, Monitoring, etc.).
 - Generación automática de código Bicep modular y optimizado.
@@ -240,8 +242,11 @@ InfraGen sigue convenciones estrictas y consistentes para garantizar nombres ún
 | **Storage Account** | `sta` | `stamyappdev` / `stamyapp` (prod) | `sta{appName}{environment}` (prod sin env) |
 | **App Service** | - | `myapp-dev` / `myapp` (prod) | `{appName}-{environment}` (prod sin env) |
 | **App Service Plan** | `-asp` | `myapp-dev-asp` / `myapp-asp` (prod) | `{appName}-{environment}-asp` (prod sin env) |
+| **Container App** | `-ca` | `myapp-webapp-dev-ca` / `myapp-webapp-ca` (prod) | `{appName}-{basename}-{environment}-ca` (prod sin env) |
+| **Container Environment** | `-cae` | `myapp-dev-cae` / `myapp-cae` (prod) | `{appName}-{environment}-cae` (prod sin env) |
 | **SQL Server** | `sqls` | `sqls-myapp-dev` / `sqls-myapp` (prod) | `sqls-{appName}-{environment}` (prod sin env) |
 | **SQL Database** | `db-` | `db-myapp-dev` / `db-myapp` (prod) | `db-{appName}-{environment}` (prod sin env) |
+| **Application Insights** | `-ain` | `myapp-webapp-dev-ain` / `myapp-webapp-ain` (prod) | `{appName}-{basename}-{environment}-ain` (prod sin env) |
 | **Function App** | `func` | `funceusmyappdev` | `func{shortLocation}{appName}{environment}` |
 | **Cognitive Service** | `cog` | `cogeusmyappdev` | `cog{shortLocation}{appName}{environment}` |
 | **Log Analytics** | `log` | `logeusmyappdev` | `log{shortLocation}{appName}{environment}` |
@@ -287,8 +292,11 @@ Resource Group:     rgeusmywebappdev
 Storage Account:    stamywebappdev
 App Service Plan:   mywebapp-dev-asp
 App Service:        mywebapp-dev
+Container App:      mywebapp-webapp-dev-ca
+Container Environment: mywebapp-dev-cae
 SQL Server:         sqls-mywebapp-dev
 SQL Database:       db-mywebapp-dev
+Application Insights: mywebapp-webapp-dev-ain
 Function App:       funceusmywebappdev
 ```
 
@@ -298,8 +306,11 @@ Resource Group:     rgeusmywebapp (sin environment)
 Storage Account:    stamywebapp (sin environment)
 App Service Plan:   mywebapp-asp (sin environment)
 App Service:        mywebapp (sin environment)
+Container App:      mywebapp-webapp-ca (sin environment)
+Container Environment: mywebapp-cae (sin environment)
 SQL Server:         sqls-mywebapp (sin environment)
 SQL Database:       db-mywebapp (sin environment)
+Application Insights: mywebapp-webapp-ain (sin environment)
 ```
 
 ## 📋 Recursos Soportados
@@ -333,6 +344,49 @@ Configuración completa de cuentas de almacenamiento con opciones de SKU, tipo d
 │ Access Tier: Cool ▼                │
 │ ☑ Enable HTTPS Traffic Only        │
 │ ☐ Allow Public Access             │
+└─────────────────────────────────────┘
+```
+
+### 🐳 Container App
+
+Configuración completa de Azure Container Apps con soporte para containers, scaling automático y variables de entorno.
+
+**Características:**
+
+- **Imagen de Container**: Soporte para Docker Hub, Azure Container Registry, y registries públicos
+- **Recursos Configurables**: CPU (0.25-2.0 vCPUs) y Memoria (0.5-4.0 Gi)
+- **Auto-scaling**: Réplicas mínimas (0-25) y máximas (1-25) con soporte para scale-to-zero
+- **Networking**: Acceso público configurable (Ingress) con soporte HTTP/HTTPS
+- **Variables de Entorno**: Interfaz dinámica para agregar/quitar variables
+- **Container Apps Environment**: Se crea automáticamente para alojar las aplicaciones
+- **Políticas de Reinicio**: Always, OnFailure, Never
+- **Nomenclatura Automática**: Sigue la convención `{appname}-{basename}-{environment}-ca`
+
+**Valores por Defecto:**
+
+- Imagen: `ubuntu:latest`
+- CPU: `0.25 vCPU`
+- Memoria: `0.5Gi`
+- Puerto: `80`
+- Min Replicas: `0` (scale-to-zero habilitado)
+- Max Replicas: `10`
+- Ingress: `Habilitado`
+- HTTPS: `Habilitado`
+
+```text
+┌─────────────────────────────────────┐
+│ Container App Configuration         │
+├─────────────────────────────────────┤
+│ Name: myapp-webapp-dev-ca          │
+│ Image: ubuntu:latest               │
+│ CPU: 0.25 vCPU ▼                   │
+│ Memory: 0.5Gi ▼                    │
+│ Port: 80                           │
+│ Min Replicas: 0                    │
+│ Max Replicas: 10                   │
+│ ☑ Public Access (Ingress)          │
+│ ☐ Allow HTTP (Insecure)            │
+│ Environment Variables: [+]         │
 └─────────────────────────────────────┘
 ```
 
@@ -493,33 +547,37 @@ Configuración de servicios de IA y Machine Learning de Azure.
 └─────────────────────────────────────┘
 ```
 
-### 📊 Monitoring & Alerts
+### 📊 Monitoring & Alerts (Application Insights)
 
-Sistema de monitoreo con Log Analytics y alertas configurables.
+Sistema de monitoreo con Application Insights y configuración de telemetría avanzada.
 
 **Características:**
 
-- Workspace de Log Analytics
-- 3 tipos de alertas (CPU, Memory, Response Time)
-- Configuración de umbrales personalizables
-- Integración automática con recursos
+- **Nomenclatura Automática**: Sigue la convención `{appname}-{basename}-{environment}-ain`
+- **Tipos de Aplicación**: Web, Mobile, Desktop (optimización de telemetría)
+- **Acceso de Red Configurable**: Control de ingesta y consultas públicas/privadas
+- **Retención de Datos**: 30-730 días configurable con slider interactivo
+- **Integración Automática**: Se conecta automáticamente con otros recursos
+- **Nombre Base Personalizable**: Campo específico para definir el propósito del monitoreo
 
 **Valores por Defecto:**
 
-- SKU: `PerGB2018`
-- Retención: `30 días`
-- Alertas: `CPU > 80%, Memory > 85%, Response > 5s`
+- Tipo: `Web Application`
+- Acceso Ingesta: `Habilitado`
+- Acceso Consultas: `Habilitado`
+- Retención: `90 días`
+- Nombre Base: `webapp`
 
 ```text
 ┌─────────────────────────────────────┐
-│ Monitoring Configuration            │
+│ Application Insights Configuration  │
 ├─────────────────────────────────────┤
-│ Workspace: logprod_eastus_MyWebApp │
-│ SKU: PerGB2018 ▼                   │
-│ Retention: 30 days                 │
-│ ☑ Enable CPU Alerts               │
-│ ☑ Enable Memory Alerts            │
-│ ☑ Enable Response Time Alerts     │
+│ Base Name: webapp                  │
+│ Full Name: myapp-webapp-dev-ain    │
+│ Type: Web Application ▼            │
+│ Ingestion Access: Enabled ▼        │
+│ Query Access: Enabled ▼            │
+│ Retention: 90 days [slider]        │
 └─────────────────────────────────────┘
 ```
 
@@ -529,15 +587,16 @@ Sistema de monitoreo con Log Analytics y alertas configurables.
 InfraGen/
 ├── src/
 │   ├── components/
-│   │   ├── AzureSelector.vue          # Componente principal con validaciones (767+ líneas)
+│   │   ├── AzureSelector.vue          # Componente principal con validaciones (1000+ líneas)
 │   │   ├── CostEstimator.vue          # Estimador de costos avanzado (550+ líneas)
+│   │   ├── ContainerAppConfig.vue     # Config Container Apps (320+ líneas)
 │   │   ├── StorageAccountConfig.vue   # Config Storage Account (160+ líneas)
 │   │   ├── AppServiceConfig.vue       # Config App Service (180+ líneas)
 │   │   ├── SqlDatabaseConfig.vue      # Config SQL Database (460+ líneas)
 │   │   ├── FunctionAppConfig.vue      # Config Function App (270+ líneas)
 │   │   ├── CognitiveServiceConfig.vue # Config Cognitive Services (140+ líneas)
 │   │   ├── SQLServerConfig.vue        # Config SQL Server (130+ líneas)
-│   │   └── MonitoringAlertsConfig.vue # Config Monitoring (120+ líneas)
+│   │   └── MonitoringAlertsConfig.vue # Config Application Insights (230+ líneas)
 │   ├── utils/
 │   │   └── azurePricing.js            # Sistema de precios Azure por región (330+ líneas)
 │   ├── data/
@@ -661,17 +720,18 @@ hasSQLServer() {
 
 ## 📊 Estadísticas del Proyecto
 
-- **Líneas de código**: ~4,500+ líneas (incluye estimador de costos y validaciones avanzadas)
-- **Componentes Vue**: 9 componentes especializados
-- **Recursos Azure**: 8 tipos completamente configurables
+- **Líneas de código**: ~5,000+ líneas (incluye Container Apps y nomenclatura automática)
+- **Componentes Vue**: 10 componentes especializados (incluye ContainerAppConfig)
+- **Recursos Azure**: 9 tipos completamente configurables (+ Container Apps)
 - **Validaciones**: 25+ patrones de validación incluido sistema de dependencias
-- **Configuraciones**: 100+ opciones únicas
+- **Configuraciones**: 120+ opciones únicas (incluye variables de entorno)
 - **🔗 Dependencias**: Sistema completo de eliminación en cascada y asignación automática
 - **📋 Mapeo de propiedades**: Traducción automática UI ↔ Azure Bicep
-- **Nomenclatura**: Convenciones automáticas para todos los recursos con casos especiales para producción
+- **🏷️ Nomenclatura**: Convenciones automáticas con nombres base personalizables
 - **💰 Sistema de Costos**: 35+ regiones con multiplicadores precisos
 - **📊 Análisis de Costos**: 6 categorías de recursos con recomendaciones
 - **📁 Formatos de Export**: 4 formatos de descarga (CSV, Excel, JSON, Print)
+- **🐳 Container Apps**: Soporte completo para aplicaciones containerizadas
 
 ## 🚀 Características Técnicas Avanzadas
 
@@ -759,4 +819,4 @@ Victor Canseco
 
 ⭐ Si este proyecto te fue útil, no olvides darle una estrella en GitHub!
 
-**Versión 2.0.0** - Actualizada con sistema de dependencias avanzado, eliminación en cascada, asignación automática de recursos, mapeo completo de propiedades SQL Database y mejoras en nomenclatura para producción.
+**Versión 2.1.0** - Actualizada con soporte para Azure Container Apps, nomenclatura automática para Application Insights con nombres base personalizables, y mejoras en la experiencia de usuario con validaciones inteligentes y configuración de variables de entorno dinámicas.

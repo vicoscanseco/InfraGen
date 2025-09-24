@@ -335,6 +335,7 @@ import SqlDatabaseConfig from './SqlDatabaseConfig.vue'
 import CognitiveServiceConfig from './CognitiveServiceConfig.vue'
 import SQLServerConfig from './SQLServerConfig.vue'
 import MonitoringAlertsConfig from './MonitoringAlertsConfig.vue'
+import ContainerAppConfig from './ContainerAppConfig.vue'
 import CostEstimator from './CostEstimator.vue'
 import ArchitectureView from './ArchitectureView.vue'
 
@@ -346,6 +347,7 @@ const componentMapping = {
   'CognitiveService': CognitiveServiceConfig,
   'SQLServer': SQLServerConfig,
   'SQLDatabase': SqlDatabaseConfig,
+  'ContainerApp': ContainerAppConfig,
   'MonitoringAlerts': MonitoringAlertsConfig
 }
 
@@ -430,6 +432,7 @@ const availableComponents = [
   { value: 'StorageAccount', label: 'Storage Account', description: 'Almacenamiento de Azure' },
   { value: 'AppServicePlan', label: 'App Service Plan', description: 'Plan de App Service' },
   { value: 'AppService', label: 'App Service', description: 'Aplicación web de Azure' },
+  { value: 'ContainerApp', label: 'Container App', description: 'Aplicación containerizada en Azure' },
   // { value: 'CognitiveService', label: 'Cognitive Services', description: 'Servicios cognitivos de Azure' },
   { value: 'SQLServer', label: 'SQL Server', description: 'Servidor de base de datos SQL' },
   { value: 'SQLDatabase', label: 'SQL Database', description: 'Base de datos SQL' },
@@ -918,6 +921,80 @@ const generateBicep = () => {
           content += '      state: \'' + (cfg.enableThreatDetection ? 'Enabled' : 'Disabled') + '\'\n'
           content += '    }\n'
         }
+        content += '  }\n'
+        content += '  tags: tags\n'
+        content += '}\n\n'
+      }
+      
+      if (item.value === 'ContainerApp') {
+        if (!cfg.name) throw new Error('ContainerApp configuration is missing a name')
+        
+        // Container Apps Environment
+        const envName = cfg.containerAppEnvironment || (appName.value + '-' + selectedEnv.value + '-cae')
+        content += '// Container Apps Environment ' + envName + '\n'
+        content += 'resource containerAppEnvironment_' + envName.replace(/[^a-zA-Z0-9]/g, '') + ' \'Microsoft.App/managedEnvironments@2023-05-01\' = {\n'
+        content += '  name: \'' + envName + '\'\n'
+        content += '  location: location\n'
+        content += '  properties: {\n'
+        content += '    zoneRedundant: false\n'
+        content += '  }\n'
+        content += '  tags: tags\n'
+        content += '}\n\n'
+        
+        // Container App
+        content += '// Container App ' + cfg.name + '\n'
+        content += 'resource containerApp_' + cfg.name.replace(/[^a-zA-Z0-9]/g, '') + ' \'Microsoft.App/containerApps@2023-05-01\' = {\n'
+        content += '  name: \'' + cfg.name + '\'\n'
+        content += '  location: location\n'
+        content += '  dependsOn: [\n'
+        content += '    containerAppEnvironment_' + envName.replace(/[^a-zA-Z0-9]/g, '') + '\n'
+        content += '  ]\n'
+        content += '  properties: {\n'
+        content += '    managedEnvironmentId: containerAppEnvironment_' + envName.replace(/[^a-zA-Z0-9]/g, '') + '.id\n'
+        content += '    configuration: {\n'
+        if (cfg.enableIngress) {
+          content += '      ingress: {\n'
+          content += '        external: true\n'
+          content += '        targetPort: ' + (cfg.targetPort || 80) + '\n'
+          content += '        allowInsecure: ' + (cfg.allowInsecure || false) + '\n'
+          content += '        traffic: [\n'
+          content += '          {\n'
+          content += '            weight: 100\n'
+          content += '            latestRevision: true\n'
+          content += '          }\n'
+          content += '        ]\n'
+          content += '      }\n'
+        }
+        content += '      secrets: []\n'
+        content += '    }\n'
+        content += '    template: {\n'
+        content += '      containers: [\n'
+        content += '        {\n'
+        content += '          name: \'' + cfg.name.toLowerCase().replace(/[^a-z0-9-]/g, '-') + '\'\n'
+        content += '          image: \'' + (cfg.containerImage || 'ubuntu:latest') + '\'\n'
+        content += '          resources: {\n'
+        content += '            cpu: ' + (cfg.cpu || '0.25') + '\n'
+        content += '            memory: \'' + (cfg.memory || '0.5Gi') + '\'\n'
+        content += '          }\n'
+        if (cfg.environmentVariables && cfg.environmentVariables.length > 0) {
+          content += '          env: [\n'
+          cfg.environmentVariables.forEach(envVar => {
+            if (envVar.name && envVar.value) {
+              content += '            {\n'
+              content += '              name: \'' + envVar.name + '\'\n'
+              content += '              value: \'' + envVar.value + '\'\n'
+              content += '            }\n'
+            }
+          })
+          content += '          ]\n'
+        }
+        content += '        }\n'
+        content += '      ]\n'
+        content += '      scale: {\n'
+        content += '        minReplicas: ' + (cfg.minReplicas || 0) + '\n'
+        content += '        maxReplicas: ' + (cfg.maxReplicas || 10) + '\n'
+        content += '      }\n'
+        content += '    }\n'
         content += '  }\n'
         content += '  tags: tags\n'
         content += '}\n\n'

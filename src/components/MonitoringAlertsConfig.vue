@@ -7,21 +7,31 @@
     <v-card-text>
       <v-row dense class="mt-3">
         <v-col cols="12" md="6">
-          <v-tooltip location="top">
+          <v-tooltip text="Define el nombre base de tu Application Insights. Se combinará automáticamente con el nombre de la app y ambiente para crear el nombre final único en Azure.">
             <template v-slot:activator="{ props }">
               <v-text-field 
                 v-bind="props"
-                v-model="localConfig.name" 
-                label="Nombre de Application Insights" 
-                placeholder="Ej: my-app-insights" 
+                v-model="localAppInsightsBaseName" 
+                label="Nombre Base de Application Insights" 
+                placeholder="Ej: webapp"
                 density="compact" 
-                variant="outlined" 
-                :rules="[rules.required]"
-                @input="updateConfig"
+                variant="outlined"
+                :rules="[rules.required, rules.appInsightsNameFormat]"
+                hint="Solo letras, números y guiones. Se agregará automáticamente appname y environment."
+                persistent-hint
+                @input="updateAppInsightsBaseName($event.target.value)"
               />
             </template>
-            <span>Nombre del recurso de Application Insights. Recopila telemetría, métricas de rendimiento, logs de aplicación y permite análisis de comportamiento de usuarios. Esencial para monitoreo en producción</span>
           </v-tooltip>
+          <v-chip 
+            v-if="computedAppInsightsName"
+            size="small" 
+            color="warning" 
+            variant="outlined" 
+            class="mt-1"
+          >
+            Nombre completo: {{ computedAppInsightsName }}
+          </v-chip>
         </v-col>
         <v-col cols="12" md="6">
           <v-tooltip location="top">
@@ -106,19 +116,44 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 
 const props = defineProps({
   config: {
     type: Object,
     default: () => ({})
+  },
+  appName: {
+    type: String,
+    default: ''
+  },
+  environment: {
+    type: String,
+    default: 'dev'
   }
 })
 
 const emit = defineEmits(['update:config', 'update'])
 
+// Base name handling
+const localAppInsightsBaseName = ref('')
+
+// Computed Application Insights name
+const computedAppInsightsName = computed(() => {
+  if (!localAppInsightsBaseName.value || !props.appName || !props.environment) return ''
+  const cleanAppName = props.appName.toLowerCase().replace(/[^a-z0-9]/g, '')
+  const cleanBaseName = localAppInsightsBaseName.value.toLowerCase().replace(/[^a-z0-9-]/g, '')
+  
+  // Para producción, no incluir environment
+  if (props.environment === 'prod') {
+    return `${cleanAppName}-${cleanBaseName}-ain`
+  } else {
+    return `${cleanAppName}-${cleanBaseName}-${props.environment}-ain`
+  }
+})
+
 const localConfig = ref({
-  name: 'my-app-insights',
+  name: '',
   applicationType: 'web',
   publicNetworkAccessForIngestion: 'Enabled',
   publicNetworkAccessForQuery: 'Enabled',
@@ -138,7 +173,18 @@ const networkAccessOptions = [
 ]
 
 const rules = {
-  required: value => !!value || 'Este campo es obligatorio'
+  required: value => !!value || 'Este campo es obligatorio',
+  appInsightsNameFormat: value => {
+    const pattern = /^[a-zA-Z0-9-]+$/
+    return pattern.test(value) || 'Solo letras, números y guiones'
+  }
+}
+
+// Update functions
+const updateAppInsightsBaseName = (value) => {
+  localAppInsightsBaseName.value = value
+  localConfig.value.name = computedAppInsightsName.value
+  updateConfig()
 }
 
 const updateConfig = () => {
@@ -146,9 +192,36 @@ const updateConfig = () => {
   emit('update', { ...localConfig.value })
 }
 
-watch(localConfig, updateConfig, { deep: true })
+// Watch for external config changes
+watch(() => props.config, (newConfig) => {
+  if (newConfig) {
+    localConfig.value = { ...localConfig.value, ...newConfig }
+  }
+}, { deep: true, immediate: true })
 
+// Watch for computed name changes
+watch(computedAppInsightsName, (newName) => {
+  if (newName) {
+    localConfig.value.name = newName
+    updateConfig()
+  }
+})
+
+// Watch for app name or environment changes
+watch([() => props.appName, () => props.environment], () => {
+  if (localAppInsightsBaseName.value) {
+    localConfig.value.name = computedAppInsightsName.value
+    updateConfig()
+  }
+}, { immediate: true })
+
+// Initialize component
 onMounted(() => {
+  // Set default base name if not provided
+  if (!localAppInsightsBaseName.value && !localConfig.value.name) {
+    localAppInsightsBaseName.value = 'webapp'
+  }
+  
   updateConfig()
 })
 </script>
