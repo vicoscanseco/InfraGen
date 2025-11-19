@@ -256,6 +256,10 @@ export default {
       // Trigger name update immediately
       this.updateConfig('name', this.computedStorageName)
     }
+
+    // Emitir la configuración completa inicial para asegurar que los defaults (como kind='StorageV2') se guarden
+    this.$emit('update', { ...this.localConfig })
+    this.$emit('update:config', { ...this.localConfig })
   },
   methods: {
     updateConfig(key, value) {

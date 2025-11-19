@@ -269,6 +269,29 @@
       </div>
     </v-card>
 
+    <!-- Comandos de despliegue -->
+    <v-card v-if="deploymentCommands" class="mx-auto my-4 pa-4" max-width="800">
+      <v-card-title class="text-h6 mb-3">
+        Guía de Despliegue (Azure CLI)
+        <v-spacer />
+        <v-tooltip text="Copia los comandos al portapapeles">
+          <template v-slot:activator="{ props }">
+            <v-btn v-bind="props" color="primary" size="small" @click="copyCommands">
+              <v-icon left>mdi-content-copy</v-icon>
+              Copiar Comandos
+            </v-btn>
+          </template>
+        </v-tooltip>
+      </v-card-title>
+      <v-divider class="mb-3" />
+      <v-alert type="info" variant="tonal" class="mb-3" density="compact">
+        Se recomienda ejecutar primero el comando <strong>what-if</strong> para previsualizar los cambios antes de desplegar.
+      </v-alert>
+      <div class="code-container">
+        <pre class="code-block"><code>{{ deploymentCommands }}</code></pre>
+      </div>
+    </v-card>
+
     <!-- Mensaje de error -->
     <v-alert v-if="errorMsg" type="error" class="mt-4">
       {{ errorMsg }}
@@ -384,6 +407,15 @@ const notificationMessage = ref('')
 const notificationColor = ref('success')
 const notificationIcon = ref('mdi-check')
 
+// Estado del componente
+const configuredComponents = ref([])
+const bicepContent = ref('')
+const deploymentCommands = ref('')
+const errorMsg = ref('')
+const infoMsg = ref('')
+const configDialog = ref(false)
+const currentComponent = ref(null)
+
 // Computed property para generar nombre de grupo de recursos
 const computedResourceGroupName = computed(() => {
   if (!appName.value || !location.value || !selectedEnv.value) return ''
@@ -408,7 +440,7 @@ watch(computedResourceGroupName, (newName) => {
 onMounted(async () => {
   try {
     // Cargar ambientes
-    const envRes = await fetch('/src/environments.json')
+    const envRes = await fetch('/environments.json')
     if (!envRes.ok) {
       throw new Error(`Error al cargar ambientes: ${envRes.status}`)
     }
@@ -427,7 +459,7 @@ onMounted(async () => {
     environments.value = envData
     
     // Cargar ubicaciones
-    const locRes = await fetch('/src/locations.json')
+    const locRes = await fetch('/locations.json')
     if (!locRes.ok) {
       throw new Error(`Error al cargar ubicaciones: ${locRes.status}`)
     }
@@ -541,13 +573,7 @@ const availableComponents = [
   { value: 'MonitoringAlerts', label: 'Application Insights', description: 'Monitoreo y telemetría' }
 ]
 
-// Estado del componente
-const configuredComponents = ref([])
-const bicepContent = ref('')
-const errorMsg = ref('')
-const infoMsg = ref('')
-const configDialog = ref(false)
-const currentComponent = ref(null)
+
 const currentConfig = ref({})
 const editingIndex = ref(-1)
 
@@ -826,7 +852,7 @@ const generateBicep = () => {
         if (!cfg.name) throw new Error('StorageAccount configuration is missing a name')
         content += '// Storage Account ' + cfg.name + '\n'
         content += 'resource storageAccount_' + cfg.name + ' \'Microsoft.Storage/storageAccounts@2022-09-01\' = {\n'
-        content += '  scope: resourceGroup\n'
+
         content += '  name: \'' + cfg.name + '\'\n'
         content += '  location: location\n'
         content += '  sku: {\n'
@@ -849,7 +875,7 @@ const generateBicep = () => {
         }
         content += '// App Service Plan ' + cfg.name + '\n'
         content += 'resource appServicePlan_' + cfg.name.replace(/[^a-zA-Z0-9]/g, '') + ' \'Microsoft.Web/serverfarms@2022-03-01\' = {\n'
-        content += '  scope: resourceGroup\n'
+
         content += '  name: \'' + cfg.name + '\'\n'
         content += '  location: location\n'
         content += '  sku: {\n'
@@ -949,12 +975,102 @@ const generateBicep = () => {
         content += '  tags: tags\n'
         content += '}\n\n'
       }
-      
-      if (item.value === 'CognitiveService') {
+
+      if (item.value === 'FunctionApp') {
+        if (!cfg.name) throw new Error('FunctionApp configuration is missing a name')
+        
+        // 1. Storage Account for Function App
+        const funcStorageName = cfg.storageAccountName || ('sta' + cfg.name.replace(/[^a-z0-9]/g, ''))
+        content += '// Storage Account for Function App ' + cfg.name + '\n'
+        content += 'resource storageAccount_' + funcStorageName + ' \'Microsoft.Storage/storageAccounts@2022-09-01\' = {\n'
+        content += '  scope: resourceGroup\n'
+        content += '  name: \'' + funcStorageName + '\'\n'
+        content += '  location: location\n'
+        content += '  sku: {\n'
+        content += '    name: \'Standard_LRS\'\n'
+        content += '  }\n'
+        content += '  kind: \'StorageV2\'\n'
+        content += '  properties: {\n'
+        content += '    supportsHttpsTrafficOnly: true\n'
+        content += '    minimumTlsVersion: \'TLS1_2\'\n'
+        content += '  }\n'
+        content += '  tags: tags\n'
+        content += '}\n\n'
+
+        // 2. App Service Plan for Function App
+        const funcPlanName = cfg.appServicePlanName || (cfg.name + '-plan')
+        content += '// App Service Plan for Function App ' + cfg.name + '\n'
+        content += 'resource appServicePlan_' + funcPlanName.replace(/[^a-zA-Z0-9]/g, '') + ' \'Microsoft.Web/serverfarms@2022-03-01\' = {\n'
+        content += '  scope: resourceGroup\n'
+        content += '  name: \'' + funcPlanName + '\'\n'
+        content += '  location: location\n'
+        content += '  sku: {\n'
+        content += '    name: \'' + (cfg.sku || 'Y1') + '\'\n'
+        content += '    tier: \'' + (cfg.hostingPlan === 'Consumption' ? 'Dynamic' : (cfg.hostingPlan === 'Premium' ? 'ElasticPremium' : 'Standard')) + '\'\n'
+        content += '  }\n'
+        content += '  properties: {\n'
+        content += '    reserved: ' + (cfg.operatingSystem === 'Linux') + '\n'
+        content += '  }\n'
+        content += '  tags: tags\n'
+        content += '}\n\n'
+
+        // 3. Function App Resource
+        content += '// Function App ' + cfg.name + '\n'
+        content += 'resource functionApp_' + cfg.name.replace(/[^a-zA-Z0-9]/g, '') + ' \'Microsoft.Web/sites@2022-03-01\' = {\n'
+        content += '  scope: resourceGroup\n'
+        content += '  name: \'' + cfg.name + '\'\n'
+        content += '  location: location\n'
+        content += '  kind: \'' + (cfg.operatingSystem === 'Linux' ? 'functionapp,linux' : 'functionapp') + '\'\n'
+        content += '  identity: {\n'
+        content += '    type: \'SystemAssigned\'\n'
+        content += '  }\n'
+        content += '  properties: {\n'
+        content += '    serverFarmId: appServicePlan_' + funcPlanName.replace(/[^a-zA-Z0-9]/g, '') + '.id\n'
+        content += '    siteConfig: {\n'
+        content += '      appSettings: [\n'
+        content += '        {\n'
+        content += '          name: \'AzureWebJobsStorage\'\n'
+        content += '          value: \'DefaultEndpointsProtocol=https;AccountName=${storageAccount_' + funcStorageName + '.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${storageAccount_' + funcStorageName + '.listKeys().keys[0].value}\'\n'
+        content += '        }\n'
+        content += '        {\n'
+        content += '          name: \'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING\'\n'
+        content += '          value: \'DefaultEndpointsProtocol=https;AccountName=${storageAccount_' + funcStorageName + '.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${storageAccount_' + funcStorageName + '.listKeys().keys[0].value}\'\n'
+        content += '        }\n'
+        content += '        {\n'
+        content += '          name: \'WEBSITE_CONTENTSHARE\'\n'
+        content += '          value: toLower(\'' + cfg.name + '\')\n'
+        content += '        }\n'
+        content += '        {\n'
+        content += '          name: \'FUNCTIONS_EXTENSION_VERSION\'\n'
+        content += '          value: \'~4\'\n'
+        content += '        }\n'
+        content += '        {\n'
+        content += '          name: \'FUNCTIONS_WORKER_RUNTIME\'\n'
+        content += '          value: \'' + (cfg.runtimeStack ? cfg.runtimeStack.split('|')[0].toLowerCase().replace('-isolated', '') : 'dotnet') + '\'\n'
+        content += '        }\n'
+        if (cfg.enableApplicationInsights) {
+             content += '        {\n'
+             content += '          name: \'APPINSIGHTS_INSTRUMENTATIONKEY\'\n'
+             content += '          value: applicationInsights_' + cfg.name.replace(/[^a-zA-Z0-9]/g, '') + '.properties.InstrumentationKey\n'
+             content += '        }\n'
+        }
+        content += '      ]\n'
+        content += '      ftpsState: \'FtpsOnly\'\n'
+        content += '      minTlsVersion: \'1.2\'\n'
+        if (cfg.operatingSystem === 'Linux') {
+             content += '      linuxFxVersion: \'' + (cfg.runtimeStack || 'DOTNET-ISOLATED|8.0') + '\'\n'
+        } else {
+             content += '      netFrameworkVersion: \'v8.0\'\n'
+        }
+        content += '    }\n'
+        content += '    httpsOnly: ' + (cfg.httpsOnly !== false) + '\n'
+        content += '  }\n'
+        content += '  tags: tags\n'
+        content += '}\n\n'
         if (!cfg.name) throw new Error('CognitiveService configuration is missing a name')
         content += '// Cognitive Service ' + cfg.name + '\n'
         content += 'resource cognitiveService_' + cfg.name.replace(/[^a-zA-Z0-9]/g, '') + ' \'Microsoft.CognitiveServices/accounts@2023-05-01\' = {\n'
-        content += '  scope: resourceGroup\n'
+
         content += '  name: \'' + cfg.name + '\'\n'
         content += '  location: location\n'
         content += '  sku: {\n'
@@ -1106,7 +1222,7 @@ const generateBicep = () => {
         if (!cfg.name) throw new Error('MonitoringAlerts configuration is missing a name')
         content += '// Application Insights ' + cfg.name + '\n'
         content += 'resource applicationInsights_' + cfg.name.replace(/[^a-zA-Z0-9]/g, '') + ' \'Microsoft.Insights/components@2020-02-02\' = {\n'
-        content += '  scope: resourceGroup\n'
+
         content += '  name: \'' + cfg.name + '\'\n'
         content += '  location: location\n'
         content += '  kind: \'web\'\n'
@@ -1121,6 +1237,19 @@ const generateBicep = () => {
     })
 
     bicepContent.value = content
+    
+    // Generar comandos de despliegue
+    let commands = '# 1. Crear grupo de recursos (si no existe)\n'
+    commands += `az group create --name ${resourceGroup.value} --location ${location.value}\n\n`
+    
+    commands += '# 2. Validar despliegue (What-If)\n'
+    commands += `az deployment group what-if --resource-group ${resourceGroup.value} --template-file infra.bicep\n\n`
+    
+    commands += '# 3. Ejecutar despliegue\n'
+    commands += `az deployment group create --resource-group ${resourceGroup.value} --template-file infra.bicep`
+    
+    deploymentCommands.value = commands
+
   } catch (error) {
     console.error('Error al generar Bicep:', error)
     errorMsg.value = 'Error al generar el código Bicep: ' + error.message
@@ -1137,9 +1266,19 @@ const downloadBicep = () => {
 
 const copyToClipboard = () => {
   navigator.clipboard.writeText(bicepContent.value).then(() => {
-    console.log('Código copiado al portapapeles')
+    showNotification('Código Bicep copiado al portapapeles', 'success', 'mdi-content-copy')
   }).catch(err => {
     console.error('Error al copiar:', err)
+    showNotification('Error al copiar al portapapeles', 'error', 'mdi-alert')
+  })
+}
+
+const copyCommands = () => {
+  navigator.clipboard.writeText(deploymentCommands.value).then(() => {
+    showNotification('Comandos copiados al portapapeles', 'success', 'mdi-content-copy')
+  }).catch(err => {
+    console.error('Error al copiar:', err)
+    showNotification('Error al copiar al portapapeles', 'error', 'mdi-alert')
   })
 }
 </script>
