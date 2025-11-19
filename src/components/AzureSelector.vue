@@ -1,7 +1,21 @@
 <template>
   <v-container class="fill-height d-flex flex-column align-center justify-center pa-2" fluid>
     <v-card class="mx-auto my-4 pa-4" max-width="800">
-      <v-card-title class="text-h5 mb-3 text-center">Generador de Infraestructura</v-card-title>
+      <v-card-title class="d-flex justify-space-between align-center">
+        <span class="text-h5 flex-grow-1 text-center pl-10">Generador de Infraestructura</span>
+        <v-tooltip text="Limpiar configuración guardada y reiniciar formulario">
+          <template v-slot:activator="{ props }">
+            <v-btn
+              v-bind="props"
+              icon="mdi-delete-restore"
+              variant="text"
+              color="error"
+              size="small"
+              @click="clearLocalStorage"
+            ></v-btn>
+          </template>
+        </v-tooltip>
+      </v-card-title>
       <v-divider class="mb-3" />
       <v-card-text>
         <!-- Campos principales en dos filas -->
@@ -315,6 +329,12 @@
       </v-card>
     </v-dialog>
     
+    <!-- Snackbar para notificaciones -->
+    <v-snackbar v-model="showAutoSaveNotification" :timeout="2000" :color="notificationColor">
+      <v-icon left>{{ notificationIcon }}</v-icon>
+      {{ notificationMessage }}
+    </v-snackbar>
+
     <!-- Footer -->
     <v-footer class="text-center d-flex flex-column mt-8">
       <div>
@@ -359,6 +379,10 @@ const appName = ref('')
 const resourceGroup = ref('')
 const location = ref('mexicocentral')
 const showArchDialog = ref(false)
+const showAutoSaveNotification = ref(false)
+const notificationMessage = ref('')
+const notificationColor = ref('success')
+const notificationIcon = ref('mdi-check')
 
 // Computed property para generar nombre de grupo de recursos
 const computedResourceGroupName = computed(() => {
@@ -421,11 +445,89 @@ onMounted(async () => {
     
     locations.value = locData
     
+
+    
+    // Cargar configuración guardada
+    loadFromLocalStorage()
+    
   } catch (error) {
     console.error('Error al cargar datos:', error)
     errorMsg.value = 'Error al cargar la configuración inicial: ' + error.message
   }
 })
+
+// Local Storage Logic
+const saveToLocalStorage = () => {
+  try {
+    const config = {
+      appName: appName.value,
+      environment: selectedEnv.value,
+      location: location.value,
+      resourceGroupName: resourceGroup.value,
+      components: configuredComponents.value,
+      timestamp: new Date().toISOString()
+    }
+    localStorage.setItem('infragen-config', JSON.stringify(config))
+    // No mostramos notificación en cada auto-save para no ser molestos
+    // Solo logueamos en consola
+    console.log('Configuration auto-saved', new Date().toLocaleTimeString())
+  } catch (error) {
+    console.error('Error saving to localStorage:', error)
+  }
+}
+
+const loadFromLocalStorage = () => {
+  try {
+    const saved = localStorage.getItem('infragen-config')
+    if (saved) {
+      const config = JSON.parse(saved)
+      
+      // Validar que la configuración tenga la estructura esperada
+      if (config.appName !== undefined) appName.value = config.appName
+      if (config.environment !== undefined) selectedEnv.value = config.environment
+      if (config.location !== undefined) location.value = config.location
+      if (config.resourceGroupName !== undefined) resourceGroup.value = config.resourceGroupName
+      if (config.components && Array.isArray(config.components)) {
+        configuredComponents.value = config.components
+      }
+      
+      showNotification('Configuración restaurada automáticamente', 'success', 'mdi-restore')
+    }
+  } catch (error) {
+    console.error('Error loading from localStorage:', error)
+    showNotification('Error al restaurar configuración', 'error', 'mdi-alert')
+  }
+}
+
+const clearLocalStorage = () => {
+  if (confirm('¿Estás seguro de que deseas borrar la configuración guardada y reiniciar el formulario?')) {
+    localStorage.removeItem('infragen-config')
+    
+    // Resetear campos
+    appName.value = ''
+    selectedEnv.value = 'dev'
+    location.value = 'mexicocentral'
+    resourceGroup.value = ''
+    configuredComponents.value = []
+    bicepContent.value = ''
+    errorMsg.value = ''
+    infoMsg.value = ''
+    
+    showNotification('Configuración eliminada', 'info', 'mdi-delete')
+  }
+}
+
+const showNotification = (msg, color = 'success', icon = 'mdi-check') => {
+  notificationMessage.value = msg
+  notificationColor.value = color
+  notificationIcon.value = icon
+  showAutoSaveNotification.value = true
+}
+
+// Watchers for auto-save
+watch([appName, selectedEnv, location, configuredComponents], () => {
+  saveToLocalStorage()
+}, { deep: true })
 
 // Componentes disponibles
 const availableComponents = [
