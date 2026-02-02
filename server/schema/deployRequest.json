@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Deploy Request",
+  "type": "object",
+  "properties": {
+    "appName": { "type": "string" },
+    "location": { "type": "string" },
+    "components": { "type": "array" },
+    "parameters": { "type": "object" }
+  },
+  "required": ["appName", "location", "components"]
+}
