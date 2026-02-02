@@ -59,6 +59,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { generateMain } from '../utils/bicepGenerator.js'
 
 const step = ref(1)
 const solutionType = ref(null)
@@ -90,7 +91,19 @@ const resumen = computed(() => {
 })
 
 function generarInfra() {
-  alert('¡Infraestructura generada! (demo)')
+  // Build a minimal components array from selectedResources
+  const components = selectedResources.value.map((r, i) => ({ type: r, config: { name: `wiz-${r}-${i}` } }))
+  const result = generateMain({ appName: 'wizard-app', location: 'eastus', components })
+
+  // Open a window to show generated Bicep for demo purposes
+  const w = window.open('', '_blank')
+  if (w) {
+    w.document.write('<pre style="white-space:pre-wrap; font-family: monospace;">' + result.mainBicep.replace(/</g, '&lt;') + '</pre>')
+    w.document.title = 'Bicep generado - InfraWizard'
+  } else {
+    alert('Se ha generado el Bicep. Revisa la consola.')
+    console.log(result.mainBicep)
+  }
 }
 </script>
 

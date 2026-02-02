@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "test": "vitest",
     "build": "vite build",
     "preview": "vite preview"
   },
@@ -16,6 +17,8 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.1",
-    "vite": "^7.1.2"
+    "vite": "^7.1.2",
+    "vitest": "^1.0.0",
+    "jsdom": "^21.1.0"
   }
 }

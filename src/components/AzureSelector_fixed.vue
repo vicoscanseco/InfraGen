@@ -317,272 +317,35 @@ const cancelConfig = () => {
 };
 
 const generateBicep = () => {
-  let content = '';
-  errorMsg.value = '';
+  try {
+    errorMsg.value = ''
 
-  if (!appName.value) {
-    errorMsg.value = 'El nombre de la aplicación es obligatorio.';
-    return;
-  }
-  if (!resourceGroup.value) {
-    errorMsg.value = 'El grupo de recursos es obligatorio.';
-    return;
-  }
-  if (!location.value) {
-    errorMsg.value = 'La ubicación es obligatoria.';
-    return;
-  }
-
-  if (configuredComponents.value.length === 0) {
-    bicepContent.value = '';
-    errorMsg.value = 'Agrega al menos un componente para generar el archivo Bicep.';
-    return;
-  }
-
-  // Header del archivo Bicep
-  content += `// Variables comunes
-`;
-  content += `var location = '${location.value}'
-`;
-  content += `var appName = '${appName.value}'
-`;
-  content += `var environment = '${environment.value}'
-`;
-  content += `var tags = {
-`;
-  content += `  Environment: environment
-`;
-  content += `  Application: appName
-`;
-  content += `}
-
-`;
-
-  // Crear resource group si no existe
-  content += `// Crear Resource Group
-`;
-  content += `resource resourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' = {
-`;
-  content += `  name: resourceGroupName
-`;
-  content += `  location: location
-`;
-  content += `  tags: tags
-`;
-  content += `}
-
-`;
-
-  // Generar cada componente
-  configuredComponents.value.forEach((item) => {
-    const cfg = item.config;
-    
-    if (item.value === 'StorageAccount') {
-      content += `// Storage Account ${cfg.name}
-resource storageAccount_${cfg.name.replace(/[^a-zA-Z0-9]/g, '')} 'Microsoft.Storage/storageAccounts@2022-09-01' = {
-  scope: resourceGroup
-  name: '${cfg.name}'
-  location: location
-  sku: {
-    name: '${cfg.sku || 'Standard_LRS'}'
-  }
-  kind: '${cfg.kind || 'StorageV2'}'
-  properties: {
-    accessTier: '${cfg.accessTier || 'Hot'}'
-    supportsHttpsTrafficOnly: ${cfg.httpsOnly !== false}
-    allowBlobPublicAccess: ${cfg.enableBlobPublicAccess === true}
-    minimumTlsVersion: 'TLS1_2'
-  }
-  tags: tags
-}
-
-`;
+    if (!appName.value || !location.value || configuredComponents.value.length === 0) {
+      errorMsg.value = 'Por favor completa todos los campos requeridos y agrega al menos un componente.'
+      return
     }
-    
-    if (item.value === 'AppServicePlan') {
-      content += `// App Service Plan ${cfg.name}
-resource appServicePlan_${cfg.name.replace(/[^a-zA-Z0-9]/g, '')} 'Microsoft.Web/serverfarms@2022-03-01' = {
-  scope: resourceGroup
-  name: '${cfg.name}'
-  location: location
-  sku: {
-    name: '${cfg.sku || 'B1'}'
-  }
-  kind: '${cfg.os === 'Windows' ? 'app' : 'linux'}'
-  properties: {
-    reserved: ${cfg.os !== 'Windows'}
-    perSiteScaling: ${cfg.perSiteScaling === true}`;
-      
-      if (cfg.zoneRedundant && cfg.sku && cfg.sku.startsWith('P')) {
-        content += `
-    zoneRedundant: ${cfg.zoneRedundant}`;
-      }
-      
-      if (cfg.maximumElasticWorkerCount && ['P1v2', 'P2v2', 'P3v2', 'P1v3', 'P2v3', 'P3v3'].includes(cfg.sku)) {
-        content += `
-    maximumElasticWorkerCount: ${cfg.maximumElasticWorkerCount}`;
-      }
-      
-      content += `
-  }
-  tags: tags
-}
 
-`;
-    }
-    
-    if (item.value === 'AppService') {
-      content += `// App Service ${cfg.name}
-resource appService_${cfg.name.replace(/[^a-zA-Z0-9]/g, '')} 'Microsoft.Web/sites@2022-03-01' = {
-  scope: resourceGroup
-  name: '${cfg.name}'
-  location: location
-  properties: {
-    serverFarmId: appServicePlan_${cfg.appServicePlan.replace(/[^a-zA-Z0-9]/g, '')}.id
-    siteConfig: {`;
-    
-      if (cfg.runtime) {
-        const [stack, version] = cfg.runtime.split('|');
-        if (stack === 'dotnetcore') {
-          content += `
-      netFrameworkVersion: 'v${version}'`;
-        } else if (stack === 'node') {
-          content += `
-      nodeVersion: '${version}'`;
-        } else if (stack === 'python') {
-          content += `
-      pythonVersion: '${version}'`;
-        } else if (stack === 'java') {
-          content += `
-      javaVersion: '${version}'`;
-        } else if (stack === 'php') {
-          content += `
-      phpVersion: '${version}'`;
-        }
-      }
-      
-      content += `
-      alwaysOn: ${cfg.alwaysOn === true}
-      httpLoggingEnabled: ${cfg.httpLogging === true}
-      requestTracingEnabled: ${cfg.requestTracing === true}
-      detailedErrorLoggingEnabled: ${cfg.detailedErrors === true}
-    }
-    httpsOnly: ${cfg.httpsOnly !== false}
-    clientAffinityEnabled: ${cfg.clientAffinity !== false}
-  }
-  tags: tags
-}
+    const result = generateMain({
+      appName: appName.value,
+      location: location.value,
+      components: configuredComponents.value,
+      parameters: { environment: selectedEnv.value }
+    })
 
-`;
-    }
-    
-    if (item.value === 'SqlServer') {
-      content += `// SQL Server ${cfg.name}
-resource sqlServer_${cfg.name.replace(/[^a-zA-Z0-9]/g, '')} 'Microsoft.Sql/servers@2022-05-01-preview' = {
-  name: '${cfg.name}'
-  location: location
-  properties: {
-    administratorLogin: '${cfg.adminUsername}'
-    administratorLoginPassword: '${cfg.adminPassword}'
-    version: '12.0'
-    minimalTlsVersion: '1.2'
-    publicNetworkAccess: '${cfg.allowAzureServices ? 'Enabled' : 'Disabled'}'
-  }
-  tags: tags
-}
+    bicepContent.value = result.mainBicep
 
-`;
-      
-      if (cfg.allowAzureServices) {
-        content += `// Firewall rule para servicios de Azure
-resource sqlFirewallAzure_${cfg.name.replace(/[^a-zA-Z0-9]/g, '')} 'Microsoft.Sql/servers/firewallRules@2022-05-01-preview' = {
-  parent: sqlServer_${cfg.name.replace(/[^a-zA-Z0-9]/g, '')}
-  name: 'AllowAllWindowsAzureIps'
-  properties: {
-    startIpAddress: '0.0.0.0'
-    endIpAddress: '0.0.0.0'
-  }
-}
+    let commands = '# 1. Crear grupo de recursos (si no existe)\n'
+    commands += `az group create --name ${resourceGroup.value} --location ${location.value}\n\n`
+    commands += '# 2. Validar despliegue (What-If)\n'
+    commands += `az deployment group what-if --resource-group ${resourceGroup.value} --template-file infra.bicep\n\n`
+    commands += '# 3. Ejecutar despliegue\n'
+    commands += `az deployment group create --resource-group ${resourceGroup.value} --template-file infra.bicep`
 
-`;
-      }
-    }
-    
-    if (item.value === 'SqlDatabase') {
-      content += `// SQL Database ${cfg.name}
-resource sqlDatabase_${cfg.name.replace(/[^a-zA-Z0-9]/g, '')} 'Microsoft.Sql/servers/databases@2022-05-01-preview' = {
-  parent: sqlServer_${cfg.sqlServer.replace(/[^a-zA-Z0-9]/g, '')}
-  name: '${cfg.name}'
-  location: location
-  sku: {
-    name: '${cfg.sku}'`;
-    
-      if (cfg.tier) content += `
-    tier: '${cfg.tier}'`;
-      if (cfg.capacity) content += `
-    capacity: ${cfg.capacity}`;
-      
-      content += `
+    deploymentCommands.value = commands
+  } catch (error) {
+    console.error('Error al generar Bicep (fixed):', error)
+    errorMsg.value = 'Error al generar el código Bicep: ' + error.message
   }
-  properties: {`;
-    
-      if (cfg.maxSizeBytes) content += `
-    maxSizeBytes: ${cfg.maxSizeBytes}`;
-      
-      content += `
-    collation: '${cfg.collation || 'SQL_Latin1_General_CP1_CI_AS'}'
-  }
-  tags: tags
-}
-
-`;
-    }
-    
-    if (item.value === 'FunctionApp') {
-      content += `// Function App ${cfg.name}
-resource functionApp_${cfg.name.replace(/[^a-zA-Z0-9]/g, '')} 'Microsoft.Web/sites@2022-03-01' = {
-  scope: resourceGroup
-  name: '${cfg.name}'
-  location: location
-  kind: 'functionapp'
-  properties: {
-    serverFarmId: appServicePlan_${cfg.appServicePlan.replace(/[^a-zA-Z0-9]/g, '')}.id
-    siteConfig: {`;
-    
-      if (cfg.runtime) {
-        const [stack, version] = cfg.runtime.split('|');
-        if (stack === 'dotnet') {
-          content += `
-      netFrameworkVersion: 'v${version}'`;
-        } else if (stack === 'node') {
-          content += `
-      nodeVersion: '~${version}'`;
-        } else if (stack === 'python') {
-          content += `
-      pythonVersion: '${version}'`;
-        } else if (stack === 'java') {
-          content += `
-      javaVersion: '${version}'`;
-        } else if (stack === 'powershell') {
-          content += `
-      powerShellVersion: '${version}'`;
-        }
-      }
-      
-      content += `
-      use32BitWorkerProcess: ${cfg.use32Bit === true}
-      ftpsState: '${cfg.ftpsState || 'FtpsOnly'}'
-    }
-    httpsOnly: ${cfg.httpsOnly !== false}
-  }
-  tags: tags
-}
-
-`;
-    }
-  });
-
-  bicepContent.value = content;
 };
 
 const downloadBicep = () => {
