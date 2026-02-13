@@ -259,6 +259,22 @@
                 </v-btn>
               </template>
             </v-tooltip>
+
+            <v-tooltip text="Abre el módulo de administración de despliegue Azure en una ventana separada.">
+              <template v-slot:activator="{ props }">
+                <v-btn
+                  v-bind="props"
+                  color="indigo"
+                  size="large"
+                  class="ml-4"
+                  :disabled="!bicepContent"
+                  @click="openAzureDeploymentWindow"
+                >
+                  <v-icon left>mdi-cloud-lock</v-icon>
+                  Administrador Azure
+                </v-btn>
+              </template>
+            </v-tooltip>
           </v-col>
         </v-row>
       </v-card-text>
@@ -314,12 +330,6 @@
         <pre class="code-block"><code>{{ deploymentCommands }}</code></pre>
       </div>
     </v-card>
-
-    <AzureDeploymentManager
-      :bicep-content="bicepContent"
-      :default-resource-group="resourceGroup"
-      :default-location="location"
-    />
 
     <!-- Mensaje de error -->
     <v-alert v-if="errorMsg" type="error" class="mt-4">
@@ -377,6 +387,83 @@
         <v-card-actions>
           <v-spacer />
           <v-btn color="primary" @click="showArchDialog = false">Cerrar</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Ventana separada para administración de despliegue Azure -->
+    <v-dialog v-model="showAzureDeploymentDialog" max-width="1100px" persistent>
+      <v-card>
+        <v-card-title class="text-h6 d-flex align-center justify-space-between">
+          <span>Acceso al Administrador de Despliegue Azure</span>
+          <v-btn icon="mdi-close" variant="text" @click="closeAzureDeploymentWindow" />
+        </v-card-title>
+        <v-divider />
+
+        <v-card-text v-if="!azureAdminAuthenticated" class="pt-4">
+          <v-alert type="info" variant="tonal" density="compact" class="mb-4">
+            Inicia sesión para acceder al módulo de despliegue.
+          </v-alert>
+
+          <v-row dense>
+            <v-col cols="12" md="6">
+              <v-text-field
+                v-model="azureAdminUsername"
+                label="Usuario"
+                density="compact"
+                variant="outlined"
+                :rules="[v => !!v || 'El usuario es obligatorio']"
+              />
+            </v-col>
+            <v-col cols="12" md="6">
+              <v-text-field
+                v-model="azureAdminPassword"
+                label="Contraseña"
+                type="password"
+                density="compact"
+                variant="outlined"
+                :rules="[v => !!v || 'La contraseña es obligatoria']"
+                @keyup.enter="authenticateAzureAdmin"
+              />
+            </v-col>
+          </v-row>
+
+          <v-alert v-if="azureAuthError" type="error" variant="tonal" density="compact" class="mb-2">
+            {{ azureAuthError }}
+          </v-alert>
+        </v-card-text>
+
+        <v-card-text v-else class="pt-4">
+          <v-alert type="success" variant="tonal" density="compact" class="mb-3">
+            Sesión iniciada como {{ azureAdminUsername }}.
+          </v-alert>
+
+          <AzureDeploymentManager
+            :bicep-content="bicepContent"
+            :default-resource-group="resourceGroup"
+            :default-location="location"
+          />
+        </v-card-text>
+
+        <v-card-actions>
+          <v-spacer />
+          <v-btn color="grey" @click="closeAzureDeploymentWindow">
+            Cerrar
+          </v-btn>
+          <v-btn
+            v-if="!azureAdminAuthenticated"
+            color="primary"
+            @click="authenticateAzureAdmin"
+          >
+            Ingresar
+          </v-btn>
+          <v-btn
+            v-else
+            color="warning"
+            @click="logoutAzureAdmin"
+          >
+            Cerrar sesión
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -443,6 +530,11 @@ const notificationMessage = ref('')
 const notificationColor = ref('success')
 const notificationIcon = ref('mdi-check')
 const bicepFileInput = ref(null)
+const showAzureDeploymentDialog = ref(false)
+const azureAdminAuthenticated = ref(false)
+const azureAdminUsername = ref('')
+const azureAdminPassword = ref('')
+const azureAuthError = ref('')
 
 // Estado del componente
 const configuredComponents = ref([])
@@ -540,6 +632,48 @@ const showNotification = (msg, color = 'success', icon = 'mdi-check') => {
   notificationColor.value = color
   notificationIcon.value = icon
   showAutoSaveNotification.value = true
+}
+
+// Credenciales locales temporales para proteger acceso al módulo.
+// Pendiente: reemplazar por autenticación real con backend/identity provider.
+const localAzureAdminCredentials = {
+  username: 'admin',
+  password: 'Admin123!'
+}
+
+const openAzureDeploymentWindow = () => {
+  azureAuthError.value = ''
+  showAzureDeploymentDialog.value = true
+}
+
+const closeAzureDeploymentWindow = () => {
+  showAzureDeploymentDialog.value = false
+  azureAuthError.value = ''
+}
+
+const authenticateAzureAdmin = () => {
+  if (!azureAdminUsername.value || !azureAdminPassword.value) {
+    azureAuthError.value = 'Captura usuario y contraseña para continuar.'
+    return
+  }
+
+  const isValidUser = azureAdminUsername.value === localAzureAdminCredentials.username
+  const isValidPassword = azureAdminPassword.value === localAzureAdminCredentials.password
+
+  if (!isValidUser || !isValidPassword) {
+    azureAuthError.value = 'Usuario o contraseña inválidos.'
+    azureAdminAuthenticated.value = false
+    return
+  }
+
+  azureAuthError.value = ''
+  azureAdminAuthenticated.value = true
+}
+
+const logoutAzureAdmin = () => {
+  azureAdminAuthenticated.value = false
+  azureAdminPassword.value = ''
+  azureAuthError.value = ''
 }
 
 const {
