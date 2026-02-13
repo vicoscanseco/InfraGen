@@ -17,18 +17,18 @@ applyTo: **
 InfraGen/
 ├── src/
 │   ├── components/
-│   │   ├── AzureSelector.vue          # Componente principal con validaciones (1000+ líneas)
-│   │   ├── CostEstimator.vue          # Estimador de costos avanzado (550+ líneas)
-│   │   ├── ContainerAppConfig.vue     # Config Container Apps (320+ líneas)
-│   │   ├── StorageAccountConfig.vue   # Config Storage Account (160+ líneas)
-│   │   ├── AppServiceConfig.vue       # Config App Service (180+ líneas)
-│   │   ├── SqlDatabaseConfig.vue      # Config SQL Database (460+ líneas)
-│   │   ├── FunctionAppConfig.vue      # Config Function App (270+ líneas)
-│   │   ├── CognitiveServiceConfig.vue # Config Cognitive Services (140+ líneas)
-│   │   ├── SQLServerConfig.vue        # Config SQL Server (130+ líneas)
-│   │   └── MonitoringAlertsConfig.vue # Config Application Insights (230+ líneas)
+│   │   ├── AzureSelector.vue          # Componente principal con validaciones
+│   │   ├── CostEstimator.vue          # Estimador de costos avanzado 
+│   │   ├── ContainerAppConfig.vue     # Config Container Apps 
+│   │   ├── StorageAccountConfig.vue   # Config Storage Account 
+│   │   ├── AppServiceConfig.vue       # Config App Service 
+│   │   ├── SqlDatabaseConfig.vue      # Config SQL Database 
+│   │   ├── FunctionAppConfig.vue      # Config Function App 
+│   │   ├── CognitiveServiceConfig.vue # Config Cognitive Services 
+│   │   ├── SQLServerConfig.vue        # Config SQL Server 
+│   │   └── MonitoringAlertsConfig.vue # Config Application Insights 
 │   ├── utils/
-│   │   └── azurePricing.js            # Sistema de precios Azure por región (330+ líneas)
+│   │   └── azurePricing.js            # Sistema de precios Azure por región 
 │   ├── data/
 │   │   ├── environments.json          # Entornos disponibles
 │   │   └── locations.json             # 35+ regiones Azure con short names
@@ -127,6 +127,11 @@ SQL Server:         sqls-mywebapp (sin environment)
 SQL Database:       db-mywebapp (sin environment)
 Application Insights: mywebapp-webapp-ain (sin environment)
 ```
+
+# Skills Requeridos
+
+- Para generar código de bicep utiliza el skill `bicep-generator`: `.github/skills/bicep-generator/SKILL.md`.
+
 
 # Referencias
 

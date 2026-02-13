@@ -101,3 +101,6 @@
 2. Aplicar lazy-loading también a configuradores poco frecuentes.
 3. Definir estrategia de chunks en `vite.config.js` (manualChunks) para reducir warning > 500 kB.
 4. Retirar o mover variantes legacy (`AzureSelector_clean.vue`, `AzureSelector_fixed.vue`) a carpeta de respaldo/documentación.
+5. Crear Modulo para cargar una configuracion ya generada anteriormente
+6. Realizar integracion con Azure para creacion de los recursos desde la herramienta
+7. 
