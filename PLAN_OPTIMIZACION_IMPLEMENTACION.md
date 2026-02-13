@@ -102,4 +102,9 @@
 3. Definir estrategia de chunks en `vite.config.js` (manualChunks) para reducir warning > 500 kB.
 4. Retirar o mover variantes legacy (`AzureSelector_clean.vue`, `AzureSelector_fixed.vue`) a carpeta de respaldo/documentación.
 5. Crear Modulo para cargar una configuración ya generada anteriormente
-6. Realizar integración con Azure para creación de los recursos desde la herramienta, preferentemente con Azure CLI o con el Azure REST API
+6. Crear un modulo de administrador que permita: 
+   1. Introducir las credenciales necesarias para Azure
+   2. Seleccionar la suscripción 
+   3. Seleccionar o crear un nuevo grupo de recursos
+   4. Realizar la prueba de what-if del archivo bicep generado, preferentemente con Azure CLI o con el Azure REST API
+   5. Realizar el deploy hacia esa suscripción del archivo bicep generado, preferentemente con Azure CLI o con el Azure REST API
