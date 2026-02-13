@@ -135,6 +135,6 @@ Application Insights: mywebapp-webapp-ain (sin environment)
 
 # Referencias
 
-- Definiciones de agentes: [.github/agents/AGENTS.md](.github/agents/AGENTS.md)
+- Definiciones de agentes: [agents/AGENTS.md](agents/AGENTS.md)
 - Vue.js Style Guide: [https://vuejs.org/v2/style-guide/](https://vuejs.org/v2/style-guide/)
 - Azure Bicep Best Practices: [https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/best-practices](https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/best-practices)  
