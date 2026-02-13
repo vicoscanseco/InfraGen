@@ -240,7 +240,8 @@
   </v-card>
 </template>
 
-<script>
+<script setup>
+import { computed } from 'vue'
 import { 
   calculateComponentCost, 
   calculateTotalCost, 
@@ -249,246 +250,225 @@ import {
   regionPriceMultipliers 
 } from '../utils/azurePricing.js'
 
-export default {
-  name: 'CostEstimator',
-  props: {
-    components: {
-      type: Array,
-      default: () => []
-    },
-    region: {
-      type: String,
-      default: 'eastus'
-    }
+const props = defineProps({
+  components: {
+    type: Array,
+    default: () => []
   },
-  computed: {
-    regionInfo() {
-      return regionPriceMultipliers[this.region] || { multiplier: 1.0, name: 'Unknown Region' }
-    },
-    
-    totalCost() {
-      if (!this.components || !Array.isArray(this.components)) {
-        return 0
+  region: {
+    type: String,
+    default: 'eastus'
+  }
+})
+
+const regionInfo = computed(() => {
+  return regionPriceMultipliers[props.region] || { multiplier: 1.0, name: 'Unknown Region' }
+})
+
+const totalCost = computed(() => {
+  if (!props.components || !Array.isArray(props.components)) {
+    return 0
+  }
+  return calculateTotalCost(props.components, props.region)
+})
+
+const costByCategory = computed(() => {
+  if (!props.components || !Array.isArray(props.components)) {
+    return []
+  }
+
+  const categories = {
+    'Compute': { name: 'Cómputo', cost: 0, color: 'primary', types: ['AppServicePlan', 'FunctionApp'] },
+    'Database': { name: 'Base de Datos', cost: 0, color: 'orange', types: ['SQLDatabase'] },
+    'Storage': { name: 'Almacenamiento', cost: 0, color: 'green', types: ['StorageAccount'] },
+    'AI': { name: 'Inteligencia Artificial', cost: 0, color: 'purple', types: ['CognitiveService'] },
+    'Monitoring': { name: 'Monitoreo', cost: 0, color: 'blue', types: ['MonitoringAlerts'] },
+    'Other': { name: 'Otros', cost: 0, color: 'grey', types: [] }
+  }
+
+  props.components.forEach(component => {
+    if (!component) return
+
+    const cost = calculateComponentCost(component, props.region)
+    const componentType = component.type || component.value
+    let categorized = false
+
+    for (const category of Object.values(categories)) {
+      if (category.types.includes(componentType)) {
+        category.cost += cost
+        categorized = true
+        break
       }
-      return calculateTotalCost(this.components, this.region)
-    },
-    
-    costByCategory() {
-      if (!this.components || !Array.isArray(this.components)) {
-        return []
-      }
-      
-      const categories = {
-        'Compute': { name: 'Cómputo', cost: 0, color: 'primary', types: ['AppServicePlan', 'FunctionApp'] },
-        'Database': { name: 'Base de Datos', cost: 0, color: 'orange', types: ['SQLDatabase'] },
-        'Storage': { name: 'Almacenamiento', cost: 0, color: 'green', types: ['StorageAccount'] },
-        'AI': { name: 'Inteligencia Artificial', cost: 0, color: 'purple', types: ['CognitiveService'] },
-        'Monitoring': { name: 'Monitoreo', cost: 0, color: 'blue', types: ['MonitoringAlerts'] },
-        'Other': { name: 'Otros', cost: 0, color: 'grey', types: [] }
-      }
-      
-      this.components.forEach(component => {
-        if (!component) return
-        
-        const cost = calculateComponentCost(component, this.region)
-        const componentType = component.type || component.value
-        let categorized = false
-        
-        for (const [key, category] of Object.entries(categories)) {
-          if (category.types.includes(componentType)) {
-            category.cost += cost
-            categorized = true
-            break
-          }
-        }
-        
-        if (!categorized) {
-          categories.Other.cost += cost
-        }
-      })
-      
-      return Object.values(categories).filter(cat => cat.cost > 0)
-    },
-    
-    costRecommendations() {
-      if (!this.components || !Array.isArray(this.components)) {
-        return []
-      }
-      
-      const recommendations = []
-      
-      // Revisar si hay App Service en tier alto
-      const expensiveAppServices = this.components.filter(c => 
-        (c.type === 'AppServicePlan' || c.value === 'AppServicePlan') && 
-        c.config && c.config.sku &&
-        ['P1V2', 'P2V2', 'P3V2', 'P1V3', 'P2V3', 'P3V3'].includes(c.config.sku)
-      )
-      if (expensiveAppServices.length > 0) {
-        recommendations.push('Considera usar tiers B1-B3 o S1-S3 para desarrollo/testing')
-      }
-      
-      // Revisar SQL Database Premium
-      const premiumDatabases = this.components.filter(c => 
-        (c.type === 'SQLDatabase' || c.value === 'SQLDatabase') && 
-        c.config && c.config.edition &&
-        ['Premium', 'BusinessCritical'].includes(c.config.edition)
-      )
-      if (premiumDatabases.length > 0) {
-        recommendations.push('Evalúa si realmente necesitas SQL Database Premium/Business Critical')
-      }
-      
-      // Revisar Storage Premium
-      const premiumStorage = this.components.filter(c => 
-        (c.type === 'StorageAccount' || c.value === 'StorageAccount') && 
-        c.config && c.config.sku && c.config.sku.includes('Premium')
-      )
-      if (premiumStorage.length > 0) {
-        recommendations.push('Premium Storage es ideal para aplicaciones de alto rendimiento')
-      }
-      
-      // Sugerir Function App Consumption si hay muchos compute resources
-      const computeResources = this.components.filter(c => 
-        ['AppServicePlan', 'FunctionApp'].includes(c.type || c.value)
-      )
-      if (computeResources.length > 1) {
-        recommendations.push('Considera Function Apps con Consumption Plan para cargas variables')
-      }
-      
-      return recommendations
     }
-  },
-  
-  methods: {
-    calculateComponentCost,
-    getPriceDescription,
-    getComponentIcon,
-    
-    // Helper method que incluye la región
-    getComponentCost(component) {
-      return calculateComponentCost(component, this.region)
+
+    if (!categorized) {
+      categories.Other.cost += cost
+    }
+  })
+
+  return Object.values(categories).filter(cat => cat.cost > 0)
+})
+
+const costRecommendations = computed(() => {
+  if (!props.components || !Array.isArray(props.components)) {
+    return []
+  }
+
+  const recommendations = []
+
+  const expensiveAppServices = props.components.filter(c =>
+    (c.type === 'AppServicePlan' || c.value === 'AppServicePlan') &&
+    c.config && c.config.sku &&
+    ['P1V2', 'P2V2', 'P3V2', 'P1V3', 'P2V3', 'P3V3'].includes(c.config.sku)
+  )
+  if (expensiveAppServices.length > 0) {
+    recommendations.push('Considera usar tiers B1-B3 o S1-S3 para desarrollo/testing')
+  }
+
+  const premiumDatabases = props.components.filter(c =>
+    (c.type === 'SQLDatabase' || c.value === 'SQLDatabase') &&
+    c.config && c.config.edition &&
+    ['Premium', 'BusinessCritical'].includes(c.config.edition)
+  )
+  if (premiumDatabases.length > 0) {
+    recommendations.push('Evalúa si realmente necesitas SQL Database Premium/Business Critical')
+  }
+
+  const premiumStorage = props.components.filter(c =>
+    (c.type === 'StorageAccount' || c.value === 'StorageAccount') &&
+    c.config && c.config.sku && c.config.sku.includes('Premium')
+  )
+  if (premiumStorage.length > 0) {
+    recommendations.push('Premium Storage es ideal para aplicaciones de alto rendimiento')
+  }
+
+  const computeResources = props.components.filter(c =>
+    ['AppServicePlan', 'FunctionApp'].includes(c.type || c.value)
+  )
+  if (computeResources.length > 1) {
+    recommendations.push('Considera Function Apps con Consumption Plan para cargas variables')
+  }
+
+  return recommendations
+})
+
+const getComponentCost = (component) => {
+  return calculateComponentCost(component, props.region)
+}
+
+const formatCost = (cost) => {
+  return cost.toFixed(2)
+}
+
+const getCostColor = (component) => {
+  const cost = getComponentCost(component)
+  if (cost === 0) return 'grey'
+  if (cost < 10) return 'green'
+  if (cost < 50) return 'orange'
+  return 'red'
+}
+
+const getComponentDisplayName = (componentValueOrType) => {
+  const type = typeof componentValueOrType === 'string' ? componentValueOrType : (componentValueOrType.type || componentValueOrType.value)
+
+  const names = {
+    'StorageAccount': 'Storage Account',
+    'AppServicePlan': 'App Service Plan',
+    'AppService': 'App Service',
+    'SQLServer': 'SQL Server',
+    'SQLDatabase': 'SQL Database',
+    'FunctionApp': 'Function App',
+    'CognitiveService': 'Cognitive Service',
+    'MonitoringAlerts': 'Application Insights'
+  }
+  return names[type] || type
+}
+
+const getCostAnalysisType = () => {
+  if (totalCost.value < 20) return 'success'
+  if (totalCost.value < 100) return 'warning'
+  return 'error'
+}
+
+const getCostAnalysisTitle = () => {
+  if (totalCost.value < 20) return 'Configuración económica'
+  if (totalCost.value < 100) return 'Configuración intermedia'
+  return 'Configuración enterprise'
+}
+
+const getCostAnalysisMessage = () => {
+  if (totalCost.value < 20) {
+    return 'Ideal para desarrollo, testing o aplicaciones pequeñas.'
+  } else if (totalCost.value < 100) {
+    return 'Adecuado para aplicaciones de producción pequeñas a medianas.'
+  }
+  return 'Configuración robusta para aplicaciones enterprise de alta demanda.'
+}
+
+// Genera un snapshot uniforme para todos los formatos de descarga.
+const generateReportData = () => {
+  return {
+    metadata: {
+      generatedAt: new Date().toISOString(),
+      region: regionInfo.value.name,
+      regionMultiplier: regionInfo.value.multiplier,
+      totalComponents: props.components.length,
+      totalCost: totalCost.value
     },
-    
-    formatCost(cost) {
-      return cost.toFixed(2)
-    },
-    
-    getCostColor(component) {
-      const cost = this.getComponentCost(component)
-      if (cost === 0) return 'grey'
-      if (cost < 10) return 'green'
-      if (cost < 50) return 'orange'
-      return 'red'
-    },
-    
-    getComponentDisplayName(componentValueOrType) {
-      // Soporte para recibir el objeto completo o solo el tipo
-      const type = typeof componentValueOrType === 'string' ? componentValueOrType : (componentValueOrType.type || componentValueOrType.value)
-      
-      const names = {
-        'StorageAccount': 'Storage Account',
-        'AppServicePlan': 'App Service Plan',
-        'AppService': 'App Service',
-        'SQLServer': 'SQL Server',
-        'SQLDatabase': 'SQL Database',
-        'FunctionApp': 'Function App',
-        'CognitiveService': 'Cognitive Service',
-        'MonitoringAlerts': 'Application Insights'
-      }
-      return names[type] || type
-    },
-    
-    getCostAnalysisType() {
-      if (this.totalCost < 20) return 'success'
-      if (this.totalCost < 100) return 'warning'
-      return 'error'
-    },
-    
-    getCostAnalysisTitle() {
-      if (this.totalCost < 20) return 'Configuración económica'
-      if (this.totalCost < 100) return 'Configuración intermedia'
-      return 'Configuración enterprise'
-    },
-    
-    getCostAnalysisMessage() {
-      if (this.totalCost < 20) {
-        return 'Ideal para desarrollo, testing o aplicaciones pequeñas.'
-      } else if (this.totalCost < 100) {
-        return 'Adecuado para aplicaciones de producción pequeñas a medianas.'
-      } else {
-        return 'Configuración robusta para aplicaciones enterprise de alta demanda.'
-      }
-    },
-    
-    // Métodos de descarga y exportación
-    generateReportData() {
-      const reportData = {
-        metadata: {
-          generatedAt: new Date().toISOString(),
-          region: this.regionInfo.name,
-          regionMultiplier: this.regionInfo.multiplier,
-          totalComponents: this.components.length,
-          totalCost: this.totalCost
-        },
-        components: this.components.map(component => ({
-          name: component.config?.name || 'Sin nombre',
-          type: this.getComponentDisplayName(component.type || component.value),
-          typeId: component.type || component.value,
-          cost: this.getComponentCost(component),
-          configuration: component.config,
-          description: getPriceDescription(component)
-        })),
-        costByCategory: this.costByCategory,
-        recommendations: this.costRecommendations
-      }
-      return reportData
-    },
-    
-    downloadCSV() {
-      const reportData = this.generateReportData()
-      let csvContent = "data:text/csv;charset=utf-8,"
-      
-      // Header del CSV
-      csvContent += "Reporte de Estimación de Costos Azure\n"
-      csvContent += `Generado el: ${new Date().toLocaleString()}\n`
-      csvContent += `Región: ${this.regionInfo.name}\n`
-      csvContent += `Multiplicador de región: ${this.regionInfo.multiplier}\n`
-      csvContent += `Total estimado: $${this.formatCost(this.totalCost)}/mes\n\n`
-      
-      // Tabla de componentes
-      csvContent += "Componente,Tipo,Costo Mensual,Descripción\n"
-      reportData.components.forEach(component => {
-        csvContent += `"${component.name}","${component.type}","$${this.formatCost(component.cost)}","${component.description}"\n`
-      })
-      
-      // Categorías
-      csvContent += "\nCostos por Categoría\n"
-      csvContent += "Categoría,Costo\n"
-      reportData.costByCategory.forEach(category => {
-        csvContent += `"${category.name}","$${this.formatCost(category.cost)}"\n`
-      })
-      
-      // Recomendaciones
-      if (reportData.recommendations.length > 0) {
-        csvContent += "\nRecomendaciones\n"
-        reportData.recommendations.forEach(rec => {
-          csvContent += `"${rec}"\n`
-        })
-      }
-      
-      const encodedUri = encodeURI(csvContent)
-      const link = document.createElement("a")
-      link.setAttribute("href", encodedUri)
-      link.setAttribute("download", `azure-cost-estimate-${new Date().toISOString().split('T')[0]}.csv`)
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-    },
-    
-    downloadExcel() {
-      const reportData = this.generateReportData()
-      
-      // Crear contenido HTML que Excel puede interpretar
-      let excelContent = `
+    components: props.components.map(component => ({
+      name: component.config?.name || 'Sin nombre',
+      type: getComponentDisplayName(component.type || component.value),
+      typeId: component.type || component.value,
+      cost: getComponentCost(component),
+      configuration: component.config,
+      description: getPriceDescription(component)
+    })),
+    costByCategory: costByCategory.value,
+    recommendations: costRecommendations.value
+  }
+}
+
+const downloadCSV = () => {
+  const reportData = generateReportData()
+  let csvContent = 'data:text/csv;charset=utf-8,'
+
+  csvContent += 'Reporte de Estimación de Costos Azure\n'
+  csvContent += `Generado el: ${new Date().toLocaleString()}\n`
+  csvContent += `Región: ${regionInfo.value.name}\n`
+  csvContent += `Multiplicador de región: ${regionInfo.value.multiplier}\n`
+  csvContent += `Total estimado: $${formatCost(totalCost.value)}/mes\n\n`
+
+  csvContent += 'Componente,Tipo,Costo Mensual,Descripción\n'
+  reportData.components.forEach(component => {
+    csvContent += `"${component.name}","${component.type}","$${formatCost(component.cost)}","${component.description}"\n`
+  })
+
+  csvContent += '\nCostos por Categoría\n'
+  csvContent += 'Categoría,Costo\n'
+  reportData.costByCategory.forEach(category => {
+    csvContent += `"${category.name}","$${formatCost(category.cost)}"\n`
+  })
+
+  if (reportData.recommendations.length > 0) {
+    csvContent += '\nRecomendaciones\n'
+    reportData.recommendations.forEach(rec => {
+      csvContent += `"${rec}"\n`
+    })
+  }
+
+  const encodedUri = encodeURI(csvContent)
+  const link = document.createElement('a')
+  link.setAttribute('href', encodedUri)
+  link.setAttribute('download', `azure-cost-estimate-${new Date().toISOString().split('T')[0]}.csv`)
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}
+
+const downloadExcel = () => {
+  const reportData = generateReportData()
+
+  let excelContent = `
         <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
         <head>
           <meta charset="UTF-8">
@@ -529,7 +509,7 @@ export default {
             </tr>
             <tr>
               <td><strong>Total:</strong></td>
-              <td colspan="3" class="total">$${this.formatCost(reportData.metadata.totalCost)}/mes</td>
+              <td colspan="3" class="total">$${formatCost(reportData.metadata.totalCost)}/mes</td>
             </tr>
             <tr><td colspan="4"></td></tr>
             <tr class="header">
@@ -545,7 +525,7 @@ export default {
           <tr>
             <td>${component.name}</td>
             <td>${component.type}</td>
-            <td class="number">$${this.formatCost(component.cost)}</td>
+            <td class="number">$${formatCost(component.cost)}</td>
             <td>${component.description}</td>
           </tr>
         `
@@ -564,7 +544,7 @@ export default {
         excelContent += `
           <tr>
             <td colspan="2">${category.name}</td>
-            <td class="number">$${this.formatCost(category.cost)}</td>
+            <td class="number">$${formatCost(category.cost)}</td>
             <td class="number">${((category.cost / reportData.metadata.totalCost) * 100).toFixed(1)}%</td>
           </tr>
         `
@@ -593,35 +573,35 @@ export default {
       })
       const url = URL.createObjectURL(blob)
       
-      const link = document.createElement("a")
+      const link = document.createElement('a')
       link.href = url
       link.download = `azure-cost-estimate-${new Date().toISOString().split('T')[0]}.xls`
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
       URL.revokeObjectURL(url)
-    },
-    
-    downloadJSON() {
-      const reportData = this.generateReportData()
-      const jsonString = JSON.stringify(reportData, null, 2)
-      const blob = new Blob([jsonString], { type: 'application/json' })
-      const url = URL.createObjectURL(blob)
-      
-      const link = document.createElement("a")
-      link.href = url
-      link.download = `azure-cost-estimate-${new Date().toISOString().split('T')[0]}.json`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      URL.revokeObjectURL(url)
-    },
-    
-    printReport() {
-      const reportData = this.generateReportData()
-      
-      const printWindow = window.open('', '_blank')
-      printWindow.document.write(`
+}
+
+const downloadJSON = () => {
+  const reportData = generateReportData()
+  const jsonString = JSON.stringify(reportData, null, 2)
+  const blob = new Blob([jsonString], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `azure-cost-estimate-${new Date().toISOString().split('T')[0]}.json`
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
+
+const printReport = () => {
+  const reportData = generateReportData()
+
+  const printWindow = window.open('', '_blank')
+  printWindow.document.write(`
         <!DOCTYPE html>
         <html>
         <head>
@@ -647,7 +627,7 @@ export default {
             <p><strong>Fecha de generación:</strong> ${new Date().toLocaleString()}</p>
             <p><strong>Región:</strong> ${reportData.metadata.region}</p>
             <p><strong>Multiplicador de región:</strong> ${reportData.metadata.regionMultiplier}</p>
-            <p class="total"><strong>Total estimado:</strong> $${this.formatCost(reportData.metadata.totalCost)}/mes</p>
+            <p class="total"><strong>Total estimado:</strong> $${formatCost(reportData.metadata.totalCost)}/mes</p>
           </div>
           
           <h2>📋 Componentes Configurados</h2>
@@ -665,7 +645,7 @@ export default {
                 <tr>
                   <td>${component.name}</td>
                   <td>${component.type}</td>
-                  <td>$${this.formatCost(component.cost)}</td>
+                  <td>$${formatCost(component.cost)}</td>
                   <td>${component.description}</td>
                 </tr>
               `).join('')}
@@ -685,7 +665,7 @@ export default {
               ${reportData.costByCategory.map(category => `
                 <tr>
                   <td>${category.name}</td>
-                  <td>$${this.formatCost(category.cost)}</td>
+                  <td>$${formatCost(category.cost)}</td>
                   <td>${((category.cost / reportData.metadata.totalCost) * 100).toFixed(1)}%</td>
                 </tr>
               `).join('')}
@@ -708,10 +688,8 @@ export default {
         </body>
         </html>
       `)
-      printWindow.document.close()
-      printWindow.print()
-    }
-  }
+  printWindow.document.close()
+  printWindow.print()
 }
 </script>
 
