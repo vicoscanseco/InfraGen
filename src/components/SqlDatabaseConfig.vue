@@ -266,7 +266,9 @@
   </v-card>
 </template>
 
-<script>
+<script setup>
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+
 const editionOptions = [
   { label: 'Basic (Desarrollo/Testing)', value: 'Basic' },
   { label: 'Standard (Aplicaciones Generales)', value: 'Standard' },
@@ -317,241 +319,211 @@ const collationOptions = [
   { label: 'SQL_Latin1_General_CP1_CS_AS (Case Sensitive)', value: 'SQL_Latin1_General_CP1_CS_AS' }
 ]
 
-export default {
-  name: 'SqlDatabaseConfig',
-  props: {
-    config: {
-      type: Object,
-      required: true
-    },
-    environment: {
-      type: String,
-      required: true,
-      default: 'dev'
-    },
-    sqlServerName: {
-      type: String,
-      default: ''
-    },
-    availableSqlServers: {
-      type: Array,
-      default: () => []
-    }
+const props = defineProps({
+  config: {
+    type: Object,
+    required: true
   },
-  emits: ['update:config', 'update:model-value'],
-  data() {
-    return {
-      localDatabaseBaseName: 'mydb',
-      localConfig: {
-        adminUsername: 'sqladmin',
-        adminPassword: 'P@ssw0rd123!',
-        edition: 'Basic',
-        serviceObjective: 'Basic',
-        collation: 'SQL_Latin1_General_CP1_CI_AS',
-        enableFirewallRules: true,
-        enableThreatDetection: false,
-        allowedIpRanges: '0.0.0.0-0.0.0.0',
-        maxSizeBytes: null,
-        readScale: 'Disabled',
-        zoneRedundant: false,
-        capacity: null,
-        ...this.config
-      }
-    }
+  environment: {
+    type: String,
+    required: true,
+    default: 'dev'
   },
-  computed: {
-    computedServerName() {
-      // Usar el nombre del SQL Server que viene del componente padre
-      return this.sqlServerName || ''
-    },
-    computedDatabaseName() {
-      const env = this.environment || 'dev'
-      if (env === 'prod') {
-        return this.localDatabaseBaseName ? `db-${this.localDatabaseBaseName}` : ''
-      }
-      return this.localDatabaseBaseName ? `db-${this.localDatabaseBaseName}-${env}` : ''
-    },
-    editionOptions() {
-      return editionOptions
-    },
-    currentServiceObjectiveOptions() {
-      return serviceObjectiveOptions[this.localConfig.edition] || serviceObjectiveOptions.Basic
-    },
-    collationOptions() {
-      return collationOptions
-    },
-    rules() {
-      return {
-        required: value => !!value || 'Este campo es obligatorio',
-        databaseNameFormat: value => {
-          if (!value) return true
-          const regex = /^[a-zA-Z0-9_-]+$/
-          return regex.test(value) || 'Solo letras, números, guiones y guiones bajos'
-        },
-        serverNameFormat: value => {
-          if (!value) return true
-          const regex = /^[a-z0-9-]+$/
-          return regex.test(value) || 'Solo letras minúsculas, números y guiones'
-        },
-        adminUsernameFormat: value => {
-          if (!value) return true
-          const forbidden = ['admin', 'administrator', 'sa', 'root', 'dbmanager', 'loginmanager', 'dbo', 'guest', 'public']
-          if (forbidden.includes(value.toLowerCase())) {
-            return 'No se permiten nombres reservados como admin, administrator, sa, etc.'
-          }
-          const regex = /^[a-zA-Z][a-zA-Z0-9_]{0,127}$/
-          return regex.test(value) || 'Debe empezar con letra, solo letras, números y guión bajo'
-        },
-        passwordFormat: value => {
-          if (!value) return true
-          if (value.length < 8) return 'Mínimo 8 caracteres'
-          if (!/(?=.*[a-z])/.test(value)) return 'Debe contener al menos una letra minúscula'
-          if (!/(?=.*[A-Z])/.test(value)) return 'Debe contener al menos una letra mayúscula'
-          if (!/(?=.*\d)/.test(value)) return 'Debe contener al menos un número'
-          if (!/(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])/.test(value)) return 'Debe contener al menos un carácter especial (!@#$%^&*()_+-=[]{}|;:,.<>?)'
-          return true
-        }
-      }
-    }
+  sqlServerName: {
+    type: String,
+    default: ''
   },
-  watch: {
-    sqlServerName: {
-      immediate: true,
-      handler(newValue) {
-        if (newValue) {
-          this.updateConfig('sqlServer', newValue)
-          this.updateConfig('serverName', newValue)
-        }
-      }
-    },
-    localDatabaseBaseName(newValue) {
-      if (newValue) {
-        this.updateConfig('databaseName', this.computedDatabaseName)
-        this.updateConfig('name', this.computedDatabaseName) // Para generateBicep
-      }
-    },
-    config: {
-      handler(newConfig) {
-        // Solo actualizar si hay cambios reales para evitar bucles
-        const hasChanges = Object.keys(newConfig).some(key => 
-          this.localConfig[key] !== newConfig[key]
-        )
-        if (hasChanges) {
-          this.localConfig = {
-            adminUsername: 'sqladmin',
-            adminPassword: 'P@ssw0rd123!',
-            edition: 'Basic',
-            serviceObjective: 'Basic',
-            collation: 'SQL_Latin1_General_CP1_CI_AS',
-            enableFirewallRules: true,
-            enableThreatDetection: false,
-            allowedIpRanges: '0.0.0.0-0.0.0.0',
-            ...newConfig
-          }
-        }
-      },
-      deep: true,
-      immediate: true
-    }
+  availableSqlServers: {
+    type: Array,
+    default: () => []
+  }
+})
+
+const emit = defineEmits(['update:config', 'update:model-value', 'update'])
+
+const localDatabaseBaseName = ref('mydb')
+
+const localConfig = reactive({
+  adminUsername: 'sqladmin',
+  adminPassword: 'P@ssw0rd123!',
+  edition: 'Basic',
+  serviceObjective: 'Basic',
+  collation: 'SQL_Latin1_General_CP1_CI_AS',
+  enableFirewallRules: true,
+  enableThreatDetection: false,
+  allowedIpRanges: '0.0.0.0-0.0.0.0',
+  maxSizeBytes: null,
+  readScale: 'Disabled',
+  zoneRedundant: false,
+  capacity: null,
+  ...props.config
+})
+
+// Usa el SQL Server configurado en el componente padre.
+const computedServerName = computed(() => props.sqlServerName || '')
+
+const computedDatabaseName = computed(() => {
+  const env = props.environment || 'dev'
+  if (env === 'prod') {
+    return localDatabaseBaseName.value ? `db-${localDatabaseBaseName.value}` : ''
+  }
+  return localDatabaseBaseName.value ? `db-${localDatabaseBaseName.value}-${env}` : ''
+})
+
+const currentServiceObjectiveOptions = computed(() => {
+  return serviceObjectiveOptions[localConfig.edition] || serviceObjectiveOptions.Basic
+})
+
+const rules = {
+  required: value => !!value || 'Este campo es obligatorio',
+  databaseNameFormat: value => {
+    if (!value) return true
+    const regex = /^[a-zA-Z0-9_-]+$/
+    return regex.test(value) || 'Solo letras, números, guiones y guiones bajos'
   },
-  mounted() {
-    console.log('SqlDatabaseConfig mounted - about to initialize')
-    
-    // Forzar inicialización inmediata de nombres
-    setTimeout(() => {
-      // Initialize localDatabaseBaseName from existing databaseName
-      if (this.config.databaseName) {
-        const env = this.environment || 'dev'
-        const prefix = 'db-'
-        
-        let baseName = this.config.databaseName
-        
-        // Remove db prefix if present
-        if (baseName.startsWith(prefix)) {
-          baseName = baseName.slice(prefix.length)
-        }
-        
-        // For non-production environments, remove environment suffix if present
-        if (env !== 'prod') {
-          const fullSuffix = `-${env}`
-          if (baseName.endsWith(fullSuffix)) {
-            baseName = baseName.slice(0, -fullSuffix.length)
-          }
-        }
-        // For production, the name after removing 'db-' is already the base name
-        
-        this.localDatabaseBaseName = baseName
-      }
-      
-      // Asegurar que los nombres se establezcan
-      this.updateConfig('name', this.computedDatabaseName)
-      this.updateConfig('sqlServer', this.computedServerName)
-      this.updateConfig('databaseName', this.computedDatabaseName)
-      this.updateConfig('serverName', this.computedServerName)
-      this.updateConfig('collation', this.localConfig.collation)
-      this.updateConfig('enableThreatDetection', this.localConfig.enableThreatDetection)
-      
-      // Forzar emisión de la configuración completa inicial
-      const fullConfig = {
-        ...this.localConfig,
-        name: this.computedDatabaseName,
-        sqlServer: this.computedServerName,
-        databaseName: this.computedDatabaseName,
-        serverName: this.computedServerName,
-        // Mapear las propiedades del componente a las propiedades de Azure Bicep
-        sku: this.localConfig.serviceObjective || 'Basic', // serviceObjective -> sku
-        tier: this.localConfig.edition || 'Basic'          // edition -> tier
-      }
-      
-      this.$emit('update:config', fullConfig)
-      this.$emit('update:model-value', fullConfig)
-      this.$emit('update', fullConfig)
-    }, 100)
+  serverNameFormat: value => {
+    if (!value) return true
+    const regex = /^[a-z0-9-]+$/
+    return regex.test(value) || 'Solo letras minúsculas, números y guiones'
   },
-  methods: {
-    updateConfig(key, value) {
-      // Emitir la configuración completa con el nuevo valor
-      const updatedConfig = { 
-        ...this.localConfig, 
-        [key]: value,
-        // Asegurar que siempre se incluyan los nombres
-        name: this.computedDatabaseName,
-        sqlServer: this.computedServerName,
-        databaseName: this.computedDatabaseName,
-        serverName: this.computedServerName,
-        // Mapear las propiedades del componente a las propiedades de Azure Bicep
-        sku: this.localConfig.serviceObjective || 'Basic', // serviceObjective -> sku
-        tier: this.localConfig.edition || 'Basic'          // edition -> tier
-      }
-      this.$emit('update:config', updatedConfig)
-      this.$emit('update:model-value', updatedConfig)
-    },
-    updateConfigField(key, value) {
-      // Actualizar localConfig directamente y emitir cambios
-      this.localConfig[key] = value
-      
-      // Manejar lógica especial para edition
-      if (key === 'edition') {
-        const firstOption = this.currentServiceObjectiveOptions[0]?.value || 'Basic'
-        this.localConfig.serviceObjective = firstOption
-        this.updateConfig('serviceObjective', firstOption)
-      }
-      
-      this.updateConfig(key, value)
-    },
-    updateDatabaseBaseName(value) {
-      this.localDatabaseBaseName = value
-    },
-    updateEdition(value) {
-      // Reset service objective when edition changes
-      const firstOption = this.currentServiceObjectiveOptions[0]?.value || ''
-      this.localConfig.edition = value
-      this.localConfig.serviceObjective = firstOption
-      this.updateConfig('edition', value)
-      this.updateConfig('serviceObjective', firstOption)
+  adminUsernameFormat: value => {
+    if (!value) return true
+    const forbidden = ['admin', 'administrator', 'sa', 'root', 'dbmanager', 'loginmanager', 'dbo', 'guest', 'public']
+    if (forbidden.includes(value.toLowerCase())) {
+      return 'No se permiten nombres reservados como admin, administrator, sa, etc.'
     }
+    const regex = /^[a-zA-Z][a-zA-Z0-9_]{0,127}$/
+    return regex.test(value) || 'Debe empezar con letra, solo letras, números y guión bajo'
+  },
+  passwordFormat: value => {
+    if (!value) return true
+    if (value.length < 8) return 'Mínimo 8 caracteres'
+    if (!/(?=.*[a-z])/.test(value)) return 'Debe contener al menos una letra minúscula'
+    if (!/(?=.*[A-Z])/.test(value)) return 'Debe contener al menos una letra mayúscula'
+    if (!/(?=.*\d)/.test(value)) return 'Debe contener al menos un número'
+    if (!/(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])/.test(value)) return 'Debe contener al menos un carácter especial (!@#$%^&*()_+-=[]{}|;:,.<>?)'
+    return true
   }
 }
+
+// Emite la configuración completa con el mapeo requerido por Bicep.
+const updateConfig = (key, value) => {
+  const updatedConfig = {
+    ...localConfig,
+    [key]: value,
+    name: computedDatabaseName.value,
+    sqlServer: computedServerName.value,
+    databaseName: computedDatabaseName.value,
+    serverName: computedServerName.value,
+    sku: localConfig.serviceObjective || 'Basic',
+    tier: localConfig.edition || 'Basic'
+  }
+
+  emit('update:config', updatedConfig)
+  emit('update:model-value', updatedConfig)
+}
+
+const updateConfigField = (key, value) => {
+  localConfig[key] = value
+
+  if (key === 'edition') {
+    const firstOption = currentServiceObjectiveOptions.value[0]?.value || 'Basic'
+    localConfig.serviceObjective = firstOption
+    updateConfig('serviceObjective', firstOption)
+  }
+
+  updateConfig(key, value)
+}
+
+const updateDatabaseBaseName = (value) => {
+  localDatabaseBaseName.value = value
+}
+
+const updateEdition = (value) => {
+  const firstOption = currentServiceObjectiveOptions.value[0]?.value || ''
+  localConfig.edition = value
+  localConfig.serviceObjective = firstOption
+  updateConfig('edition', value)
+  updateConfig('serviceObjective', firstOption)
+}
+
+watch(() => props.sqlServerName, (newValue) => {
+  if (newValue) {
+    updateConfig('sqlServer', newValue)
+    updateConfig('serverName', newValue)
+  }
+}, { immediate: true })
+
+watch(localDatabaseBaseName, (newValue) => {
+  if (newValue) {
+    updateConfig('databaseName', computedDatabaseName.value)
+    updateConfig('name', computedDatabaseName.value)
+  }
+})
+
+watch(() => props.config, (newConfig) => {
+  const hasChanges = Object.keys(newConfig).some((key) => localConfig[key] !== newConfig[key])
+  if (hasChanges) {
+    Object.assign(localConfig, {
+      adminUsername: 'sqladmin',
+      adminPassword: 'P@ssw0rd123!',
+      edition: 'Basic',
+      serviceObjective: 'Basic',
+      collation: 'SQL_Latin1_General_CP1_CI_AS',
+      enableFirewallRules: true,
+      enableThreatDetection: false,
+      allowedIpRanges: '0.0.0.0-0.0.0.0',
+      ...newConfig
+    })
+  }
+}, { deep: true, immediate: true })
+
+onMounted(() => {
+  // Forzar inicialización inmediata de nombres
+  setTimeout(() => {
+    if (props.config.databaseName) {
+      const env = props.environment || 'dev'
+      const prefix = 'db-'
+      let baseName = props.config.databaseName
+
+      if (baseName.startsWith(prefix)) {
+        baseName = baseName.slice(prefix.length)
+      }
+
+      if (env !== 'prod') {
+        const fullSuffix = `-${env}`
+        if (baseName.endsWith(fullSuffix)) {
+          baseName = baseName.slice(0, -fullSuffix.length)
+        }
+      }
+
+      localDatabaseBaseName.value = baseName
+    }
+
+    updateConfig('name', computedDatabaseName.value)
+    updateConfig('sqlServer', computedServerName.value)
+    updateConfig('databaseName', computedDatabaseName.value)
+    updateConfig('serverName', computedServerName.value)
+    updateConfig('collation', localConfig.collation)
+    updateConfig('enableThreatDetection', localConfig.enableThreatDetection)
+
+    const fullConfig = {
+      ...localConfig,
+      name: computedDatabaseName.value,
+      sqlServer: computedServerName.value,
+      databaseName: computedDatabaseName.value,
+      serverName: computedServerName.value,
+      sku: localConfig.serviceObjective || 'Basic',
+      tier: localConfig.edition || 'Basic'
+    }
+
+    emit('update:config', fullConfig)
+    emit('update:model-value', fullConfig)
+    emit('update', fullConfig)
+  }, 100)
+})
+
+defineExpose({ updateEdition })
 </script>
 
 <style scoped>
