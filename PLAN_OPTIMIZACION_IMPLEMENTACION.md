@@ -76,6 +76,13 @@
 - Se dejó registro en `LEGACY_COMPONENTES.md`.
 - Se mantiene `AzureSelector.vue` como selector canónico.
 
+### 2.9 Importación de configuración desde Bicep (Completado)
+
+- Se creó el parser `src/utils/bicepImportParser.js` para interpretar Bicep generado por InfraGen.
+- Se integró el botón **Importar Bicep** en `AzureSelector.vue`.
+- Al importar, se reconstruyen campos base y componentes editables para continuar trabajando.
+- Validación posterior: `npm run build` y `npm run test:pricing` en verde.
+
 ## Archivos modificados
 
 - `src/components/AzureSelector.vue`
@@ -118,9 +125,8 @@
 
 ## Próximos pasos sugeridos
 
-1. Crear Modulo para cargar una configuración ya generada anteriormente
-2. Crear un modulo de administrador para introducir credenciales necesarias de Azure
-3. Permitir seleccionar la suscripción desde el modulo de administrador
-4. Permitir seleccionar o crear un nuevo grupo de recursos desde el modulo de administrador
-5. Realizar la prueba de what-if del archivo bicep generado, preferentemente con Azure CLI o con Azure REST API
-6. Realizar el deploy hacia esa suscripción del archivo bicep generado, preferentemente con Azure CLI o con Azure REST API
+1. Crear un modulo de administrador para introducir credenciales necesarias de Azure
+2. Permitir seleccionar la suscripción desde el modulo de administrador
+3. Permitir seleccionar o crear un nuevo grupo de recursos desde el modulo de administrador
+4. Realizar la prueba de what-if del archivo bicep generado, preferentemente con Azure CLI o con Azure REST API
+5. Realizar el deploy hacia esa suscripción del archivo bicep generado, preferentemente con Azure CLI o con Azure REST API

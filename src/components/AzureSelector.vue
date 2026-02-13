@@ -206,6 +206,29 @@
         <!-- Botones para generar y ver arquitectura -->
         <v-row class="mt-4">
           <v-col cols="12" class="text-center">
+            <input
+              ref="bicepFileInput"
+              type="file"
+              accept=".bicep,.txt"
+              class="d-none"
+              @change="handleBicepImport"
+            >
+
+            <v-tooltip text="Importa un archivo Bicep generado por InfraGen para reconstruir la configuración editable.">
+              <template v-slot:activator="{ props }">
+                <v-btn
+                  v-bind="props"
+                  color="info"
+                  size="large"
+                  class="me-4"
+                  @click="openBicepImporter"
+                >
+                  <v-icon left>mdi-file-import</v-icon>
+                  Importar Bicep
+                </v-btn>
+              </template>
+            </v-tooltip>
+
             <v-tooltip text="Genera el código Bicep para desplegar tu infraestructura en Azure. Requiere al menos un componente configurado.">
               <template v-slot:activator="{ props }">
                 <v-btn
@@ -373,6 +396,7 @@
 import { ref, computed, onMounted, watch, defineAsyncComponent } from 'vue'
 import CostEstimator from './CostEstimator.vue'
 import { useInfragenConfigPersistence } from '../utils/configPersistence'
+import { parseInfragenBicep } from '../utils/bicepImportParser'
 
 // Cargar la vista de arquitectura bajo demanda para reducir el bundle inicial.
 const ArchitectureView = defineAsyncComponent(() => import('./ArchitectureView.vue'))
@@ -411,6 +435,7 @@ const showAutoSaveNotification = ref(false)
 const notificationMessage = ref('')
 const notificationColor = ref('success')
 const notificationIcon = ref('mdi-check')
+const bicepFileInput = ref(null)
 
 // Estado del componente
 const configuredComponents = ref([])
@@ -1243,6 +1268,77 @@ const copyCommands = () => {
     console.error('Error al copiar:', err)
     showNotification('Error al copiar al portapapeles', 'error', 'mdi-alert')
   })
+}
+
+const buildDeploymentCommands = (groupName, deployLocation) => {
+  if (!groupName || !deployLocation) return ''
+
+  let commands = '# 1. Crear grupo de recursos (si no existe)\n'
+  commands += `az group create --name ${groupName} --location ${deployLocation}\n\n`
+  commands += '# 2. Validar despliegue (What-If)\n'
+  commands += `az deployment group what-if --resource-group ${groupName} --template-file infra.bicep\n\n`
+  commands += '# 3. Ejecutar despliegue\n'
+  commands += `az deployment group create --resource-group ${groupName} --template-file infra.bicep`
+
+  return commands
+}
+
+const openBicepImporter = () => {
+  bicepFileInput.value?.click()
+}
+
+const toConfiguredComponents = (components) => {
+  return components.map(component => {
+    const metadata = availableComponents.find(item => item.value === component.value)
+
+    return {
+      value: component.value,
+      label: metadata?.label || component.value,
+      description: metadata?.description || '',
+      config: component.config || {}
+    }
+  })
+}
+
+const handleBicepImport = async (event) => {
+  try {
+    errorMsg.value = ''
+    infoMsg.value = ''
+
+    const file = event.target?.files?.[0]
+    if (!file) return
+
+    const bicepSource = await file.text()
+    const imported = parseInfragenBicep(bicepSource)
+
+    appName.value = imported.appName || ''
+    selectedEnv.value = imported.environment || 'dev'
+    location.value = imported.location || location.value
+    configuredComponents.value = toConfiguredComponents(imported.components)
+    bicepContent.value = bicepSource
+
+    if (imported.resourceGroupName) {
+      resourceGroup.value = imported.resourceGroupName
+    }
+
+    deploymentCommands.value = buildDeploymentCommands(
+      imported.resourceGroupName || resourceGroup.value,
+      imported.location || location.value
+    )
+
+    showNotification(
+      `Configuración importada desde Bicep (${configuredComponents.value.length} componentes).`,
+      'success',
+      'mdi-file-check'
+    )
+  } catch (error) {
+    console.error('Error al importar Bicep:', error)
+    errorMsg.value = `No se pudo importar el archivo Bicep: ${error.message}`
+  } finally {
+    if (event.target) {
+      event.target.value = ''
+    }
+  }
 }
 </script>
 
