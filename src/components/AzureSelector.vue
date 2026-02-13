@@ -315,6 +315,12 @@
       </div>
     </v-card>
 
+    <AzureDeploymentManager
+      :bicep-content="bicepContent"
+      :default-resource-group="resourceGroup"
+      :default-location="location"
+    />
+
     <!-- Mensaje de error -->
     <v-alert v-if="errorMsg" type="error" class="mt-4">
       {{ errorMsg }}
@@ -395,6 +401,7 @@
 <script setup>
 import { ref, computed, onMounted, watch, defineAsyncComponent } from 'vue'
 import CostEstimator from './CostEstimator.vue'
+import AzureDeploymentManager from './AzureDeploymentManager.vue'
 import { useInfragenConfigPersistence } from '../utils/configPersistence'
 import { parseInfragenBicep } from '../utils/bicepImportParser'
 

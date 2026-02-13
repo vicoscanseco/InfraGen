@@ -83,6 +83,18 @@
 - Al importar, se reconstruyen campos base y componentes editables para continuar trabajando.
 - Validación posterior: `npm run build` y `npm run test:pricing` en verde.
 
+### 2.10 Módulo administrador de despliegue Azure (Completado)
+
+- Se creó `src/components/AzureDeploymentManager.vue`.
+- Se integró en `AzureSelector.vue` con datos del Bicep actual, ubicación y grupo de recursos.
+- Permite:
+  - Definir credenciales (Azure CLI o Service Principal).
+  - Seleccionar suscripción.
+  - Elegir grupo de recursos existente o crear nuevo.
+  - Generar comandos de `what-if` y `deploy` por Azure CLI.
+  - Generar referencia equivalente para Azure REST API.
+- Validación posterior: `npm run build` y `npm run test:pricing` en verde.
+
 ## Archivos modificados
 
 - `src/components/AzureSelector.vue`
@@ -125,8 +137,6 @@
 
 ## Próximos pasos sugeridos
 
-1. Crear un modulo de administrador para introducir credenciales necesarias de Azure
-2. Permitir seleccionar la suscripción desde el modulo de administrador
-3. Permitir seleccionar o crear un nuevo grupo de recursos desde el modulo de administrador
-4. Realizar la prueba de what-if del archivo bicep generado, preferentemente con Azure CLI o con Azure REST API
-5. Realizar el deploy hacia esa suscripción del archivo bicep generado, preferentemente con Azure CLI o con Azure REST API
+1. Ejecutar despliegue real desde backend seguro (no desde frontend) usando Azure SDK/CLI.
+2. Enmascarar y gestionar secretos con Key Vault o variables seguras en CI/CD.
+3. Agregar historial de operaciones (what-if/deploy) y bitácora de resultados.
