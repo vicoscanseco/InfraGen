@@ -4,6 +4,19 @@
       <v-card-title class="d-flex justify-space-between align-center">
         <span class="text-h5 flex-grow-1 text-center pl-10">Generador de Infraestructura</span>
 
+        <v-tooltip text="Limpiar configuración guardada y reiniciar formulario">
+          <template v-slot:activator="{ props }">
+            <v-btn
+              v-bind="props"
+              icon="mdi-delete-restore"
+              variant="text"
+              color="error"
+              size="small"
+              @click="clearLocalStorage"
+            ></v-btn>
+          </template>
+        </v-tooltip>
+
         <v-menu location="bottom end">
           <template v-slot:activator="{ props }">
             <v-btn
@@ -31,19 +44,6 @@
             />
           </v-list>
         </v-menu>
-
-        <v-tooltip text="Limpiar configuración guardada y reiniciar formulario">
-          <template v-slot:activator="{ props }">
-            <v-btn
-              v-bind="props"
-              icon="mdi-delete-restore"
-              variant="text"
-              color="error"
-              size="small"
-              @click="clearLocalStorage"
-            ></v-btn>
-          </template>
-        </v-tooltip>
       </v-card-title>
       <v-divider class="mb-3" />
       <v-card-text>
