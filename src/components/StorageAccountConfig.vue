@@ -132,7 +132,23 @@
   </v-card>
 </template>
 
-<script>
+<script setup>
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+
+const props = defineProps({
+  config: {
+    type: Object,
+    required: true
+  },
+  environment: {
+    type: String,
+    required: true,
+    default: 'dev'
+  }
+})
+
+const emit = defineEmits(['update:config', 'update'])
+
 const skuOptions = [
   { label: 'Standard LRS (Locally Redundant)', value: 'Standard_LRS' },
   { label: 'Standard GRS (Geo Redundant)', value: 'Standard_GRS' },
@@ -155,123 +171,84 @@ const accessTierOptions = [
   { label: 'Cool (Acceso poco frecuente)', value: 'Cool' }
 ]
 
-export default {
-  name: 'StorageAccountConfig',
-  props: {
-    config: {
-      type: Object,
-      required: true
-    },
-    environment: {
-      type: String,
-      required: true,
-      default: 'dev'
-    }
-  },
-  emits: ['update:config', 'update'],
-  data() {
-    return {
-      localStorageBaseName: '',
-      localConfig: {
-        sku: 'Standard_LRS',
-        kind: 'StorageV2', 
-        accessTier: 'Cool',
-        httpsOnly: true,
-        enableBlobPublicAccess: false,
-        ...this.config
-      }
-    }
-  },
-  computed: {
-    computedStorageName() {
-      const env = this.environment || 'dev'
-      // Storage accounts no pueden tener guiones, solo letras minúsculas y números
-      if (env === 'prod') {
-        return this.localStorageBaseName ? `sta${this.localStorageBaseName}` : ''
-      }
-      return this.localStorageBaseName ? `sta${this.localStorageBaseName}${env}` : ''
-    },
-    skuOptions() {
-      return skuOptions
-    },
-    kindOptions() {
-      return kindOptions
-    },
-    accessTierOptions() {
-      return accessTierOptions
-    },
-    rules() {
-      return {
-        required: value => !!value || 'Este campo es obligatorio',
-        storageNameFormat: value => {
-          if (!value) return true
-          const regex = /^[a-z0-9]{3,24}$/
-          return regex.test(value) || 'Solo letras minúsculas y números, 3-24 caracteres'
-        }
-      }
-    }
-  },
-  watch: {
-    localStorageBaseName(newValue) {
-      this.updateConfig('name', this.computedStorageName)
-    },
-    config: {
-      handler(newConfig) {
-        this.localConfig = {
-          sku: 'Standard_LRS',
-          kind: 'StorageV2', 
-          accessTier: 'Cool',
-          httpsOnly: true,
-          enableBlobPublicAccess: false,
-          ...newConfig
-        }
-      },
-      deep: true,
-      immediate: true
-    }
-  },
-  mounted() {
-    // Initialize localStorageBaseName from existing name
-    if (this.config.name) {
-      const env = this.environment || 'dev'
-      const prefix = 'sta'
-      
-      let baseName = this.config.name
-      
-      // Remove sta prefix if present
-      if (baseName.startsWith(prefix)) {
-        baseName = baseName.slice(prefix.length)
-      }
-      
-      // For non-production environments, remove environment suffix if present
-      if (env !== 'prod' && baseName.endsWith(env)) {
-        baseName = baseName.slice(0, -env.length)
-      }
-      // For production, the name after removing 'sta' is already the base name
-      
-      this.localStorageBaseName = baseName
-    } else {
-      // Set default storage base name if none exists
-      this.localStorageBaseName = 'mystorage'
-      // Trigger name update immediately
-      this.updateConfig('name', this.computedStorageName)
-    }
-
-    // Emitir la configuración completa inicial para asegurar que los defaults (como kind='StorageV2') se guarden
-    this.$emit('update', { ...this.localConfig })
-    this.$emit('update:config', { ...this.localConfig })
-  },
-  methods: {
-    updateConfig(key, value) {
-      this.localConfig[key] = value
-      this.$emit('update', { ...this.config, [key]: value })
-      this.$emit('update:config', { ...this.config, [key]: value })
-    },
-    updateStorageBaseName(value) {
-      this.localStorageBaseName = value
-    }
+const rules = {
+  required: value => !!value || 'Este campo es obligatorio',
+  storageNameFormat: value => {
+    if (!value) return true
+    const regex = /^[a-z0-9]{3,24}$/
+    return regex.test(value) || 'Solo letras minúsculas y números, 3-24 caracteres'
   }
 }
+
+const localStorageBaseName = ref('')
+
+const localConfig = reactive({
+  sku: 'Standard_LRS',
+  kind: 'StorageV2',
+  accessTier: 'Cool',
+  httpsOnly: true,
+  enableBlobPublicAccess: false,
+  ...props.config
+})
+
+// Calcula el nombre final del storage account según ambiente.
+const computedStorageName = computed(() => {
+  const env = props.environment || 'dev'
+  if (env === 'prod') {
+    return localStorageBaseName.value ? `sta${localStorageBaseName.value}` : ''
+  }
+  return localStorageBaseName.value ? `sta${localStorageBaseName.value}${env}` : ''
+})
+
+// Emite cambios manteniendo el contrato actual con el padre.
+const updateConfig = (key, value) => {
+  localConfig[key] = value
+  emit('update', { ...props.config, [key]: value })
+  emit('update:config', { ...props.config, [key]: value })
+}
+
+const updateStorageBaseName = (value) => {
+  localStorageBaseName.value = value
+}
+
+watch(localStorageBaseName, () => {
+  updateConfig('name', computedStorageName.value)
+})
+
+watch(() => props.config, (newConfig) => {
+  Object.assign(localConfig, {
+    sku: 'Standard_LRS',
+    kind: 'StorageV2',
+    accessTier: 'Cool',
+    httpsOnly: true,
+    enableBlobPublicAccess: false,
+    ...newConfig
+  })
+}, { deep: true, immediate: true })
+
+onMounted(() => {
+  if (props.config.name) {
+    const env = props.environment || 'dev'
+    const prefix = 'sta'
+    let baseName = props.config.name
+
+    if (baseName.startsWith(prefix)) {
+      baseName = baseName.slice(prefix.length)
+    }
+
+    if (env !== 'prod' && baseName.endsWith(env)) {
+      baseName = baseName.slice(0, -env.length)
+    }
+
+    localStorageBaseName.value = baseName
+  } else {
+    localStorageBaseName.value = 'mystorage'
+    updateConfig('name', computedStorageName.value)
+  }
+
+  emit('update', { ...localConfig })
+  emit('update:config', { ...localConfig })
+})
 </script>
 
 
