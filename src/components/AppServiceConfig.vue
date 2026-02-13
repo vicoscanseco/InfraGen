@@ -143,7 +143,32 @@
   </v-card>
 </template>
 
-<script>
+<script setup>
+import { computed, onMounted, reactive, ref, toRefs, watch } from 'vue'
+
+const props = defineProps({
+  config: {
+    type: Object,
+    required: true
+  },
+  environment: {
+    type: String,
+    required: true,
+    default: 'dev'
+  },
+  availableAppServicePlans: {
+    type: Array,
+    default: () => []
+  },
+  appServiceNumber: {
+    type: Number,
+    default: 1
+  }
+})
+
+const emit = defineEmits(['update', 'update:config'])
+const { appServiceNumber } = toRefs(props)
+
 const runtimeStackOptions = [
   { label: '.NET 8.0', value: 'DOTNETCORE|8.0' },
   { label: '.NET 6.0', value: 'DOTNETCORE|6.0' },
@@ -157,128 +182,97 @@ const runtimeStackOptions = [
   { label: 'PHP 8.2', value: 'PHP|8.2' }
 ]
 
-export default {
-  name: 'AppServiceConfig',
-  props: {
-    config: {
-      type: Object,
-      required: true
-    },
-    environment: {
-      type: String,
-      required: true,
-      default: 'dev'
-    },
-    availableAppServicePlans: {
-      type: Array,
-      default: () => []
-    },
-    appServiceNumber: {
-      type: Number,
-      default: 1
-    }
-  },
-  emits: ['update', 'update:config'],
-  data() {
-    return {
-      localAppBaseName: '',
-      localConfig: {
-        appServicePlanReference: 'Se asignará al ASP configurado',
-        runtimeStack: 'DOTNETCORE|8.0',
-        httpsOnly: true,
-        alwaysOn: false,
-        clientAffinityEnabled: false,
-        publicNetworkAccess: true,
-        ...this.config
-      }
-    }
-  },
-  computed: {
-    computedAppName() {
-      const env = this.environment || 'dev'
-      if (env === 'prod') {
-        return this.localAppBaseName || ''
-      }
-      return this.localAppBaseName ? `${this.localAppBaseName}-${env}` : ''
-    },
-    runtimeStackOptions() {
-      return runtimeStackOptions
-    },
-    rules() {
-      return {
-        required: value => !!value || 'Este campo es obligatorio',
-        appServiceNameFormat: value => {
-          if (!value) return true
-          const regex = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,58}[a-zA-Z0-9]$/
-          return regex.test(value) || 'Solo letras, números y guiones, 2-60 caracteres. Debe empezar y terminar con letra o número'
-        }
-      }
-    },
-    assignedAppServicePlan() {
-      // Automáticamente asignar el primer App Service Plan disponible
-      return this.availableAppServicePlans.length > 0 ? this.availableAppServicePlans[0].name : null
-    }
-  },
-  watch: {
-    localAppBaseName(newValue) {
-      this.updateConfig('name', this.computedAppName)
-    },
-    assignedAppServicePlan(newPlan) {
-      // Automáticamente asignar el App Service Plan cuando cambie
-      if (newPlan) {
-        this.localConfig.appServicePlanReference = newPlan
-        this.updateConfig('appServicePlan', newPlan)
-      }
-    },
-    config: {
-      handler(newConfig) {
-        this.localConfig = {
-          appServicePlanReference: 'Se asignará al ASP configurado',
-          runtimeStack: 'DOTNETCORE|8.0',
-          httpsOnly: true,
-          alwaysOn: false,
-          clientAffinityEnabled: false,
-          publicNetworkAccess: true,
-          ...newConfig
-        }
-      },
-      deep: true,
-      immediate: true
-    }
-  },
-  mounted() {
-    // Initialize localAppBaseName from existing name
-    if (this.config.name) {
-      const env = this.environment || 'dev'
-      let baseName = this.config.name
-      if (env !== 'prod') {
-        const suffix = `-${env}`
-        if (baseName.endsWith(suffix)) {
-          baseName = baseName.replace(suffix, '')
-        }
-      }
-      this.localAppBaseName = baseName
-    } else {
-      // Set default app base name if none exists
-      this.localAppBaseName = this.appServiceNumber === 1 ? 'myapp' : `myapp${this.appServiceNumber}`
-    }
-    // Establecer automáticamente la referencia al App Service Plan si está disponible
-    if (this.assignedAppServicePlan && !this.config.appServicePlan) {
-      this.localConfig.appServicePlanReference = this.assignedAppServicePlan
-      this.updateConfig('appServicePlan', this.assignedAppServicePlan)
-    }
-  },
-  methods: {
-    updateConfig(key, value) {
-      this.localConfig[key] = value
-      this.$emit('update', { ...this.config, [key]: value })
-      this.$emit('update:config', { ...this.config, [key]: value })
-    },
-    updateAppBaseName(value) {
-      this.localAppBaseName = value
-    }
+const rules = {
+  required: value => !!value || 'Este campo es obligatorio',
+  appServiceNameFormat: value => {
+    if (!value) return true
+    const regex = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,58}[a-zA-Z0-9]$/
+    return regex.test(value) || 'Solo letras, números y guiones, 2-60 caracteres. Debe empezar y terminar con letra o número'
   }
 }
+
+const localAppBaseName = ref('')
+
+const localConfig = reactive({
+  appServicePlanReference: 'Se asignará al ASP configurado',
+  runtimeStack: 'DOTNETCORE|8.0',
+  httpsOnly: true,
+  alwaysOn: false,
+  clientAffinityEnabled: false,
+  publicNetworkAccess: true,
+  ...props.config
+})
+
+// Deriva el nombre final del App Service respetando la regla de producción sin environment.
+const computedAppName = computed(() => {
+  const env = props.environment || 'dev'
+  if (env === 'prod') {
+    return localAppBaseName.value || ''
+  }
+  return localAppBaseName.value ? `${localAppBaseName.value}-${env}` : ''
+})
+
+// Toma automáticamente el primer App Service Plan disponible.
+const assignedAppServicePlan = computed(() => {
+  return props.availableAppServicePlans.length > 0 ? props.availableAppServicePlans[0].name : null
+})
+
+// Emite cambios hacia el padre manteniendo el contrato actual del componente.
+const updateConfig = (key, value) => {
+  localConfig[key] = value
+  emit('update', { ...props.config, [key]: value })
+  emit('update:config', { ...props.config, [key]: value })
+}
+
+const updateAppBaseName = (value) => {
+  localAppBaseName.value = value
+}
+
+watch(localAppBaseName, () => {
+  updateConfig('name', computedAppName.value)
+})
+
+watch(assignedAppServicePlan, (newPlan) => {
+  if (newPlan) {
+    localConfig.appServicePlanReference = newPlan
+    updateConfig('appServicePlan', newPlan)
+  }
+})
+
+watch(() => props.config, (newConfig) => {
+  Object.assign(localConfig, {
+    appServicePlanReference: 'Se asignará al ASP configurado',
+    runtimeStack: 'DOTNETCORE|8.0',
+    httpsOnly: true,
+    alwaysOn: false,
+    clientAffinityEnabled: false,
+    publicNetworkAccess: true,
+    ...newConfig
+  })
+}, { deep: true, immediate: true })
+
+onMounted(() => {
+  if (props.config.name) {
+    const env = props.environment || 'dev'
+    let baseName = props.config.name
+
+    if (env !== 'prod') {
+      const suffix = `-${env}`
+      if (baseName.endsWith(suffix)) {
+        baseName = baseName.replace(suffix, '')
+      }
+    }
+
+    localAppBaseName.value = baseName
+  } else {
+    localAppBaseName.value = appServiceNumber.value === 1 ? 'myapp' : `myapp${appServiceNumber.value}`
+  }
+
+  if (assignedAppServicePlan.value && !props.config.appServicePlan) {
+    localConfig.appServicePlanReference = assignedAppServicePlan.value
+    updateConfig('appServicePlan', assignedAppServicePlan.value)
+  }
+})
 </script>
 
 
