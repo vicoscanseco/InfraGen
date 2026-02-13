@@ -237,7 +237,24 @@
   </v-card>
 </template>
 
-<script>
+<script setup>
+import { computed, onMounted, ref, toRefs, watch } from 'vue'
+
+const props = defineProps({
+  config: {
+    type: Object,
+    required: true
+  },
+  environment: {
+    type: String,
+    required: true,
+    default: 'dev'
+  }
+})
+
+const emit = defineEmits(['update'])
+const { config } = toRefs(props)
+
 const hostingPlanOptions = [
   { label: 'Consumption (Serverless)', value: 'Consumption' },
   { label: 'Premium (Escalable)', value: 'Premium' },
@@ -293,127 +310,94 @@ const preWarmedInstanceOptions = [
   { label: '10 instancias', value: '10' }
 ]
 
-export default {
-  name: 'FunctionAppConfig',
-  props: {
-    config: {
-      type: Object,
-      required: true
-    },
-    environment: {
-      type: String,
-      required: true,
-      default: 'dev'
-    }
+const rules = {
+  required: value => !!value || 'Este campo es obligatorio',
+  functionAppNameFormat: value => {
+    if (!value) return true
+    const regex = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,58}[a-zA-Z0-9]$/
+    return regex.test(value) || 'Solo letras, números y guiones, 2-60 caracteres. Debe empezar y terminar con letra o número'
   },
-  emits: ['update'],
-  data() {
-    return {
-      localFunctionBaseName: ''
-    }
-  },
-  computed: {
-    computedFunctionName() {
-      const env = this.environment || 'dev'
-      return this.localFunctionBaseName ? `${this.localFunctionBaseName}-${env}` : ''
-    },
-    computedAppServicePlanName() {
-      return this.computedFunctionName ? `${this.computedFunctionName}-plan` : ''
-    },
-    computedStorageAccountName() {
-      const env = this.environment || 'dev'
-      // Storage accounts no pueden tener guiones
-      return this.localFunctionBaseName ? `sta${this.localFunctionBaseName}${env}` : ''
-    },
-    hostingPlanOptions() {
-      return hostingPlanOptions
-    },
-    currentSkuOptions() {
-      return skuOptions[this.config.hostingPlan] || skuOptions.Consumption
-    },
-    runtimeStackOptions() {
-      return runtimeStackOptions
-    },
-    operatingSystemOptions() {
-      return operatingSystemOptions
-    },
-    preWarmedInstanceOptions() {
-      return preWarmedInstanceOptions
-    },
-    rules() {
-      return {
-        required: value => !!value || 'Este campo es obligatorio',
-        functionAppNameFormat: value => {
-          if (!value) return true
-          const regex = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,58}[a-zA-Z0-9]$/
-          return regex.test(value) || 'Solo letras, números y guiones, 2-60 caracteres. Debe empezar y terminar con letra o número'
-        },
-        storageNameFormat: value => {
-          if (!value) return true
-          const regex = /^[a-z0-9]{3,24}$/
-          return regex.test(value) || 'Solo letras minúsculas y números, 3-24 caracteres'
-        }
-      }
-    }
-  },
-  watch: {
-    localFunctionBaseName(newValue) {
-      this.updateConfig('name', this.computedFunctionName)
-      this.updateConfig('appServicePlanName', this.computedAppServicePlanName)
-      this.updateConfig('storageAccountName', this.computedStorageAccountName)
-    },
-    environment(newValue) {
-      // Update computed names when environment changes
-      this.updateConfig('name', this.computedFunctionName)
-      this.updateConfig('appServicePlanName', this.computedAppServicePlanName)
-      this.updateConfig('storageAccountName', this.computedStorageAccountName)
-    },
-    'config.hostingPlan'() {
-      // Reset SKU when hosting plan changes
-      this.updateConfig('sku', this.currentSkuOptions[0]?.value || '')
-    }
-  },
-  mounted() {
-    // Initialize default values
-    if (!this.config.hostingPlan) this.updateConfig('hostingPlan', 'Consumption')
-    if (!this.config.sku) this.updateConfig('sku', 'Y1')
-    if (!this.config.runtimeStack) this.updateConfig('runtimeStack', 'DOTNET-ISOLATED|8.0')
-    if (!this.config.operatingSystem) this.updateConfig('operatingSystem', 'Linux')
-    if (this.config.httpsOnly === undefined) this.updateConfig('httpsOnly', true)
-    if (this.config.enableApplicationInsights === undefined) this.updateConfig('enableApplicationInsights', true)
-    if (!this.config.preWarmedInstances) this.updateConfig('preWarmedInstances', '1')
-    if (this.config.vnetIntegration === undefined) this.updateConfig('vnetIntegration', false)
-
-    // Initialize localFunctionBaseName from existing name
-    if (this.config.name) {
-      const env = this.environment || 'dev'
-      const suffix = `-${env}`
-      
-      let baseName = this.config.name
-      
-      // Remove environment suffix if present
-      if (baseName.endsWith(suffix)) {
-        baseName = baseName.replace(suffix, '')
-      }
-      
-      this.localFunctionBaseName = baseName
-    }
-  },
-  methods: {
-    updateConfig(key, value) {
-      this.$emit('update', { ...this.config, [key]: value })
-    },
-    updateFunctionBaseName(value) {
-      this.localFunctionBaseName = value
-    },
-    updateHostingPlan(value) {
-      // Reset SKU when hosting plan changes
-      const firstOption = this.currentSkuOptions[0]?.value || ''
-      this.updateConfig('hostingPlan', value)
-      this.updateConfig('sku', firstOption)
-    }
+  storageNameFormat: value => {
+    if (!value) return true
+    const regex = /^[a-z0-9]{3,24}$/
+    return regex.test(value) || 'Solo letras minúsculas y números, 3-24 caracteres'
   }
 }
+
+const localFunctionBaseName = ref('')
+
+// Nombre principal de Function App basado en baseName + environment.
+const computedFunctionName = computed(() => {
+  const env = props.environment || 'dev'
+  return localFunctionBaseName.value ? `${localFunctionBaseName.value}-${env}` : ''
+})
+
+const computedAppServicePlanName = computed(() => {
+  return computedFunctionName.value ? `${computedFunctionName.value}-plan` : ''
+})
+
+const computedStorageAccountName = computed(() => {
+  const env = props.environment || 'dev'
+  return localFunctionBaseName.value ? `sta${localFunctionBaseName.value}${env}` : ''
+})
+
+const currentSkuOptions = computed(() => {
+  return skuOptions[props.config.hostingPlan] || skuOptions.Consumption
+})
+
+// Emite el cambio puntual manteniendo el contrato actual del padre.
+const updateConfig = (key, value) => {
+  emit('update', { ...props.config, [key]: value })
+}
+
+const updateFunctionBaseName = (value) => {
+  localFunctionBaseName.value = value
+}
+
+const updateHostingPlan = (value) => {
+  const firstOption = currentSkuOptions.value[0]?.value || ''
+  updateConfig('hostingPlan', value)
+  updateConfig('sku', firstOption)
+}
+
+watch(localFunctionBaseName, () => {
+  updateConfig('name', computedFunctionName.value)
+  updateConfig('appServicePlanName', computedAppServicePlanName.value)
+  updateConfig('storageAccountName', computedStorageAccountName.value)
+})
+
+watch(() => props.environment, () => {
+  updateConfig('name', computedFunctionName.value)
+  updateConfig('appServicePlanName', computedAppServicePlanName.value)
+  updateConfig('storageAccountName', computedStorageAccountName.value)
+})
+
+watch(() => props.config.hostingPlan, () => {
+  updateConfig('sku', currentSkuOptions.value[0]?.value || '')
+})
+
+onMounted(() => {
+  if (!props.config.hostingPlan) updateConfig('hostingPlan', 'Consumption')
+  if (!props.config.sku) updateConfig('sku', 'Y1')
+  if (!props.config.runtimeStack) updateConfig('runtimeStack', 'DOTNET-ISOLATED|8.0')
+  if (!props.config.operatingSystem) updateConfig('operatingSystem', 'Linux')
+  if (props.config.httpsOnly === undefined) updateConfig('httpsOnly', true)
+  if (props.config.enableApplicationInsights === undefined) updateConfig('enableApplicationInsights', true)
+  if (!props.config.preWarmedInstances) updateConfig('preWarmedInstances', '1')
+  if (props.config.vnetIntegration === undefined) updateConfig('vnetIntegration', false)
+
+  if (props.config.name) {
+    const env = props.environment || 'dev'
+    const suffix = `-${env}`
+    let baseName = props.config.name
+
+    if (baseName.endsWith(suffix)) {
+      baseName = baseName.replace(suffix, '')
+    }
+
+    localFunctionBaseName.value = baseName
+  }
+})
 </script>
 
 
