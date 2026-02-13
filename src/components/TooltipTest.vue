@@ -149,10 +149,8 @@
   </v-card>
 </template>
 
-<script>
-export default {
-  name: 'TooltipTest'
-}
+<script setup>
+// Componente de pruebas visuales para validar el comportamiento de tooltips en Vuetify.
 </script>
 
 <style scoped>
