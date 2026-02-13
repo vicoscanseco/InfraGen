@@ -3,6 +3,35 @@
     <v-card class="mx-auto my-4 pa-4" max-width="800">
       <v-card-title class="d-flex justify-space-between align-center">
         <span class="text-h5 flex-grow-1 text-center pl-10">Generador de Infraestructura</span>
+
+        <v-menu location="bottom end">
+          <template v-slot:activator="{ props }">
+            <v-btn
+              v-bind="props"
+              icon="mdi-dots-vertical"
+              variant="text"
+              color="indigo"
+              size="small"
+            />
+          </template>
+
+          <v-list density="compact">
+            <v-list-item
+              prepend-icon="mdi-file-import"
+              title="Importar Bicep"
+              subtitle="Cargar archivo Bicep"
+              @click="openBicepImporter"
+            />
+            <v-list-item
+              prepend-icon="mdi-cloud-lock"
+              title="Administrador Azure"
+              subtitle="Abrir ventana de despliegue"
+              :disabled="!bicepContent"
+              @click="openAzureDeploymentWindow"
+            />
+          </v-list>
+        </v-menu>
+
         <v-tooltip text="Limpiar configuración guardada y reiniciar formulario">
           <template v-slot:activator="{ props }">
             <v-btn
@@ -214,21 +243,6 @@
               @change="handleBicepImport"
             >
 
-            <v-tooltip text="Importa un archivo Bicep generado por InfraGen para reconstruir la configuración editable.">
-              <template v-slot:activator="{ props }">
-                <v-btn
-                  v-bind="props"
-                  color="info"
-                  size="large"
-                  class="me-4"
-                  @click="openBicepImporter"
-                >
-                  <v-icon left>mdi-file-import</v-icon>
-                  Importar Bicep
-                </v-btn>
-              </template>
-            </v-tooltip>
-
             <v-tooltip text="Genera el código Bicep para desplegar tu infraestructura en Azure. Requiere al menos un componente configurado.">
               <template v-slot:activator="{ props }">
                 <v-btn
@@ -256,22 +270,6 @@
                 >
                   <v-icon left>mdi-graph</v-icon>
                   Vista de Arquitectura
-                </v-btn>
-              </template>
-            </v-tooltip>
-
-            <v-tooltip text="Abre el módulo de administración de despliegue Azure en una ventana separada.">
-              <template v-slot:activator="{ props }">
-                <v-btn
-                  v-bind="props"
-                  color="indigo"
-                  size="large"
-                  class="ml-4"
-                  :disabled="!bicepContent"
-                  @click="openAzureDeploymentWindow"
-                >
-                  <v-icon left>mdi-cloud-lock</v-icon>
-                  Administrador Azure
                 </v-btn>
               </template>
             </v-tooltip>

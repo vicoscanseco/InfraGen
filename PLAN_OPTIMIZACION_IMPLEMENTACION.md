@@ -137,8 +137,8 @@
 
 ## Próximos pasos sugeridos
 
-1. Estandarizar componentes a TypeScript (`<script setup lang="ts">`) de forma gradual por lotes pequeños y con `vue-tsc` en CI (pendiente por ahora).
-2. El modulo de administración para la conexion con Azure, debe ser una ventana separada y para ingresar a esta debe entrar con un usuario y password.
-3. Ejecutar despliegue real desde backend seguro (no desde frontend) usando Azure SDK/CLI.
-4. Enmascarar y gestionar secretos con Key Vault o variables seguras en CI/CD.
-5. Agregar historial de operaciones (what-if/deploy) y bitácora de resultados.
+1. El modulo de administración para la conexion con Azure, debe ser una ventana separada y para ingresar a esta debe entrar con un usuario y password.
+2. Ejecutar despliegue real desde backend seguro (no desde frontend) usando Azure SDK/CLI.
+3. Enmascarar y gestionar secretos con Key Vault o variables seguras en CI/CD.
+4. Agregar historial de operaciones (what-if/deploy) y bitácora de resultados.
+5. Estandarizar componentes a TypeScript (`<script setup lang="ts">`) de forma gradual por lotes pequeños y con `vue-tsc` en CI (pendiente por ahora).
