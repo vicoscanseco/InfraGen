@@ -57,6 +57,25 @@
 
 - Se agregó script npm `test:pricing`.
 
+### 2.6 Extracción de persistencia (Completado)
+
+- Se movió la lógica de `localStorage` a `src/utils/configPersistence.js`.
+- `AzureSelector.vue` ahora consume el módulo `useInfragenConfigPersistence`.
+- Se redujo complejidad del componente sin cambiar flujo funcional.
+- Validación posterior: `npm run build` y `npm run test:pricing` en verde.
+
+### 2.7 Lazy-loading de configuradores (Completado)
+
+- Se migraron los configuradores del diálogo dinámico a `defineAsyncComponent` en `AzureSelector.vue`.
+- Se generaron chunks separados por configurador para mejorar carga inicial.
+- Validación posterior: `npm run build` y `npm run test:pricing` en verde.
+
+### 2.8 Retiro de variantes legacy (Completado)
+
+- Se retiraron `AzureSelector_clean.vue` y `AzureSelector_fixed.vue` por no estar en uso.
+- Se dejó registro en `LEGACY_COMPONENTES.md`.
+- Se mantiene `AzureSelector.vue` como selector canónico.
+
 ## Archivos modificados
 
 - `src/components/AzureSelector.vue`
@@ -64,6 +83,7 @@
 - `src/style.css`
 - `package.json`
 - `vite.config.js`
+- `src/utils/configPersistence.js`
 
 ## Fase 3 — Validación (Completado)
 
@@ -82,8 +102,9 @@
 - Baseline inicial: `4.42s` con warning de chunk > `500 kB`.
 - Build tras quick wins previos: `3.31s` (warning aún presente).
 - Build tras `manualChunks`: `4.08s` y **sin warning** de chunk > `500 kB`.
+- Build tras lazy-loading de configuradores: `2.53s` y reducción del chunk principal a ~`62.09 kB`.
 - Distribución principal resultante:
-  - `index-*.js`: ~`125 kB`
+  - `index-*.js`: ~`62.09 kB`
   - `vendor-vue-*.js`: ~`77.7 kB`
   - `vendor-vuetify-*.js`: ~`436 kB`
   - `vendor-vueflow-*.js`: ~`154.6 kB`
@@ -97,14 +118,9 @@
 
 ## Próximos pasos sugeridos
 
-1. Extraer utilidades de persistencia a módulo dedicado para simplificar `AzureSelector`.
-2. Aplicar lazy-loading también a configuradores poco frecuentes.
-3. Definir estrategia de chunks en `vite.config.js` (manualChunks) para reducir warning > 500 kB.
-4. Retirar o mover variantes legacy (`AzureSelector_clean.vue`, `AzureSelector_fixed.vue`) a carpeta de respaldo/documentación.
-5. Crear Modulo para cargar una configuración ya generada anteriormente
-6. Crear un modulo de administrador que permita: 
-   1. Introducir las credenciales necesarias para Azure
-   2. Seleccionar la suscripción 
-   3. Seleccionar o crear un nuevo grupo de recursos
-   4. Realizar la prueba de what-if del archivo bicep generado, preferentemente con Azure CLI o con el Azure REST API
-   5. Realizar el deploy hacia esa suscripción del archivo bicep generado, preferentemente con Azure CLI o con el Azure REST API
+1. Crear Modulo para cargar una configuración ya generada anteriormente
+2. Crear un modulo de administrador para introducir credenciales necesarias de Azure
+3. Permitir seleccionar la suscripción desde el modulo de administrador
+4. Permitir seleccionar o crear un nuevo grupo de recursos desde el modulo de administrador
+5. Realizar la prueba de what-if del archivo bicep generado, preferentemente con Azure CLI o con Azure REST API
+6. Realizar el deploy hacia esa suscripción del archivo bicep generado, preferentemente con Azure CLI o con Azure REST API

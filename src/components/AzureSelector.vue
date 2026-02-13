@@ -370,19 +370,22 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, defineAsyncComponent, onBeforeUnmount } from 'vue'
-import StorageAccountConfig from './StorageAccountConfig.vue'
-import AppServicePlanConfig from './AppServicePlanConfig.vue'
-import AppServiceConfig from './AppServiceConfig.vue'
-import SqlDatabaseConfig from './SqlDatabaseConfig.vue'
-import CognitiveServiceConfig from './CognitiveServiceConfig.vue'
-import SQLServerConfig from './SQLServerConfig.vue'
-import MonitoringAlertsConfig from './MonitoringAlertsConfig.vue'
-import ContainerAppConfig from './ContainerAppConfig.vue'
+import { ref, computed, onMounted, watch, defineAsyncComponent } from 'vue'
 import CostEstimator from './CostEstimator.vue'
+import { useInfragenConfigPersistence } from '../utils/configPersistence'
 
 // Cargar la vista de arquitectura bajo demanda para reducir el bundle inicial.
 const ArchitectureView = defineAsyncComponent(() => import('./ArchitectureView.vue'))
+
+// Cargar configuradores bajo demanda para reducir la carga inicial.
+const StorageAccountConfig = defineAsyncComponent(() => import('./StorageAccountConfig.vue'))
+const AppServicePlanConfig = defineAsyncComponent(() => import('./AppServicePlanConfig.vue'))
+const AppServiceConfig = defineAsyncComponent(() => import('./AppServiceConfig.vue'))
+const SqlDatabaseConfig = defineAsyncComponent(() => import('./SqlDatabaseConfig.vue'))
+const CognitiveServiceConfig = defineAsyncComponent(() => import('./CognitiveServiceConfig.vue'))
+const SQLServerConfig = defineAsyncComponent(() => import('./SQLServerConfig.vue'))
+const MonitoringAlertsConfig = defineAsyncComponent(() => import('./MonitoringAlertsConfig.vue'))
+const ContainerAppConfig = defineAsyncComponent(() => import('./ContainerAppConfig.vue'))
 
 // Mapeo de componentes
 const componentMapping = {
@@ -408,11 +411,6 @@ const showAutoSaveNotification = ref(false)
 const notificationMessage = ref('')
 const notificationColor = ref('success')
 const notificationIcon = ref('mdi-check')
-
-// Estado de control para evitar escrituras de localStorage en cascada.
-const isAutoSavePaused = ref(false)
-let autoSaveTimerId = null
-const AUTO_SAVE_DELAY_MS = 500
 
 // Estado del componente
 const configuredComponents = ref([])
@@ -505,99 +503,6 @@ onMounted(async () => {
   }
 })
 
-// Local Storage Logic
-const saveToLocalStorage = () => {
-  try {
-    const config = {
-      appName: appName.value,
-      environment: selectedEnv.value,
-      location: location.value,
-      resourceGroupName: resourceGroup.value,
-      components: configuredComponents.value,
-      timestamp: new Date().toISOString()
-    }
-    localStorage.setItem('infragen-config', JSON.stringify(config))
-    // No mostramos notificación en cada auto-save para evitar ruido visual.
-  } catch (error) {
-    console.error('Error saving to localStorage:', error)
-  }
-}
-
-// Programa el auto-guardado con debounce para reducir escrituras repetidas.
-const scheduleSaveToLocalStorage = () => {
-  if (isAutoSavePaused.value) return
-
-  if (autoSaveTimerId) {
-    clearTimeout(autoSaveTimerId)
-  }
-
-  autoSaveTimerId = setTimeout(() => {
-    saveToLocalStorage()
-    autoSaveTimerId = null
-  }, AUTO_SAVE_DELAY_MS)
-}
-
-// Ejecuta cambios de estado sin disparar auto-guardado durante hidratación/reset.
-const runWithAutoSavePaused = (callback) => {
-  isAutoSavePaused.value = true
-  try {
-    callback()
-  } finally {
-    setTimeout(() => {
-      isAutoSavePaused.value = false
-    }, 0)
-  }
-}
-
-const loadFromLocalStorage = () => {
-  try {
-    const saved = localStorage.getItem('infragen-config')
-    if (saved) {
-      const config = JSON.parse(saved)
-
-      runWithAutoSavePaused(() => {
-        // Validar que la configuración tenga la estructura esperada.
-        if (config.appName !== undefined) appName.value = config.appName
-        if (config.environment !== undefined) selectedEnv.value = config.environment
-        if (config.location !== undefined) location.value = config.location
-        if (config.resourceGroupName !== undefined) resourceGroup.value = config.resourceGroupName
-        if (config.components && Array.isArray(config.components)) {
-          configuredComponents.value = config.components
-        }
-      })
-      
-      showNotification('Configuración restaurada automáticamente', 'success', 'mdi-restore')
-    }
-  } catch (error) {
-    console.error('Error loading from localStorage:', error)
-    showNotification('Error al restaurar configuración', 'error', 'mdi-alert')
-  }
-}
-
-const clearLocalStorage = () => {
-  if (confirm('¿Estás seguro de que deseas borrar la configuración guardada y reiniciar el formulario?')) {
-    localStorage.removeItem('infragen-config')
-
-    runWithAutoSavePaused(() => {
-      // Resetear campos.
-      appName.value = ''
-      selectedEnv.value = environments.value.some(env => env.value === 'dev')
-        ? 'dev'
-        : (environments.value[0]?.value || 'dev')
-      location.value = locations.value.some(loc => loc.value === 'mexicocentral')
-        ? 'mexicocentral'
-        : (locations.value[0]?.value || '')
-      resourceGroup.value = ''
-      configuredComponents.value = []
-      bicepContent.value = ''
-      errorMsg.value = ''
-      infoMsg.value = ''
-    })
-    
-    showNotification('Configuración eliminada', 'info', 'mdi-delete')
-  }
-}
-
 const showNotification = (msg, color = 'success', icon = 'mdi-check') => {
   notificationMessage.value = msg
   notificationColor.value = color
@@ -605,15 +510,21 @@ const showNotification = (msg, color = 'success', icon = 'mdi-check') => {
   showAutoSaveNotification.value = true
 }
 
-// Watchers separados para evitar deep-watch innecesario en campos simples.
-watch([appName, selectedEnv, location], scheduleSaveToLocalStorage)
-watch(configuredComponents, scheduleSaveToLocalStorage, { deep: true })
-
-onBeforeUnmount(() => {
-  if (autoSaveTimerId) {
-    clearTimeout(autoSaveTimerId)
-    autoSaveTimerId = null
-  }
+const {
+  loadFromLocalStorage,
+  clearLocalStorage
+} = useInfragenConfigPersistence({
+  appName,
+  selectedEnv,
+  location,
+  resourceGroup,
+  configuredComponents,
+  bicepContent,
+  errorMsg,
+  infoMsg,
+  environments,
+  locations,
+  showNotification
 })
 
 // Componentes disponibles
