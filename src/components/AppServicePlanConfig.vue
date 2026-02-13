@@ -120,131 +120,103 @@
   </v-card>
 </template>
 
-<script>
-export default {
-  name: 'AppServicePlanConfig',
-  props: {
-    modelValue: {
-      type: Object,
-      default: () => ({})
-    },
-    appName: {
-      type: String,
-      default: 'myapp'
-    },
-    environment: {
-      type: String,
-      default: 'dev'
-    }
+<script setup>
+import { computed, reactive, watch } from 'vue'
+
+const props = defineProps({
+  modelValue: {
+    type: Object,
+    default: () => ({})
   },
-  emits: ['update:modelValue'],
-  data() {
-    return {
-      config: {
-        name: '',
-        sku: 'B1',
-        os: 'Windows',
-        perSiteScaling: false,
-        zoneRedundant: false,
-        maximumElasticWorkerCount: 1,
-        ...this.modelValue
-      },
-      skuOptions: [
-        // Free Tier
-        { name: 'F1 - Free', value: 'F1', description: 'Free tier - 1GB RAM, 60 min/day' },
-        
-        // Shared Tier
-        { name: 'D1 - Shared', value: 'D1', description: 'Shared tier - 1GB RAM, 240 min/day' },
-        
-        // Basic Tier
-        { name: 'B1 - Basic Small', value: 'B1', description: 'Basic - 1 core, 1.75GB RAM' },
-        { name: 'B2 - Basic Medium', value: 'B2', description: 'Basic - 2 cores, 3.5GB RAM' },
-        { name: 'B3 - Basic Large', value: 'B3', description: 'Basic - 4 cores, 7GB RAM' },
-        
-        // Standard Tier
-        { name: 'S1 - Standard Small', value: 'S1', description: 'Standard - 1 core, 1.75GB RAM' },
-        { name: 'S2 - Standard Medium', value: 'S2', description: 'Standard - 2 cores, 3.5GB RAM' },
-        { name: 'S3 - Standard Large', value: 'S3', description: 'Standard - 4 cores, 7GB RAM' },
-        
-        // Premium V2 Tier
-        { name: 'P1v2 - Premium Small', value: 'P1v2', description: 'Premium V2 - 1 core, 3.5GB RAM' },
-        { name: 'P2v2 - Premium Medium', value: 'P2v2', description: 'Premium V2 - 2 cores, 7GB RAM' },
-        { name: 'P3v2 - Premium Large', value: 'P3v2', description: 'Premium V2 - 4 cores, 14GB RAM' },
-        
-        // Premium V3 Tier
-        { name: 'P1v3 - Premium V3 Small', value: 'P1v3', description: 'Premium V3 - 2 cores, 8GB RAM' },
-        { name: 'P2v3 - Premium V3 Medium', value: 'P2v3', description: 'Premium V3 - 4 cores, 16GB RAM' },
-        { name: 'P3v3 - Premium V3 Large', value: 'P3v3', description: 'Premium V3 - 8 cores, 32GB RAM' }
-      ],
-      osOptions: ['Windows', 'Linux']
-    }
+  appName: {
+    type: String,
+    default: 'myapp'
   },
-  computed: {
-    isPremiumSku() {
-      return this.config.sku.startsWith('P')
-    },
-    isElasticSku() {
-      return ['P1v2', 'P2v2', 'P3v2', 'P1v3', 'P2v3', 'P3v3'].includes(this.config.sku)
-    }
-  },
-  watch: {
-    appName: {
-      immediate: true,
-      handler() {
-        this.updateName()
-      }
-    },
-    environment: {
-      immediate: true,
-      handler() {
-        this.updateName()
-      }
-    },
-    modelValue: {
-      deep: true,
-      immediate: true,
-      handler(newVal) {
-        if (newVal && Object.keys(newVal).length > 0) {
-          // Solo actualizar si los valores realmente han cambiado
-          const hasChanges = Object.keys(newVal).some(key => 
-            this.config[key] !== newVal[key]
-          )
-          if (hasChanges) {
-            this.config = { ...this.config, ...newVal }
-          }
-        }
-      }
-    }
-  },
-  methods: {
-    updateName() {
-      const appName = this.appName.toLowerCase().replace(/[^a-z0-9]/g, '')
-      const env = this.environment.toLowerCase()
-      
-      let newName
-      if (env === 'prod') {
-        newName = `${appName}-asp`
-      } else {
-        newName = `${appName}-${env}-asp`
-      }
-      
-      // Solo actualizar si el nombre realmente ha cambiado
-      if (this.config.name !== newName) {
-        this.config.name = newName
-        this.updateParent()
-      }
-    },
-    updateParent() {
-      this.$emit('update:modelValue', { ...this.config })
-    },
-    isValid() {
-      return this.config.name && 
-             this.config.sku && 
-             this.config.os &&
-             this.config.name.length >= 3 &&
-             this.config.name.length <= 60 &&
-             /^[a-zA-Z0-9-]+$/.test(this.config.name)
-    }
+  environment: {
+    type: String,
+    default: 'dev'
+  }
+})
+
+const emit = defineEmits(['update:modelValue'])
+
+const skuOptions = [
+  { name: 'F1 - Free', value: 'F1', description: 'Free tier - 1GB RAM, 60 min/day' },
+  { name: 'D1 - Shared', value: 'D1', description: 'Shared tier - 1GB RAM, 240 min/day' },
+  { name: 'B1 - Basic Small', value: 'B1', description: 'Basic - 1 core, 1.75GB RAM' },
+  { name: 'B2 - Basic Medium', value: 'B2', description: 'Basic - 2 cores, 3.5GB RAM' },
+  { name: 'B3 - Basic Large', value: 'B3', description: 'Basic - 4 cores, 7GB RAM' },
+  { name: 'S1 - Standard Small', value: 'S1', description: 'Standard - 1 core, 1.75GB RAM' },
+  { name: 'S2 - Standard Medium', value: 'S2', description: 'Standard - 2 cores, 3.5GB RAM' },
+  { name: 'S3 - Standard Large', value: 'S3', description: 'Standard - 4 cores, 7GB RAM' },
+  { name: 'P1v2 - Premium Small', value: 'P1v2', description: 'Premium V2 - 1 core, 3.5GB RAM' },
+  { name: 'P2v2 - Premium Medium', value: 'P2v2', description: 'Premium V2 - 2 cores, 7GB RAM' },
+  { name: 'P3v2 - Premium Large', value: 'P3v2', description: 'Premium V2 - 4 cores, 14GB RAM' },
+  { name: 'P1v3 - Premium V3 Small', value: 'P1v3', description: 'Premium V3 - 2 cores, 8GB RAM' },
+  { name: 'P2v3 - Premium V3 Medium', value: 'P2v3', description: 'Premium V3 - 4 cores, 16GB RAM' },
+  { name: 'P3v3 - Premium V3 Large', value: 'P3v3', description: 'Premium V3 - 8 cores, 32GB RAM' }
+]
+
+const osOptions = ['Windows', 'Linux']
+
+const config = reactive({
+  name: '',
+  sku: 'B1',
+  os: 'Windows',
+  perSiteScaling: false,
+  zoneRedundant: false,
+  maximumElasticWorkerCount: 1,
+  ...props.modelValue
+})
+
+const isPremiumSku = computed(() => config.sku.startsWith('P'))
+
+const isElasticSku = computed(() => {
+  return ['P1v2', 'P2v2', 'P3v2', 'P1v3', 'P2v3', 'P3v3'].includes(config.sku)
+})
+
+// Emite siempre una copia para mantener un flujo unidireccional con el padre.
+const updateParent = () => {
+  emit('update:modelValue', { ...config })
+}
+
+// Genera automáticamente el nombre según app + environment.
+const updateName = () => {
+  const normalizedAppName = props.appName.toLowerCase().replace(/[^a-z0-9]/g, '')
+  const env = props.environment.toLowerCase()
+  const newName = env === 'prod' ? `${normalizedAppName}-asp` : `${normalizedAppName}-${env}-asp`
+
+  if (config.name !== newName) {
+    config.name = newName
+    updateParent()
   }
 }
+
+const isValid = () => {
+  return config.name &&
+    config.sku &&
+    config.os &&
+    config.name.length >= 3 &&
+    config.name.length <= 60 &&
+    /^[a-zA-Z0-9-]+$/.test(config.name)
+}
+
+watch(() => props.appName, () => {
+  updateName()
+}, { immediate: true })
+
+watch(() => props.environment, () => {
+  updateName()
+}, { immediate: true })
+
+watch(() => props.modelValue, (newVal) => {
+  if (newVal && Object.keys(newVal).length > 0) {
+    const hasChanges = Object.keys(newVal).some((key) => config[key] !== newVal[key])
+    if (hasChanges) {
+      Object.assign(config, newVal)
+    }
+  }
+}, { deep: true, immediate: true })
+
+defineExpose({ isValid })
 </script>
