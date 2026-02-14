@@ -1,6 +1,6 @@
 <template>
   <!-- Estimador cuando hay componentes -->
-  <v-card class="mt-4" v-if="components.length > 0">
+  <v-card class="mt-4 surface-elev-2" v-if="components.length > 0">
     <v-card-title class="bg-success text-white">
       <v-icon class="mr-2">mdi-calculator</v-icon>
       💰 Estimación de Costos Mensual

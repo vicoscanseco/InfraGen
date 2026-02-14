@@ -1,6 +1,6 @@
 <template>
   <v-container class="fill-height d-flex flex-column align-center justify-center pa-2" fluid>
-    <v-card class="mx-auto my-4 pa-4 compact-ui" max-width="1400">
+    <v-card class="mx-auto my-4 pa-4 compact-ui surface-elev-1" max-width="1400">
       <v-card-title class="d-flex justify-space-between align-center">
         <span class="text-h5 flex-grow-1 text-center pl-10">Generador de Infraestructura</span>
 
@@ -64,7 +64,7 @@
 
         <v-row dense class="layout-two-columns">
           <v-col cols="12" lg="5">
-            <v-card variant="outlined" class="mb-3">
+            <v-card variant="outlined" class="mb-3 surface-elev-2">
               <v-card-title class="text-subtitle-1">Configuración base</v-card-title>
               <v-divider />
               <v-card-text class="pb-2">
@@ -152,7 +152,7 @@
               </v-card-text>
             </v-card>
 
-            <v-card variant="outlined">
+            <v-card variant="outlined" class="surface-elev-2">
               <v-card-title class="text-subtitle-1">Componentes disponibles</v-card-title>
               <v-divider />
               <v-card-text class="pa-2 available-panel">
@@ -196,7 +196,7 @@
           </v-col>
 
           <v-col cols="12" lg="4">
-            <v-card variant="outlined" class="mb-3">
+            <v-card variant="outlined" class="mb-3 surface-elev-2">
               <v-card-title class="text-subtitle-1">Componentes configurados</v-card-title>
               <v-divider />
               <v-card-text class="pa-0 panel-scroll">
@@ -291,7 +291,7 @@
           </v-col>
 
           <v-col cols="12" lg="3">
-            <v-card variant="outlined" class="mb-3">
+            <v-card variant="outlined" class="mb-3 surface-elev-2">
               <v-card-title class="text-subtitle-1">Estimación de costos</v-card-title>
               <v-divider />
               <v-card-text class="pa-2 cost-panel-scroll">
@@ -315,7 +315,7 @@
 
     <!-- Dialog de configuración -->
     <v-dialog v-model="configDialog" max-width="900px" persistent>
-      <v-card>
+      <v-card class="surface-elev-1">
         <v-card-title>
           Configurar {{ currentComponent?.label }}
         </v-card-title>
@@ -426,7 +426,7 @@
       persistent
       class="azure-admin-dialog"
     >
-      <v-card class="azure-admin-card">
+      <v-card class="azure-admin-card surface-elev-1">
         <v-card-title class="text-h6 d-flex align-center justify-space-between">
           <span>Acceso al Administrador de Despliegue Azure</span>
           <v-btn icon="mdi-close" variant="text" @click="closeAzureDeploymentWindow" />
