@@ -144,18 +144,21 @@
 
 2. Centralizar defaults y validaciones en un esquema único de configuración para evitar reglas duplicadas entre componentes.
 
-3. Fortalecer el flujo de importación/exportación con pruebas de ida y vuelta (importar → editar → exportar) para asegurar que no se pierdan campos.
+3. Documentar en README/guías operativas qué genera cada opción y recomendaciones por entorno (`dev`/`qa`/`prod`).
 
-4. Ejecutar una pasada de accesibilidad y UX fina:
-  - Mensajes de error por campo más claros.
-  - Navegación por teclado/foco en modales.
-  - Revisión final de contraste en tema oscuro.
-
-5. Documentar en README/guías operativas qué genera cada opción y recomendaciones por entorno (`dev`/`qa`/`prod`).
-
-6. Estandarizar componentes a TypeScript (`<script setup lang="ts">`) de forma gradual por lotes pequeños y con `vue-tsc` en CI (pendiente por ahora).
+4. Estandarizar componentes a TypeScript (`<script setup lang="ts">`) de forma gradual por lotes pequeños y con `vue-tsc` en CI (pendiente por ahora).
 
 ## Paso 2 — Validación automática del Bicep (Completado)
 
 - Se reutiliza `hasRequiredBicepSections` desde `src/utils/ruleValidators.js` para bloquear la exportación si la plantilla falta parámetros, recursos u outputs.
 - `AzureSelector.vue` ahora valida el contenido generado antes de calcular los comandos de despliegue y deja vacíos los campos cuando la plantilla no pasa la comprobación.
+
+## Paso 3 — Fortalecer el flujo de importación/exportación (Completado)
+
+- La nueva utilidad `buildBicepContent` agrupa toda la generación de Bicep y se reusa tanto en la UI como en la suite Vitest para simular un ciclo exportar → importar.
+- El test `tests/importExport.test.js` crea un conjunto de componentes de ejemplo, genera el Bicep correspondiente y los vuelve a importar con `parseInfragenBicep`, verificando que los nombres, referencias y metadatos se preservan.
+
+## Paso 4 — Mejora de accesibilidad y UX (Completado)
+
+- Los botones principales del panel de componentes configurados tienen `aria-label` específicos y los mensajes de error/info anuncian el estado con `role` y `aria-live`.
+- Se añadió foco visible y retroalimentación tonal reforzada para las filas de componentes configurados, manteniendo contraste legible en temas claros y oscuros.

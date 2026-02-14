@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test:pricing": "node test_pricing.js",
-    "test:rules": "vitest run tests/ruleValidators.test.js"
+    "test:rules": "vitest run tests"
   },
   "dependencies": {
     "@mdi/font": "^7.4.47",
