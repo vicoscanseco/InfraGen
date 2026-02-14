@@ -212,8 +212,8 @@
                     class="px-2"
                   >
                     <template v-slot:prepend>
-                      <v-avatar color="green" size="small">
-                        <v-icon color="white" size="16">mdi-check</v-icon>
+                      <v-avatar color="primary" size="small" variant="tonal">
+                        <v-icon color="primary" size="16">{{ getAvailableComponentIcon(item.value) }}</v-icon>
                       </v-avatar>
                     </template>
                     <template v-slot:append>
