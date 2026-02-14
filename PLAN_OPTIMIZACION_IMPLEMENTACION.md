@@ -137,5 +137,22 @@
 
 ## Próximos pasos sugeridos
 
-1. Estandarizar componentes a TypeScript (`<script setup lang="ts">`) de forma gradual por lotes pequeños y con `vue-tsc` en CI (pendiente por ahora).
-2. 
+1. Implementar una suite mínima de pruebas automáticas para reglas críticas:
+  - Nomenclatura por ambiente/región.
+  - Conversión de tamaño SQL Database (GB → bytes).
+  - Generación base de Bicep sin regresiones.
+
+2. Agregar validación automática del Bicep generado antes de exportar/desplegar, para detectar parámetros inválidos de forma temprana.
+
+3. Centralizar defaults y validaciones en un esquema único de configuración para evitar reglas duplicadas entre componentes.
+
+4. Fortalecer el flujo de importación/exportación con pruebas de ida y vuelta (importar → editar → exportar) para asegurar que no se pierdan campos.
+
+5. Ejecutar una pasada de accesibilidad y UX fina:
+  - Mensajes de error por campo más claros.
+  - Navegación por teclado/foco en modales.
+  - Revisión final de contraste en tema oscuro.
+
+6. Documentar en README/guías operativas qué genera cada opción y recomendaciones por entorno (`dev`/`qa`/`prod`).
+
+7. Estandarizar componentes a TypeScript (`<script setup lang="ts">`) de forma gradual por lotes pequeños y con `vue-tsc` en CI (pendiente por ahora).
