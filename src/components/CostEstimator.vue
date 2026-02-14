@@ -131,25 +131,6 @@
         </v-col>
       </v-row>
       
-      <!-- Disclaimer -->
-      <v-alert 
-        type="info" 
-        density="compact" 
-        variant="tonal" 
-        class="mt-4"
-        border="start"
-      >
-        <template v-slot:prepend>
-          <v-icon>mdi-information-outline</v-icon>
-        </template>
-        <div class="text-body-2">
-          <strong>Nota importante:</strong> Los costos son estimaciones basadas en precios estándar de Azure. 
-          Se ha aplicado un ajuste del {{ regionInfo.multiplier !== 1.0 ? ((regionInfo.multiplier - 1) * 100).toFixed(0) + '% para la región ' + regionInfo.name : 'precio base para ' + regionInfo.name }}. 
-          Los costos reales pueden variar según el uso actual, descuentos aplicables, 
-          ofertas especiales y el consumo real de recursos.
-        </div>
-      </v-alert>
-
       <!-- Modal para desglose completo de costos -->
       <v-dialog v-model="showDetailDialog" max-width="980px">
         <v-card>
@@ -211,6 +192,24 @@
                 </div>
               </v-col>
             </v-row>
+
+            <v-alert
+              type="info"
+              density="compact"
+              variant="tonal"
+              class="mt-4"
+              border="start"
+            >
+              <template v-slot:prepend>
+                <v-icon>mdi-information-outline</v-icon>
+              </template>
+              <div class="text-body-2">
+                <strong>Nota importante:</strong> Los costos son estimaciones basadas en precios estándar de Azure.
+                Se ha aplicado un ajuste del {{ regionInfo.multiplier !== 1.0 ? ((regionInfo.multiplier - 1) * 100).toFixed(0) + '% para la región ' + regionInfo.name : 'precio base para ' + regionInfo.name }}.
+                Los costos reales pueden variar según el uso actual, descuentos aplicables,
+                ofertas especiales y el consumo real de recursos.
+              </div>
+            </v-alert>
           </v-card-text>
 
           <v-card-actions>
