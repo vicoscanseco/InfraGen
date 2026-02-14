@@ -554,7 +554,7 @@ import CostEstimator from './CostEstimator.vue'
 import AzureDeploymentManager from './AzureDeploymentManager.vue'
 import { useInfragenConfigPersistence } from '../utils/configPersistence'
 import { parseInfragenBicep } from '../utils/bicepImportParser'
-import { sanitizeAppName, syncEnvironmentToken, buildResourceGroupName } from '../utils/ruleValidators'
+import { sanitizeAppName, syncEnvironmentToken, buildResourceGroupName, hasRequiredBicepSections } from '../utils/ruleValidators'
 
 // Cargar la vista de arquitectura bajo demanda para reducir el bundle inicial.
 const ArchitectureView = defineAsyncComponent(() => import('./ArchitectureView.vue'))
