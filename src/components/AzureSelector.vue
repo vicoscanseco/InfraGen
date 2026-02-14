@@ -510,7 +510,7 @@
             Cerrar
           </v-btn>
           <v-btn
-            v-else
+            v-if="azureAdminAuthenticated"
             color="warning"
             @click="logoutAzureAdmin"
           >
@@ -1598,6 +1598,7 @@ const handleBicepImport = async (event) => {
 
 .azure-admin-card {
   border-radius: 12px;
+  overflow: hidden;
 }
 
 .azure-login-wrap {
@@ -1605,12 +1606,19 @@ const handleBicepImport = async (event) => {
   margin: 0 auto;
 }
 
-.azure-login-banner {
+.azure-login-hero {
   display: flex;
   align-items: center;
-  padding: 10px 12px;
+  gap: 8px;
+  padding: 12px 14px;
   border-radius: 10px;
-  background-color: rgba(25, 118, 210, 0.08);
+  background: linear-gradient(135deg, rgba(25, 118, 210, 0.14), rgba(25, 118, 210, 0.05));
+  border: 1px solid rgba(25, 118, 210, 0.2);
+}
+
+.azure-login-form {
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  border-radius: 10px;
 }
 
 .azure-admin-actions {
