@@ -196,8 +196,8 @@
             <v-alert
               type="info"
               density="compact"
-              variant="tonal"
-              class="mt-4"
+              variant="flat"
+              class="mt-4 cost-note-soft"
               border="start"
             >
               <template v-slot:prepend>
@@ -720,5 +720,14 @@ const exportReport = (format) => {
   text-align: center;
   max-width: 100px;
   white-space: normal;
+}
+
+.cost-note-soft {
+  background-color: rgba(2, 136, 209, 0.08) !important;
+  border-color: rgba(2, 136, 209, 0.28) !important;
+}
+
+.cost-note-soft :deep(.v-alert__content) {
+  color: rgba(0, 0, 0, 0.68);
 }
 </style>

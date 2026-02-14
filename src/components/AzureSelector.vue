@@ -4,46 +4,53 @@
       <v-card-title class="d-flex justify-space-between align-center">
         <span class="text-h5 flex-grow-1 text-center pl-10">Generador de Infraestructura</span>
 
-        <v-tooltip text="Limpiar configuración guardada y reiniciar formulario">
-          <template v-slot:activator="{ props }">
-            <v-btn
-              v-bind="props"
-              icon="mdi-delete-restore"
-              variant="text"
-              color="error"
-              size="small"
-              @click="clearLocalStorage"
-            ></v-btn>
+        <div class="d-flex align-center ga-2">
+          <v-tooltip text="Limpiar configuración guardada y reiniciar formulario">
+            <template v-slot:activator="{ props }">
+              <v-btn
+                v-bind="props"
+                prepend-icon="mdi-delete-restore"
+                variant="text"
+                color="error"
+                size="small"
+                @click="clearLocalStorage"
+              >
+                Limpiar
+              </v-btn>
             </template>
-        </v-tooltip>
+          </v-tooltip>
 
-        <v-menu location="bottom end">
-          <template v-slot:activator="{ props }">
-            <v-btn
-              v-bind="props"
-              icon="mdi-dots-vertical"
-              variant="text"
-              color="indigo"
-              size="small"
-            />
-          </template>
+          <v-tooltip text="Cargar configuración desde un archivo Bicep">
+            <template v-slot:activator="{ props }">
+              <v-btn
+                v-bind="props"
+                prepend-icon="mdi-file-import"
+                variant="text"
+                color="indigo"
+                size="small"
+                @click="openBicepImporter"
+              >
+                Importar Bicep
+              </v-btn>
+            </template>
+          </v-tooltip>
 
-          <v-list density="compact">
-            <v-list-item
-              prepend-icon="mdi-file-import"
-              title="Importar Bicep"
-              subtitle="Cargar archivo Bicep"
-              @click="openBicepImporter"
-            />
-            <v-list-item
-              prepend-icon="mdi-cloud-lock"
-              title="Administrador Azure"
-              subtitle="Abrir ventana de despliegue"
-              :disabled="!bicepContent"
-              @click="openAzureDeploymentWindow"
-            />
-          </v-list>
-        </v-menu>
+          <v-tooltip text="Abrir ventana de despliegue en Azure (requiere Bicep generado)">
+            <template v-slot:activator="{ props }">
+              <v-btn
+                v-bind="props"
+                prepend-icon="mdi-cloud-lock"
+                variant="text"
+                color="indigo"
+                size="small"
+                :disabled="!bicepContent"
+                @click="openAzureDeploymentWindow"
+              >
+                Administrador Azure
+              </v-btn>
+            </template>
+          </v-tooltip>
+        </div>
       </v-card-title>
       <v-divider class="mb-3" />
       <v-card-text>
@@ -176,8 +183,8 @@
                         :disabled="canAddComponent(comp.value).allowed"
                       >
                         <template v-slot:activator="{ props }">
-                          <v-btn
-                            v-bind="props"
+            <v-btn
+              v-bind="props"
                             :color="canAddComponent(comp.value).allowed ? 'primary' : 'grey'"
                             :disabled="!canAddComponent(comp.value).allowed"
                             size="small"
