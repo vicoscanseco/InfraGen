@@ -426,45 +426,70 @@
     </v-dialog>
 
     <!-- Ventana separada para administración de despliegue Azure -->
-    <v-dialog v-model="showAzureDeploymentDialog" max-width="1100px" persistent>
-      <v-card>
+    <v-dialog
+      v-model="showAzureDeploymentDialog"
+      :max-width="azureAdminAuthenticated ? '1100px' : '620px'"
+      persistent
+      class="azure-admin-dialog"
+    >
+      <v-card class="azure-admin-card">
         <v-card-title class="text-h6 d-flex align-center justify-space-between">
           <span>Acceso al Administrador de Despliegue Azure</span>
           <v-btn icon="mdi-close" variant="text" @click="closeAzureDeploymentWindow" />
         </v-card-title>
         <v-divider />
 
-        <v-card-text v-if="!azureAdminAuthenticated" class="pt-4">
-          <v-alert type="info" variant="tonal" density="compact" class="mb-4">
-            Inicia sesión para acceder al módulo de despliegue.
-          </v-alert>
+        <v-card-text v-if="!azureAdminAuthenticated" class="pt-4 pb-3">
+          <div class="azure-login-wrap">
+            <div class="azure-login-hero mb-4">
+              <v-avatar color="primary" size="46" class="mr-3">
+                <v-icon color="white" size="24">mdi-shield-lock</v-icon>
+              </v-avatar>
+              <div class="flex-grow-1">
+                <div class="text-subtitle-1 font-weight-bold">Inicio de sesión seguro</div>
+                <div class="text-body-2 text-medium-emphasis">Accede al módulo de despliegue con credenciales locales.</div>
+              </div>
+              <v-chip size="small" color="primary" variant="tonal" class="font-weight-medium">
+                Admin
+              </v-chip>
+            </div>
 
-          <v-row dense>
-            <v-col cols="12" md="6">
+            <v-card variant="outlined" class="azure-login-form pa-4">
               <v-text-field
                 v-model="azureAdminUsername"
                 label="Usuario"
-                density="compact"
+                density="comfortable"
                 variant="outlined"
+                prepend-inner-icon="mdi-account"
+                hide-details="auto"
+                class="mb-3"
                 :rules="[v => !!v || 'El usuario es obligatorio']"
               />
-            </v-col>
-            <v-col cols="12" md="6">
+
               <v-text-field
                 v-model="azureAdminPassword"
+                :type="azureAdminShowPassword ? 'text' : 'password'"
                 label="Contraseña"
-                type="password"
-                density="compact"
+                density="comfortable"
                 variant="outlined"
+                prepend-inner-icon="mdi-lock"
+                :append-inner-icon="azureAdminShowPassword ? 'mdi-eye-off' : 'mdi-eye'"
+                hide-details="auto"
                 :rules="[v => !!v || 'La contraseña es obligatoria']"
+                @click:append-inner="azureAdminShowPassword = !azureAdminShowPassword"
                 @keyup.enter="authenticateAzureAdmin"
               />
-            </v-col>
-          </v-row>
 
-          <v-alert v-if="azureAuthError" type="error" variant="tonal" density="compact" class="mb-2">
-            {{ azureAuthError }}
-          </v-alert>
+              <v-btn color="primary" block class="mt-4" @click="authenticateAzureAdmin">
+                <v-icon left>mdi-login</v-icon>
+                Ingresar al Administrador
+              </v-btn>
+            </v-card>
+
+            <v-alert v-if="azureAuthError" type="error" variant="tonal" density="compact" class="mt-3 mb-0">
+              {{ azureAuthError }}
+            </v-alert>
+          </div>
         </v-card-text>
 
         <v-card-text v-else class="pt-4">
@@ -479,17 +504,10 @@
           />
         </v-card-text>
 
-        <v-card-actions>
+        <v-card-actions class="azure-admin-actions">
           <v-spacer />
           <v-btn color="grey" @click="closeAzureDeploymentWindow">
             Cerrar
-          </v-btn>
-          <v-btn
-            v-if="!azureAdminAuthenticated"
-            color="primary"
-            @click="authenticateAzureAdmin"
-          >
-            Ingresar
           </v-btn>
           <v-btn
             v-else
@@ -569,6 +587,7 @@ const showAzureDeploymentDialog = ref(false)
 const azureAdminAuthenticated = ref(false)
 const azureAdminUsername = ref('')
 const azureAdminPassword = ref('')
+const azureAdminShowPassword = ref(false)
 const azureAuthError = ref('')
 
 // Estado del componente
@@ -678,12 +697,14 @@ const localAzureAdminCredentials = {
 
 const openAzureDeploymentWindow = () => {
   azureAuthError.value = ''
+  azureAdminShowPassword.value = false
   showAzureDeploymentDialog.value = true
 }
 
 const closeAzureDeploymentWindow = () => {
   showAzureDeploymentDialog.value = false
   azureAuthError.value = ''
+  azureAdminShowPassword.value = false
 }
 
 const authenticateAzureAdmin = () => {
@@ -708,6 +729,7 @@ const authenticateAzureAdmin = () => {
 const logoutAzureAdmin = () => {
   azureAdminAuthenticated.value = false
   azureAdminPassword.value = ''
+  azureAdminShowPassword.value = false
   azureAuthError.value = ''
 }
 
@@ -1572,6 +1594,27 @@ const handleBicepImport = async (event) => {
 .cost-panel-scroll {
   max-height: 760px;
   overflow-y: auto;
+}
+
+.azure-admin-card {
+  border-radius: 12px;
+}
+
+.azure-login-wrap {
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.azure-login-banner {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background-color: rgba(25, 118, 210, 0.08);
+}
+
+.azure-admin-actions {
+  padding: 10px 16px 14px;
 }
 
 .compact-ui :deep(.v-card--variant-outlined) {
