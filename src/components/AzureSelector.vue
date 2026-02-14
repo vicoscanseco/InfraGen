@@ -1,6 +1,6 @@
 <template>
   <v-container class="fill-height d-flex flex-column align-center justify-center pa-2" fluid>
-    <v-card class="mx-auto my-4 pa-4" max-width="800">
+    <v-card class="mx-auto my-4 pa-4 compact-ui" max-width="1400">
       <v-card-title class="d-flex justify-space-between align-center">
         <span class="text-h5 flex-grow-1 text-center pl-10">Generador de Infraestructura</span>
 
@@ -14,7 +14,7 @@
               size="small"
               @click="clearLocalStorage"
             ></v-btn>
-          </template>
+            </template>
         </v-tooltip>
 
         <v-menu location="bottom end">
@@ -47,232 +47,256 @@
       </v-card-title>
       <v-divider class="mb-3" />
       <v-card-text>
-        <!-- Campos principales en dos filas -->
-        <v-row dense>
-          <v-col cols="12" md="6">
-            <v-select
-              v-model="selectedEnv"
-              :items="environments"
-              item-title="label"
-              item-value="value"
-              label="Ambiente"
-              density="compact"
-              variant="outlined"
-              required
-            />
-          </v-col>
-          <v-col cols="12" md="6">
-            <v-tooltip text="Selecciona la región de Azure donde se desplegarán tus recursos. Esto afecta los costos y la latencia.">
-              <template v-slot:activator="{ props }">
-                <v-select
-                  v-bind="props"
-                  v-model="location"
-                  :items="locations"
-                  item-title="label"
-                  item-value="value"
-                  label="Ubicación"
-                  density="compact"
-                  variant="outlined"
-                  :rules="[v => !!v || 'La ubicación es obligatoria']"
-                  required
-                />
-              </template>
-            </v-tooltip>
-          </v-col>
-        </v-row>
-        
-        <v-row dense>
-          <v-col cols="12" md="6">
-            <v-tooltip text="Nombre único para identificar tu aplicación en Azure. Se usará como prefijo para generar nombres de recursos.">
-              <template v-slot:activator="{ props }">
-                <v-text-field
-                  v-bind="props"
-                  v-model="appName"
-                  label="Nombre de la aplicación"
-                  density="compact"
-                  variant="outlined"
-                  :rules="[v => !!v || 'El nombre de la aplicación es obligatorio']"
-                  required
-                />
-              </template>
-            </v-tooltip>
-          </v-col>
-          <v-col cols="12" md="6">
-            <v-tooltip text="El grupo de recursos se genera automáticamente combinando ubicación, nombre de la aplicación y ambiente. Para producción se omite el ambiente. Contiene todos los recursos relacionados.">
-              <template v-slot:activator="{ props }">
-                <v-text-field
-                  v-bind="props"
-                  v-model="resourceGroup"
-                  label="Grupo de recursos"
-                  density="compact"
-                  variant="outlined"
-                  readonly
-                  append-inner-icon="mdi-lock"
-                  hint="Se genera automáticamente: rg + ubicación + nombre de app + ambiente (prod sin ambiente)"
-                  persistent-hint
-                />
-              </template>
-            </v-tooltip>
-            
-            <!-- Chip de preview del nombre del grupo de recursos -->
-            <div class="mt-2" v-if="computedResourceGroupName">
-              <v-chip color="blue" variant="outlined" size="small">
-                <v-icon left>mdi-eye</v-icon>
-                Preview: {{ computedResourceGroupName }}
-              </v-chip>
-            </div>
-          </v-col>
-        </v-row>
-        
-        <!-- Mensaje informativo -->
-        <v-row v-if="!isBasicInfoComplete" dense class="mt-2">
-          <v-col cols="12">
-            <v-alert
-              type="info"
-              variant="tonal"
-              closable
-              icon="mdi-information"
-              title="Información requerida"
-              text="Complete el nombre de la aplicación y la configuración básica antes de agregar componentes."
-            />
-          </v-col>
-        </v-row>
-        
-        <!-- Listado de componentes disponibles -->
-        <v-row dense class="mt-2">
-          <v-col cols="12">
-            <v-label class="mb-1 font-weight-bold">Componentes disponibles:</v-label>
-            <v-list lines="two" density="compact" class="pa-0">
-              <v-list-item
-                v-for="comp in availableComponents"
-                :key="comp.value"
-                :title="comp.label"
-                :subtitle="comp.description"
-                :class="{ 'text-disabled': !canAddComponent(comp.value).allowed }"
-                class="px-2"
-              >
-                <template v-slot:prepend>
-                  <v-icon 
-                    :color="canAddComponent(comp.value).allowed ? 'primary' : 'grey'"
-                    :icon="canAddComponent(comp.value).allowed ? 'mdi-check-circle' : 'mdi-lock'"
-                  />
-                </template>
-                <template v-slot:append>
-                  <v-tooltip 
-                    :text="!canAddComponent(comp.value).allowed ? canAddComponent(comp.value).reason : ''"
-                    :disabled="canAddComponent(comp.value).allowed"
+        <input
+          ref="bicepFileInput"
+          type="file"
+          accept=".bicep,.txt"
+          class="d-none"
+          @change="handleBicepImport"
+        >
+
+        <v-row dense class="layout-two-columns">
+          <v-col cols="12" lg="5">
+            <v-card variant="outlined" class="mb-3">
+              <v-card-title class="text-subtitle-1">Configuración base</v-card-title>
+              <v-divider />
+              <v-card-text class="pb-2">
+                <v-row dense>
+                  <v-col cols="12" md="6">
+                    <v-select
+                      v-model="selectedEnv"
+                      :items="environments"
+                      item-title="label"
+                      item-value="value"
+                      label="Ambiente"
+                      density="compact"
+                      variant="outlined"
+                      required
+                    />
+                  </v-col>
+                  <v-col cols="12" md="6">
+                    <v-tooltip text="Selecciona la región de Azure donde se desplegarán tus recursos. Esto afecta los costos y la latencia.">
+                      <template v-slot:activator="{ props }">
+                        <v-select
+                          v-bind="props"
+                          v-model="location"
+                          :items="locations"
+                          item-title="label"
+                          item-value="value"
+                          label="Ubicación"
+                          density="compact"
+                          variant="outlined"
+                          :rules="[v => !!v || 'La ubicación es obligatoria']"
+                          required
+                        />
+                      </template>
+                    </v-tooltip>
+                  </v-col>
+                </v-row>
+
+                <v-row dense>
+                  <v-col cols="12" md="6">
+                    <v-tooltip text="Nombre único para identificar tu aplicación en Azure. Se usará como prefijo para generar nombres de recursos.">
+                      <template v-slot:activator="{ props }">
+                        <v-text-field
+                          v-bind="props"
+                          v-model="appName"
+                          label="Nombre de la aplicación"
+                          density="compact"
+                          variant="outlined"
+                          :rules="[v => !!v || 'El nombre de la aplicación es obligatorio']"
+                          required
+                        />
+                      </template>
+                    </v-tooltip>
+                  </v-col>
+                  <v-col cols="12" md="6">
+                    <v-tooltip text="El grupo de recursos se genera automáticamente combinando ubicación, nombre de la aplicación y ambiente. Para producción se omite el ambiente. Contiene todos los recursos relacionados.">
+                      <template v-slot:activator="{ props }">
+                        <v-text-field
+                          v-bind="props"
+                          v-model="resourceGroup"
+                          label="Grupo de recursos"
+                          density="compact"
+                          variant="outlined"
+                          readonly
+                          append-inner-icon="mdi-lock"
+                          hint="Se genera automáticamente: rg + ubicación + nombre de app + ambiente (prod sin ambiente)"
+                          persistent-hint
+                        />
+                      </template>
+                    </v-tooltip>
+
+                    <div class="mt-2" v-if="computedResourceGroupName">
+                      <v-chip color="blue" variant="outlined" size="small">
+                        <v-icon left>mdi-eye</v-icon>
+                        Preview: {{ computedResourceGroupName }}
+                      </v-chip>
+                    </div>
+                  </v-col>
+                </v-row>
+
+                <v-row v-if="!isBasicInfoComplete" dense class="mt-2">
+                  <v-col cols="12">
+                    <v-alert
+                      type="info"
+                      variant="tonal"
+                      closable
+                      icon="mdi-information"
+                      title="Información requerida"
+                      text="Complete el nombre de la app y la configuración básica antes de agregar componentes."
+                    />
+                  </v-col>
+                </v-row>
+              </v-card-text>
+            </v-card>
+
+            <v-card variant="outlined">
+              <v-card-title class="text-subtitle-1">Componentes disponibles</v-card-title>
+              <v-divider />
+              <v-card-text class="pa-0 panel-scroll">
+                <v-list lines="two" density="compact" class="pa-0">
+                  <v-list-item
+                    v-for="comp in availableComponents"
+                    :key="comp.value"
+                    :title="comp.label"
+                    :subtitle="comp.description"
+                    :class="{ 'text-disabled': !canAddComponent(comp.value).allowed }"
+                    class="px-2"
                   >
-                    <template v-slot:activator="{ props }">
-                      <v-btn
-                        v-bind="props"
+                    <template v-slot:prepend>
+                      <v-icon
                         :color="canAddComponent(comp.value).allowed ? 'primary' : 'grey'"
-                        :disabled="!canAddComponent(comp.value).allowed"
-                        size="small"
-                        @click="addComponent(comp)"
-                      >
-                        Agregar
-                      </v-btn>
+                        :icon="canAddComponent(comp.value).allowed ? 'mdi-check-circle' : 'mdi-lock'"
+                      />
                     </template>
-                  </v-tooltip>
-                </template>
-              </v-list-item>
-            </v-list>
+                    <template v-slot:append>
+                      <v-tooltip
+                        :text="!canAddComponent(comp.value).allowed ? canAddComponent(comp.value).reason : ''"
+                        :disabled="canAddComponent(comp.value).allowed"
+                      >
+                        <template v-slot:activator="{ props }">
+                          <v-btn
+                            v-bind="props"
+                            :color="canAddComponent(comp.value).allowed ? 'primary' : 'grey'"
+                            :disabled="!canAddComponent(comp.value).allowed"
+                            size="small"
+                            @click="addComponent(comp)"
+                          >
+                            Agregar
+                          </v-btn>
+                        </template>
+                      </v-tooltip>
+                    </template>
+                  </v-list-item>
+                </v-list>
+              </v-card-text>
+            </v-card>
           </v-col>
-        </v-row>
 
-        <!-- Lista de componentes agregados -->
-        <v-row v-if="configuredComponents.length > 0" dense class="mt-2">
-          <v-col cols="12">
-            <v-label class="mb-1 font-weight-bold">Componentes configurados:</v-label>
-            <v-list lines="two" density="compact" class="pa-0">
-              <v-list-item
-                v-for="(item, index) in configuredComponents"
-                :key="index"
-                :title="item.label"
-                :subtitle="`${item.value} - ${item.config?.name || 'Sin nombre'}`"
-                class="px-2"
-              >
-                <template v-slot:prepend>
-                  <v-avatar color="green" size="small">
-                    <v-icon color="white" size="16">mdi-check</v-icon>
-                  </v-avatar>
-                </template>
-                <template v-slot:append>
-                  <v-tooltip text="Edita la configuración de este componente">
-                    <template v-slot:activator="{ props }">
-                      <v-btn
-                        v-bind="props"
-                        color="orange"
-                        size="small"
-                        class="me-2"
-                        @click="editComponent(index)"
-                      >
-                        Editar
-                      </v-btn>
+          <v-col cols="12" lg="4">
+            <v-card variant="outlined" class="mb-3">
+              <v-card-title class="text-subtitle-1">Componentes configurados</v-card-title>
+              <v-divider />
+              <v-card-text class="pa-0 panel-scroll">
+                <v-list v-if="configuredComponents.length > 0" lines="two" density="compact" class="pa-0">
+                  <v-list-item
+                    v-for="(item, index) in configuredComponents"
+                    :key="index"
+                    :title="item.label"
+                    :subtitle="`${item.value} - ${item.config?.name || 'Sin nombre'}`"
+                    class="px-2"
+                  >
+                    <template v-slot:prepend>
+                      <v-avatar color="green" size="small">
+                        <v-icon color="white" size="16">mdi-check</v-icon>
+                      </v-avatar>
                     </template>
-                  </v-tooltip>
-                  <v-tooltip text="Elimina este componente de la configuración">
-                    <template v-slot:activator="{ props }">
-                      <v-btn
-                        v-bind="props"
-                        color="red"
-                        size="small"
-                        @click="removeComponent(index)"
-                      >
-                        Quitar
-                      </v-btn>
+                    <template v-slot:append>
+                      <v-tooltip text="Edita la configuración de este componente">
+                        <template v-slot:activator="{ props }">
+                          <v-btn
+                            v-bind="props"
+                            color="orange"
+                            size="small"
+                            class="me-2"
+                            @click="editComponent(index)"
+                          >
+                            Editar
+                          </v-btn>
+                        </template>
+                      </v-tooltip>
+                      <v-tooltip text="Elimina este componente de la configuración">
+                        <template v-slot:activator="{ props }">
+                          <v-btn
+                            v-bind="props"
+                            color="red"
+                            size="small"
+                            @click="removeComponent(index)"
+                          >
+                            Quitar
+                          </v-btn>
+                        </template>
+                      </v-tooltip>
                     </template>
-                  </v-tooltip>
-                </template>
-              </v-list-item>
-            </v-list>
+                  </v-list-item>
+                </v-list>
+
+                <div v-else class="pa-4">
+                  <v-alert type="info" variant="tonal" density="compact">
+                    Aún no hay componentes configurados.
+                  </v-alert>
+                </div>
+              </v-card-text>
+            </v-card>
+
+            <v-row class="mb-2" dense>
+              <v-col cols="12">
+                <v-tooltip text="Genera el código Bicep para desplegar tu infraestructura en Azure. Requiere al menos un componente configurado.">
+                  <template v-slot:activator="{ props }">
+                    <v-btn
+                      v-bind="props"
+                      color="primary"
+                      size="default"
+                      block
+                      :disabled="configuredComponents.length === 0 || !appName || !location"
+                      @click="generateBicep"
+                    >
+                      <v-icon left>mdi-cog</v-icon>
+                      Generar Infraestructura
+                    </v-btn>
+                  </template>
+                </v-tooltip>
+              </v-col>
+              <v-col cols="12">
+                <v-tooltip text="Muestra la vista de arquitectura de los recursos configurados.">
+                  <template v-slot:activator="{ props }">
+                    <v-btn
+                      v-bind="props"
+                      color="secondary"
+                      size="default"
+                      block
+                      :disabled="configuredComponents.length === 0"
+                      @click="showArchDialog = true"
+                    >
+                      <v-icon left>mdi-graph</v-icon>
+                      Vista de Arquitectura
+                    </v-btn>
+                  </template>
+                </v-tooltip>
+              </v-col>
+            </v-row>
+
           </v-col>
-        </v-row>
 
-        <!-- Estimador de costos -->
-        <CostEstimator :components="configuredComponents" :region="location" />
-        
-        <!-- Botones para generar y ver arquitectura -->
-        <v-row class="mt-4">
-          <v-col cols="12" class="text-center">
-            <input
-              ref="bicepFileInput"
-              type="file"
-              accept=".bicep,.txt"
-              class="d-none"
-              @change="handleBicepImport"
-            >
-
-            <v-tooltip text="Genera el código Bicep para desplegar tu infraestructura en Azure. Requiere al menos un componente configurado.">
-              <template v-slot:activator="{ props }">
-                <v-btn
-                  v-bind="props"
-                  color="primary"
-                  size="large"
-                  :disabled="configuredComponents.length === 0 || !appName || !location"
-                  @click="generateBicep"
-                >
-                  <v-icon left>mdi-cog</v-icon>
-                  Generar Infraestructura
-                </v-btn>
-              </template>
-            </v-tooltip>
-            
-            <v-tooltip text="Muestra la vista de arquitectura de los recursos configurados.">
-              <template v-slot:activator="{ props }">
-                <v-btn
-                  v-bind="props"
-                  color="secondary"
-                  size="large"
-                  class="ml-4"
-                  :disabled="configuredComponents.length === 0"
-                  @click="showArchDialog = true"
-                >
-                  <v-icon left>mdi-graph</v-icon>
-                  Vista de Arquitectura
-                </v-btn>
-              </template>
-            </v-tooltip>
+          <v-col cols="12" lg="3">
+            <v-card variant="outlined" class="mb-3">
+              <v-card-title class="text-subtitle-1">Estimación de costos</v-card-title>
+              <v-divider />
+              <v-card-text class="pa-2 cost-panel-scroll">
+                <CostEstimator :components="configuredComponents" :region="location" />
+              </v-card-text>
+            </v-card>
           </v-col>
         </v-row>
       </v-card-text>
@@ -1515,5 +1539,97 @@ const handleBicepImport = async (event) => {
 
 .v-footer {
   margin-top: auto;
+}
+
+.panel-scroll {
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.cost-panel-scroll {
+  max-height: 760px;
+  overflow-y: auto;
+}
+
+.compact-ui :deep(.text-h5) {
+  font-size: 1.45rem !important;
+}
+
+.compact-ui :deep(.v-card-title) {
+  font-size: 0.86rem;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.compact-ui :deep(.v-list-item-title) {
+  font-size: 0.8rem;
+  line-height: 1.15;
+}
+
+.compact-ui :deep(.v-list-item-subtitle) {
+  font-size: 0.68rem;
+  line-height: 1.1;
+}
+
+.compact-ui :deep(.v-field__input),
+.compact-ui :deep(.v-field__field .v-label) {
+  font-size: 0.78rem;
+}
+
+.compact-ui :deep(.v-field__input) {
+  min-height: 30px;
+}
+
+.compact-ui :deep(.v-btn) {
+  font-size: 0.7rem;
+  letter-spacing: 0.02em;
+  min-height: 30px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.compact-ui :deep(.v-btn--size-small) {
+  min-height: 26px;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.compact-ui :deep(.v-btn--icon) {
+  width: 28px;
+  height: 28px;
+}
+
+.compact-ui :deep(.v-chip) {
+  font-size: 0.7rem;
+}
+
+.compact-ui :deep(.text-body-2) {
+  font-size: 0.74rem;
+}
+
+.compact-ui :deep(.text-caption) {
+  font-size: 0.64rem;
+}
+
+.compact-ui :deep(.cost-panel-scroll .text-h6) {
+  font-size: 0.96rem !important;
+}
+
+.compact-ui :deep(.cost-panel-scroll .text-subtitle-2) {
+  font-size: 0.74rem !important;
+}
+
+@media (min-width: 1900px) {
+  .compact-ui :deep(.text-h5) {
+    font-size: 1.3rem !important;
+  }
+
+  .compact-ui :deep(.v-list-item-title) {
+    font-size: 0.76rem;
+  }
+
+  .compact-ui :deep(.v-list-item-subtitle) {
+    font-size: 0.64rem;
+  }
 }
 </style>
