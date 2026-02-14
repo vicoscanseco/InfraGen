@@ -162,41 +162,49 @@
               <v-card-title class="text-subtitle-1">Componentes disponibles</v-card-title>
               <v-divider />
               <v-card-text class="pa-0 panel-scroll">
-                <v-list lines="two" density="compact" class="pa-0">
-                  <v-list-item
-                    v-for="comp in availableComponents"
-                    :key="comp.value"
-                    :title="comp.label"
-                    :subtitle="comp.description"
-                    :class="{ 'text-disabled': !canAddComponent(comp.value).allowed }"
-                    class="px-2"
-                  >
-                    <template v-slot:prepend>
-                      <v-icon
-                        :color="canAddComponent(comp.value).allowed ? 'primary' : 'grey'"
-                        :icon="canAddComponent(comp.value).allowed ? 'mdi-check-circle' : 'mdi-lock'"
-                      />
-                    </template>
-                    <template v-slot:append>
-                      <v-tooltip
-                        :text="!canAddComponent(comp.value).allowed ? canAddComponent(comp.value).reason : ''"
-                        :disabled="canAddComponent(comp.value).allowed"
-                      >
-                        <template v-slot:activator="{ props }">
-            <v-btn
-              v-bind="props"
-                            :color="canAddComponent(comp.value).allowed ? 'primary' : 'grey'"
-                            :disabled="!canAddComponent(comp.value).allowed"
-                            size="small"
-                            @click="addComponent(comp)"
+                <div class="pa-2">
+                  <v-hover v-for="comp in availableComponents" :key="comp.value" v-slot="{ isHovering, props }">
+                    <v-card
+                      v-bind="props"
+                      variant="outlined"
+                      :elevation="isHovering ? 2 : 0"
+                      class="available-comp-card mb-2"
+                      :class="{ 'text-disabled': !canAddComponent(comp.value).allowed }"
+                      tabindex="0"
+                    >
+                      <v-card-text class="py-2 px-3">
+                        <div class="d-flex align-center justify-space-between ga-2">
+                          <div class="d-flex align-center ga-2 flex-grow-1 min-w-0">
+                            <v-icon
+                              :color="canAddComponent(comp.value).allowed ? 'primary' : 'grey'"
+                              :icon="canAddComponent(comp.value).allowed ? 'mdi-check-circle' : 'mdi-lock'"
+                            />
+                            <div class="min-w-0">
+                              <div class="text-body-2 font-weight-medium text-truncate">{{ comp.label }}</div>
+                              <div class="text-caption text-medium-emphasis text-truncate">{{ comp.description }}</div>
+                            </div>
+                          </div>
+                          <v-tooltip
+                            :text="!canAddComponent(comp.value).allowed ? canAddComponent(comp.value).reason : ''"
+                            :disabled="canAddComponent(comp.value).allowed"
                           >
-                            Agregar
-                          </v-btn>
-                        </template>
-                      </v-tooltip>
-                    </template>
-                  </v-list-item>
-                </v-list>
+                            <template v-slot:activator="{ props: btnProps }">
+                              <v-btn
+                                v-bind="btnProps"
+                                :color="canAddComponent(comp.value).allowed ? 'primary' : 'grey'"
+                                :disabled="!canAddComponent(comp.value).allowed"
+                                size="small"
+                                @click="addComponent(comp)"
+                              >
+                                Agregar
+                              </v-btn>
+                            </template>
+                          </v-tooltip>
+                        </div>
+                      </v-card-text>
+                    </v-card>
+                  </v-hover>
+                </div>
               </v-card-text>
             </v-card>
           </v-col>
@@ -439,70 +447,82 @@
         </v-card-title>
         <v-divider />
 
-        <v-card-text v-if="!azureAdminAuthenticated" class="pt-4 pb-3">
-          <div class="azure-login-wrap">
-            <div class="azure-login-hero mb-4">
-              <v-avatar color="primary" size="46" class="mr-3">
-                <v-icon color="white" size="24">mdi-shield-lock</v-icon>
-              </v-avatar>
-              <div class="flex-grow-1">
-                <div class="text-subtitle-1 font-weight-bold">Inicio de sesión seguro</div>
-                <div class="text-body-2 text-medium-emphasis">Accede al módulo de despliegue con credenciales locales.</div>
+        <transition name="azure-auth-fade" mode="out-in">
+          <v-card-text v-if="!azureAdminAuthenticated" key="login" class="pt-4 pb-3">
+            <div class="azure-login-wrap">
+              <div class="azure-login-hero mb-4">
+                <v-avatar color="primary" size="46" class="mr-3">
+                  <v-icon color="white" size="24">mdi-shield-lock</v-icon>
+                </v-avatar>
+                <div class="flex-grow-1">
+                  <div class="text-subtitle-1 font-weight-bold">Inicio de sesión seguro</div>
+                  <div class="text-body-2 text-medium-emphasis">Accede al módulo de despliegue con credenciales locales.</div>
+                </div>
+                <v-chip size="small" color="primary" variant="tonal" class="font-weight-medium">
+                  Admin
+                </v-chip>
               </div>
-              <v-chip size="small" color="primary" variant="tonal" class="font-weight-medium">
-                Admin
-              </v-chip>
+
+              <v-card variant="outlined" class="azure-login-form pa-4">
+                <v-text-field
+                  v-model="azureAdminUsername"
+                  label="Usuario"
+                  density="comfortable"
+                  variant="outlined"
+                  prepend-inner-icon="mdi-account"
+                  hide-details="auto"
+                  class="mb-3 azure-login-input"
+                  :disabled="azureAuthLoading"
+                  :rules="[v => !!v || 'El usuario es obligatorio']"
+                />
+
+                <v-text-field
+                  v-model="azureAdminPassword"
+                  :type="azureAdminShowPassword ? 'text' : 'password'"
+                  label="Contraseña"
+                  density="comfortable"
+                  variant="outlined"
+                  prepend-inner-icon="mdi-lock"
+                  :append-inner-icon="azureAdminShowPassword ? 'mdi-eye-off' : 'mdi-eye'"
+                  hide-details="auto"
+                  class="azure-login-input"
+                  :disabled="azureAuthLoading"
+                  :rules="[v => !!v || 'La contraseña es obligatoria']"
+                  @click:append-inner="azureAdminShowPassword = !azureAdminShowPassword"
+                  @keyup.enter="authenticateAzureAdmin"
+                />
+
+                <v-btn
+                  color="primary"
+                  block
+                  class="mt-4"
+                  :loading="azureAuthLoading"
+                  :disabled="azureAuthLoading"
+                  @click="authenticateAzureAdmin"
+                >
+                  <v-icon left>mdi-login</v-icon>
+                  Ingresar al Administrador
+                </v-btn>
+              </v-card>
+
+              <v-alert v-if="azureAuthError" type="error" variant="tonal" density="compact" class="mt-3 mb-0">
+                {{ azureAuthError }}
+              </v-alert>
             </div>
+          </v-card-text>
 
-            <v-card variant="outlined" class="azure-login-form pa-4">
-              <v-text-field
-                v-model="azureAdminUsername"
-                label="Usuario"
-                density="comfortable"
-                variant="outlined"
-                prepend-inner-icon="mdi-account"
-                hide-details="auto"
-                class="mb-3"
-                :rules="[v => !!v || 'El usuario es obligatorio']"
-              />
-
-              <v-text-field
-                v-model="azureAdminPassword"
-                :type="azureAdminShowPassword ? 'text' : 'password'"
-                label="Contraseña"
-                density="comfortable"
-                variant="outlined"
-                prepend-inner-icon="mdi-lock"
-                :append-inner-icon="azureAdminShowPassword ? 'mdi-eye-off' : 'mdi-eye'"
-                hide-details="auto"
-                :rules="[v => !!v || 'La contraseña es obligatoria']"
-                @click:append-inner="azureAdminShowPassword = !azureAdminShowPassword"
-                @keyup.enter="authenticateAzureAdmin"
-              />
-
-              <v-btn color="primary" block class="mt-4" @click="authenticateAzureAdmin">
-                <v-icon left>mdi-login</v-icon>
-                Ingresar al Administrador
-              </v-btn>
-            </v-card>
-
-            <v-alert v-if="azureAuthError" type="error" variant="tonal" density="compact" class="mt-3 mb-0">
-              {{ azureAuthError }}
+          <v-card-text v-else key="admin" class="pt-4">
+            <v-alert type="success" variant="tonal" density="compact" class="mb-3">
+              Sesión iniciada como {{ azureAdminUsername }}.
             </v-alert>
-          </div>
-        </v-card-text>
 
-        <v-card-text v-else class="pt-4">
-          <v-alert type="success" variant="tonal" density="compact" class="mb-3">
-            Sesión iniciada como {{ azureAdminUsername }}.
-          </v-alert>
-
-          <AzureDeploymentManager
-            :bicep-content="bicepContent"
-            :default-resource-group="resourceGroup"
-            :default-location="location"
-          />
-        </v-card-text>
+            <AzureDeploymentManager
+              :bicep-content="bicepContent"
+              :default-resource-group="resourceGroup"
+              :default-location="location"
+            />
+          </v-card-text>
+        </transition>
 
         <v-card-actions class="azure-admin-actions">
           <v-spacer />
@@ -588,6 +608,7 @@ const azureAdminAuthenticated = ref(false)
 const azureAdminUsername = ref('')
 const azureAdminPassword = ref('')
 const azureAdminShowPassword = ref(false)
+const azureAuthLoading = ref(false)
 const azureAuthError = ref('')
 
 // Estado del componente
@@ -697,6 +718,7 @@ const localAzureAdminCredentials = {
 
 const openAzureDeploymentWindow = () => {
   azureAuthError.value = ''
+  azureAuthLoading.value = false
   azureAdminShowPassword.value = false
   showAzureDeploymentDialog.value = true
 }
@@ -704,14 +726,20 @@ const openAzureDeploymentWindow = () => {
 const closeAzureDeploymentWindow = () => {
   showAzureDeploymentDialog.value = false
   azureAuthError.value = ''
+  azureAuthLoading.value = false
   azureAdminShowPassword.value = false
 }
 
-const authenticateAzureAdmin = () => {
+const authenticateAzureAdmin = async () => {
+  if (azureAuthLoading.value) return
+
   if (!azureAdminUsername.value || !azureAdminPassword.value) {
     azureAuthError.value = 'Captura usuario y contraseña para continuar.'
     return
   }
+
+  azureAuthLoading.value = true
+  await new Promise(resolve => setTimeout(resolve, 320))
 
   const isValidUser = azureAdminUsername.value === localAzureAdminCredentials.username
   const isValidPassword = azureAdminPassword.value === localAzureAdminCredentials.password
@@ -719,17 +747,20 @@ const authenticateAzureAdmin = () => {
   if (!isValidUser || !isValidPassword) {
     azureAuthError.value = 'Usuario o contraseña inválidos.'
     azureAdminAuthenticated.value = false
+    azureAuthLoading.value = false
     return
   }
 
   azureAuthError.value = ''
   azureAdminAuthenticated.value = true
+  azureAuthLoading.value = false
 }
 
 const logoutAzureAdmin = () => {
   azureAdminAuthenticated.value = false
   azureAdminPassword.value = ''
   azureAdminShowPassword.value = false
+  azureAuthLoading.value = false
   azureAuthError.value = ''
 }
 
@@ -1591,6 +1622,16 @@ const handleBicepImport = async (event) => {
   overflow-y: auto;
 }
 
+.available-comp-card {
+  transition: transform 0.18s ease;
+}
+
+.available-comp-card:hover,
+.available-comp-card:focus-visible,
+.available-comp-card:focus-within {
+  transform: translateY(-1px);
+}
+
 .cost-panel-scroll {
   max-height: 760px;
   overflow-y: auto;
@@ -1619,6 +1660,26 @@ const handleBicepImport = async (event) => {
 .azure-login-form {
   border-color: rgba(0, 0, 0, 0.12) !important;
   border-radius: 10px;
+}
+
+.azure-login-form :deep(.azure-login-input .v-field) {
+  transition: box-shadow 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+}
+
+.azure-login-form :deep(.azure-login-input .v-field.v-field--focused) {
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.14);
+}
+
+.azure-auth-fade-enter-active,
+.azure-auth-fade-leave-active {
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.azure-auth-fade-enter-from,
+.azure-auth-fade-leave-to {
+  opacity: 0;
+  transform: translateY(6px);
 }
 
 .azure-admin-actions {
