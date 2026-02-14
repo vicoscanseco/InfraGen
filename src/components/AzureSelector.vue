@@ -611,6 +611,51 @@ const sanitizeAppName = (value) => {
   return String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '')
 }
 
+const escapeRegExp = (value) => {
+  return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+// Ajusta un nombre de recurso cuando cambia el ambiente (dev/test/stage/prod).
+const syncEnvironmentToken = (value, oldEnv, newEnv) => {
+  if (typeof value !== 'string' || !value) return value
+  if (!oldEnv || !newEnv || oldEnv === newEnv) return value
+
+  let updated = value
+  const oldEscaped = escapeRegExp(oldEnv)
+  const envSuffixWithDash = new RegExp(`-${oldEscaped}(?=-asp$|-ca$|-cae$|-ain$|$)`, 'gi')
+  const envSuffixNoDash = new RegExp(`${oldEscaped}$`, 'gi')
+
+  if (oldEnv !== 'prod' && newEnv !== 'prod') {
+    updated = updated.replace(envSuffixWithDash, `-${newEnv}`)
+    updated = updated.replace(envSuffixNoDash, newEnv)
+    return updated
+  }
+
+  if (oldEnv !== 'prod' && newEnv === 'prod') {
+    updated = updated.replace(envSuffixWithDash, '')
+    updated = updated.replace(envSuffixNoDash, '')
+    return updated
+  }
+
+  const hasDashedName = updated.includes('-')
+  const hasKnownSuffix = /-(asp|ca|cae|ain)$/i.test(updated)
+  const noDashConventions = /^(rg|sta|func|cog|log)[a-z0-9]+$/i.test(updated)
+
+  if (hasKnownSuffix) {
+    return updated.replace(/-(asp|ca|cae|ain)$/i, `-${newEnv}-$1`)
+  }
+
+  if (noDashConventions) {
+    return `${updated}${newEnv}`
+  }
+
+  if (hasDashedName) {
+    return `${updated}-${newEnv}`
+  }
+
+  return `${updated}${newEnv}`
+}
+
 // Computed property para generar nombre de grupo de recursos
 const computedResourceGroupName = computed(() => {
   if (!appName.value || !location.value || !selectedEnv.value) return ''
@@ -667,6 +712,48 @@ watch(appName, (newAppName, oldAppName) => {
       }
 
       updatedConfig[field] = currentValue.replace(new RegExp(oldToken, 'gi'), newToken)
+    })
+
+    return {
+      ...component,
+      config: updatedConfig
+    }
+  })
+})
+
+// Mantiene sincronizados los nombres/referencias de componentes al cambiar el ambiente.
+watch(selectedEnv, (newEnv, oldEnv) => {
+  if (!oldEnv || !newEnv || oldEnv === newEnv || configuredComponents.value.length === 0) {
+    return
+  }
+
+  const fieldsToSync = [
+    'name',
+    'appServicePlan',
+    'appServicePlanReference',
+    'plan',
+    'planName',
+    'sqlServer',
+    'sqlServerReference',
+    'server',
+    'serverName',
+    'storageAccountName',
+    'applicationInsightsName',
+    'containerEnvironmentName',
+    'workspaceName',
+    'logAnalyticsName'
+  ]
+
+  configuredComponents.value = configuredComponents.value.map(component => {
+    const updatedConfig = { ...component.config }
+
+    fieldsToSync.forEach((field) => {
+      const currentValue = updatedConfig[field]
+      if (typeof currentValue !== 'string' || !currentValue) {
+        return
+      }
+
+      updatedConfig[field] = syncEnvironmentToken(currentValue, oldEnv, newEnv)
     })
 
     return {
