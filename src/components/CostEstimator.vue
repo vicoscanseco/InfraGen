@@ -24,7 +24,7 @@
             {{ getComponentDisplayName(component.type || component.value) }}
           </v-list-item-title>
           
-          <v-list-item-subtitle class="text-body-2">
+          <v-list-item-subtitle class="component-subtitle">
             {{ getPriceDescription(component) }}
           </v-list-item-subtitle>
           
@@ -58,15 +58,15 @@
           </div>
           <v-tooltip v-if="regionInfo.multiplier !== 1.0" text="Los precios varían según la región de Azure. Este ajuste refleja la diferencia de costos respecto a East US.">
             <template v-slot:activator="{ props }">
-              <div v-bind="props" class="text-caption text-grey-darken-2 mt-1">
-                <v-icon size="12" class="mr-1">mdi-map-marker</v-icon>
-                {{ regionInfo.name }} ({{ (regionInfo.multiplier * 100 - 100).toFixed(0) }}{{ regionInfo.multiplier > 1 ? '+' : '' }}% vs East US)
+              <div v-bind="props" class="text-caption text-grey-darken-2 mt-1 region-note-single-line">
+                <v-icon size="11" class="mr-1">mdi-map-marker</v-icon>
+                {{ compactRegionLabel }}
               </div>
             </template>
           </v-tooltip>
-          <div v-else class="text-caption text-grey-darken-2 mt-1">
-            <v-icon size="12" class="mr-1">mdi-map-marker</v-icon>
-            {{ regionInfo.name }} (precio base)
+          <div v-else class="text-caption text-grey-darken-2 mt-1 region-note-single-line">
+            <v-icon size="11" class="mr-1">mdi-map-marker</v-icon>
+            {{ compactRegionLabel }}
           </div>
         </v-col>
         <v-col cols="4" class="pa-0 text-right total-col">
@@ -237,6 +237,17 @@ const showDetailDialog = ref(false)
 
 const regionInfo = computed(() => {
   return regionPriceMultipliers[props.region] || { multiplier: 1.0, name: 'Unknown Region' }
+})
+
+// Genera una etiqueta corta de región para evitar saltos de línea en el resumen total.
+const compactRegionLabel = computed(() => {
+  if (regionInfo.value.multiplier === 1.0) {
+    return `${regionInfo.value.name} · base`
+  }
+
+  const percentage = ((regionInfo.value.multiplier - 1) * 100).toFixed(0)
+  const sign = Number(percentage) > 0 ? '+' : ''
+  return `${regionInfo.value.name} · ${sign}${percentage}%`
 })
 
 const totalCost = computed(() => {
@@ -780,6 +791,12 @@ const exportReport = (format) => {
   min-width: 86px;
 }
 
+/* Texto secundario más compacto debajo del nombre del componente. */
+.component-subtitle {
+  font-size: 0.66rem !important;
+  line-height: 1.05;
+}
+
 .total-value-wrap {
   display: inline-block;
   min-width: 110px;
@@ -798,6 +815,15 @@ const exportReport = (format) => {
   min-width: 98px;
   font-weight: 700;
   font-size: 1.1rem;
+}
+
+/* Mantiene la región del total en una línea y con tamaño más compacto. */
+.region-note-single-line {
+  font-size: 0.69rem !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.1;
 }
 
 .cost-amount {
