@@ -167,6 +167,7 @@
                       :elevation="isHovering ? 2 : 0"
                       class="available-comp-card"
                       :class="{ 'text-disabled': !canAddComponent(comp.value).allowed }"
+                      :style="getAvailableCardBorderStyle(comp.value, canAddComponent(comp.value).allowed)"
                       tabindex="0"
                       role="button"
                       @click="canAddComponent(comp.value).allowed && addComponent(comp)"
@@ -182,7 +183,7 @@
                               <v-icon
                                 size="22"
                                 class="mb-1 available-comp-icon"
-                                :color="canAddComponent(comp.value).allowed ? 'primary' : 'grey'"
+                                :color="canAddComponent(comp.value).allowed ? getComponentCategoryColor(comp.value) : 'grey'"
                                 :icon="getAvailableComponentIcon(comp.value)"
                               />
                               <div class="text-caption font-weight-bold text-truncate w-100 available-comp-label">{{ comp.label }}</div>
@@ -950,6 +951,29 @@ const getComponentCategoryColor = (componentValue) => {
   }
 
   return categoryColors[componentValue] || 'primary'
+}
+
+// Devuelve un acento de borde sutil por categoría para tarjetas disponibles.
+const getAvailableCardBorderStyle = (componentValue, isAllowed) => {
+  if (!isAllowed) {
+    return { borderColor: 'rgba(110, 118, 129, 0.35)' }
+  }
+
+  const borderByCategory = {
+    StorageAccount: 'rgba(26, 127, 55, 0.45)',
+    AppServicePlan: 'rgba(31, 111, 235, 0.45)',
+    AppService: 'rgba(9, 105, 218, 0.45)',
+    ContainerApp: 'rgba(8, 145, 178, 0.45)',
+    SQLServer: 'rgba(137, 87, 229, 0.45)',
+    SQLDatabase: 'rgba(168, 85, 247, 0.45)',
+    MonitoringAlerts: 'rgba(20, 184, 166, 0.45)',
+    FunctionApp: 'rgba(14, 165, 233, 0.45)',
+    CognitiveService: 'rgba(236, 72, 153, 0.45)'
+  }
+
+  return {
+    borderColor: borderByCategory[componentValue] || 'rgba(9, 105, 218, 0.45)'
+  }
 }
 
 
