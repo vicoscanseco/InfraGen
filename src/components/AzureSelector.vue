@@ -210,7 +210,7 @@
                     :key="index"
                     :title="item.label"
                     :subtitle="`${item.value} - ${item.config?.name || 'Sin nombre'}`"
-                    class="px-2"
+                    class="px-2 configured-comp-row"
                   >
                     <template v-slot:prepend>
                       <v-avatar :color="getComponentCategoryColor(item.value)" size="small">
@@ -1829,6 +1829,35 @@ const handleBicepImport = async (event) => {
 :deep(.v-theme--dark .available-comp-card:focus-within) {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
   border-color: rgba(255, 255, 255, 0.32) !important;
+}
+
+.configured-comp-row {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  margin: 4px 8px;
+  transition: background-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+:deep(.v-theme--dark .configured-comp-row) {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.configured-comp-row:hover,
+.configured-comp-row:focus-within {
+  background: rgba(17, 117, 255, 0.06);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+}
+
+:deep(.v-theme--dark .configured-comp-row:hover),
+:deep(.v-theme--dark .configured-comp-row:focus-within) {
+  background: rgba(99, 165, 255, 0.12);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.32);
+}
+
+.configured-comp-row:last-child {
+  margin-bottom: 0;
+  border-bottom: none;
 }
 
 .cost-panel-scroll {
