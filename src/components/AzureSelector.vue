@@ -260,7 +260,7 @@
                       size="default"
                       block
                       :disabled="configuredComponents.length === 0 || !appName || !location"
-                      @click="generateBicep"
+                      @click="openGeneratedInfraDialog"
                     >
                       <v-icon left>mdi-cog</v-icon>
                       Generar Infraestructura
@@ -300,57 +300,6 @@
           </v-col>
         </v-row>
       </v-card-text>
-    </v-card>
-
-    <!-- Resultado del código Bicep -->
-    <v-card v-if="bicepContent" class="mx-auto my-4 pa-4" max-width="800">
-      <v-card-title class="text-h6 mb-3">
-        Código Bicep Generado
-        <v-spacer />
-        <v-tooltip text="Copia el código Bicep al portapapeles para usarlo en tus deployments">
-          <template v-slot:activator="{ props }">
-            <v-btn v-bind="props" color="primary" size="small" class="me-2" @click="copyToClipboard">
-              <v-icon left>mdi-content-copy</v-icon>
-              Copiar
-            </v-btn>
-          </template>
-        </v-tooltip>
-        <v-tooltip text="Descarga el código Bicep como archivo .bicep para usar con Azure CLI o Azure PowerShell">
-          <template v-slot:activator="{ props }">
-            <v-btn v-bind="props" color="success" size="small" @click="downloadBicep">
-              <v-icon left>mdi-download</v-icon>
-              Descargar
-            </v-btn>
-          </template>
-        </v-tooltip>
-      </v-card-title>
-      <v-divider class="mb-3" />
-      <div class="code-container">
-        <pre class="code-block"><code>{{ bicepContent }}</code></pre>
-      </div>
-    </v-card>
-
-    <!-- Comandos de despliegue -->
-    <v-card v-if="deploymentCommands" class="mx-auto my-4 pa-4" max-width="800">
-      <v-card-title class="text-h6 mb-3">
-        Guía de Despliegue (Azure CLI)
-        <v-spacer />
-        <v-tooltip text="Copia los comandos al portapapeles">
-          <template v-slot:activator="{ props }">
-            <v-btn v-bind="props" color="primary" size="small" @click="copyCommands">
-              <v-icon left>mdi-content-copy</v-icon>
-              Copiar Comandos
-            </v-btn>
-          </template>
-        </v-tooltip>
-      </v-card-title>
-      <v-divider class="mb-3" />
-      <v-alert type="info" variant="tonal" class="mb-3" density="compact">
-        Se recomienda ejecutar primero el comando <strong>what-if</strong> para previsualizar los cambios antes de desplegar.
-      </v-alert>
-      <div class="code-container">
-        <pre class="code-block"><code>{{ deploymentCommands }}</code></pre>
-      </div>
     </v-card>
 
     <!-- Mensaje de error -->
@@ -409,6 +358,62 @@
         <v-card-actions>
           <v-spacer />
           <v-btn color="primary" @click="showArchDialog = false">Cerrar</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Dialog de resultado de generación -->
+    <v-dialog v-model="showGeneratedInfraDialog" max-width="1100px">
+      <v-card>
+        <v-card-title class="text-h6 d-flex align-center">
+          Resultado de Generación
+          <v-spacer />
+          <v-btn icon="mdi-close" variant="text" @click="showGeneratedInfraDialog = false" />
+        </v-card-title>
+        <v-divider class="mb-3" />
+
+        <v-card-text>
+          <v-card v-if="bicepContent" class="mb-4" variant="outlined">
+            <v-card-title class="text-subtitle-1">
+              Código Bicep Generado
+              <v-spacer />
+              <v-btn color="primary" size="small" class="me-2" @click="copyToClipboard">
+                <v-icon left>mdi-content-copy</v-icon>
+                Copiar
+              </v-btn>
+              <v-btn color="success" size="small" @click="downloadBicep">
+                <v-icon left>mdi-download</v-icon>
+                Descargar
+              </v-btn>
+            </v-card-title>
+            <v-divider class="mb-2" />
+            <div class="code-container">
+              <pre class="code-block"><code>{{ bicepContent }}</code></pre>
+            </div>
+          </v-card>
+
+          <v-card v-if="deploymentCommands" variant="outlined">
+            <v-card-title class="text-subtitle-1">
+              Guía de Despliegue (Azure CLI)
+              <v-spacer />
+              <v-btn color="primary" size="small" @click="copyCommands">
+                <v-icon left>mdi-content-copy</v-icon>
+                Copiar Comandos
+              </v-btn>
+            </v-card-title>
+            <v-divider class="mb-2" />
+            <v-alert type="info" variant="tonal" class="mb-3" density="compact">
+              Se recomienda ejecutar primero el comando <strong>what-if</strong> para previsualizar los cambios antes de desplegar.
+            </v-alert>
+            <div class="code-container">
+              <pre class="code-block"><code>{{ deploymentCommands }}</code></pre>
+            </div>
+          </v-card>
+        </v-card-text>
+
+        <v-card-actions>
+          <v-spacer />
+          <v-btn color="primary" @click="showGeneratedInfraDialog = false">Cerrar</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -547,6 +552,7 @@ const appName = ref('')
 const resourceGroup = ref('')
 const location = ref('mexicocentral')
 const showArchDialog = ref(false)
+const showGeneratedInfraDialog = ref(false)
 const showAutoSaveNotification = ref(false)
 const notificationMessage = ref('')
 const notificationColor = ref('success')
@@ -947,6 +953,8 @@ const cancelConfiguration = () => {
 const generateBicep = () => {
   try {
     errorMsg.value = ''
+    bicepContent.value = ''
+    deploymentCommands.value = ''
     
     if (!appName.value || !location.value || configuredComponents.value.length === 0) {
       errorMsg.value = 'Por favor completa todos los campos requeridos y agrega al menos un componente.'
@@ -1407,6 +1415,14 @@ const generateBicep = () => {
   }
 }
 
+const openGeneratedInfraDialog = () => {
+  generateBicep()
+
+  if (bicepContent.value) {
+    showGeneratedInfraDialog.value = true
+  }
+}
+
 const downloadBicep = () => {
   const blob = new Blob([bicepContent.value], { type: 'text/plain' })
   const link = document.createElement('a')
@@ -1551,6 +1567,10 @@ const handleBicepImport = async (event) => {
   overflow-y: auto;
 }
 
+.compact-ui :deep(.v-card--variant-outlined) {
+  border-color: rgba(0, 0, 0, 0.14) !important;
+}
+
 .compact-ui :deep(.text-h5) {
   font-size: 1.45rem !important;
 }
@@ -1592,6 +1612,14 @@ const handleBicepImport = async (event) => {
   min-height: 26px;
   padding-left: 8px;
   padding-right: 8px;
+}
+
+.compact-ui :deep(.v-list-item .v-btn--size-small) {
+  min-height: 22px;
+  padding-left: 6px;
+  padding-right: 6px;
+  font-size: 0.64rem;
+  letter-spacing: 0.01em;
 }
 
 .compact-ui :deep(.v-btn--icon) {

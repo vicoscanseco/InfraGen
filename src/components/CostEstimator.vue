@@ -89,134 +89,47 @@
         </v-col>
       </v-row>
       
-      <!-- Botones de descarga -->
-      <v-row class="mt-3" justify="center">
-        <v-col cols="auto">
-          <div class="text-center mb-2">
-            <span class="text-body-2 text-grey-darken-1">
-              <v-icon size="16" class="mr-1">mdi-download</v-icon>
-              Descargar reporte de costos:
-            </span>
-          </div>
-          <v-btn-group variant="outlined" density="compact">
-            <v-tooltip text="Descargar como archivo CSV (compatible con Excel)">
-              <template v-slot:activator="{ props }">
-                <v-btn
-                  v-bind="props"
-                  size="small"
-                  @click="downloadCSV"
-                  prepend-icon="mdi-file-delimited"
-                  color="green"
-                >
-                  CSV
-                </v-btn>
-              </template>
-            </v-tooltip>
-            <v-tooltip text="Descargar como archivo Excel (.xls)">
-              <template v-slot:activator="{ props }">
-                <v-btn
-                  v-bind="props"
-                  size="small"
-                  @click="downloadExcel"
-                  prepend-icon="mdi-microsoft-excel"
-                  color="success"
-                >
-                  Excel
-                </v-btn>
-              </template>
-            </v-tooltip>
-            <v-tooltip text="Descargar como archivo JSON (datos estructurados)">
-              <template v-slot:activator="{ props }">
-                <v-btn
-                  v-bind="props"
-                  size="small"
-                  @click="downloadJSON"
-                  prepend-icon="mdi-code-json"
-                  color="blue"
-                >
-                  JSON
-                </v-btn>
-              </template>
-            </v-tooltip>
-            <v-tooltip text="Imprimir reporte completo">
-              <template v-slot:activator="{ props }">
-                <v-btn
-                  v-bind="props"
-                  size="small"
-                  @click="printReport"
-                  prepend-icon="mdi-printer"
-                  color="grey"
-                >
-                  Imprimir
-                </v-btn>
-              </template>
-            </v-tooltip>
-          </v-btn-group>
+      <!-- Acciones compactas para panel angosto -->
+      <v-row class="mt-3" dense>
+        <v-col cols="6">
+          <v-menu location="top" :close-on-content-click="true">
+            <template v-slot:activator="{ props }">
+              <v-btn
+                v-bind="props"
+                block
+                stacked
+                color="primary"
+                variant="tonal"
+                class="compact-action-btn"
+              >
+                <v-icon size="22">mdi-download</v-icon>
+                <span class="action-label">Descargar reporte</span>
+              </v-btn>
+            </template>
+
+            <v-list density="compact" min-width="220">
+              <v-list-item prepend-icon="mdi-file-delimited" title="CSV" @click="exportReport('csv')" />
+              <v-list-item prepend-icon="mdi-microsoft-excel" title="Excel" @click="exportReport('excel')" />
+              <v-list-item prepend-icon="mdi-code-json" title="JSON" @click="exportReport('json')" />
+              <v-list-item prepend-icon="mdi-printer" title="Imprimir" @click="exportReport('print')" />
+            </v-list>
+          </v-menu>
+        </v-col>
+
+        <v-col cols="6">
+          <v-btn
+            block
+            stacked
+            color="secondary"
+            variant="tonal"
+            class="compact-action-btn"
+            @click="showDetailDialog = true"
+          >
+            <v-icon size="22">mdi-chart-pie</v-icon>
+            <span class="action-label">Ver desglose detallado</span>
+          </v-btn>
         </v-col>
       </v-row>
-      
-      <!-- Desglose de costos -->
-      <v-expansion-panels class="mt-4" variant="accordion">
-        <v-expansion-panel>
-          <v-expansion-panel-title>
-            <v-icon class="mr-2">mdi-chart-pie</v-icon>
-            Ver desglose detallado
-          </v-expansion-panel-title>
-          <v-expansion-panel-text>
-            <v-row>
-              <v-col cols="12" md="6">
-                <!-- Gráfico de costos por categoría -->
-                <div class="text-subtitle-2 mb-3 font-weight-bold">
-                  Costos por Categoría
-                </div>
-                <div v-for="category in costByCategory" :key="category.name" class="mb-2">
-                  <div class="d-flex justify-space-between align-center">
-                    <span class="text-body-2">{{ category.name }}</span>
-                    <span class="font-weight-medium">${{ formatCost(category.cost) }}</span>
-                  </div>
-                  <v-progress-linear 
-                    :model-value="(category.cost / totalCost) * 100" 
-                    :color="category.color"
-                    height="8"
-                    rounded
-                  ></v-progress-linear>
-                </div>
-              </v-col>
-              
-              <v-col cols="12" md="6">
-                <!-- Comparación de tiers -->
-                <div class="text-subtitle-2 mb-3 font-weight-bold">
-                  Análisis de Costos
-                </div>
-                
-                <v-alert 
-                  :type="getCostAnalysisType()" 
-                  density="compact" 
-                  variant="tonal"
-                  class="mb-3"
-                >
-                  <div class="text-body-2">
-                    <strong>{{ getCostAnalysisTitle() }}</strong><br>
-                    {{ getCostAnalysisMessage() }}
-                  </div>
-                </v-alert>
-                
-                <!-- Recomendaciones -->
-                <div v-if="costRecommendations && costRecommendations.length > 0">
-                  <div class="text-body-2 font-weight-bold mb-2">
-                    💡 Recomendaciones para optimizar costos:
-                  </div>
-                  <ul class="text-body-2">
-                    <li v-for="rec in costRecommendations" :key="rec" class="mb-1">
-                      {{ rec }}
-                    </li>
-                  </ul>
-                </div>
-              </v-col>
-            </v-row>
-          </v-expansion-panel-text>
-        </v-expansion-panel>
-      </v-expansion-panels>
       
       <!-- Disclaimer -->
       <v-alert 
@@ -236,12 +149,82 @@
           ofertas especiales y el consumo real de recursos.
         </div>
       </v-alert>
+
+      <!-- Modal para desglose completo de costos -->
+      <v-dialog v-model="showDetailDialog" max-width="980px">
+        <v-card>
+          <v-card-title class="text-h6 d-flex align-center">
+            <v-icon class="mr-2">mdi-chart-pie</v-icon>
+            Desglose detallado de costos
+            <v-spacer />
+            <v-btn icon="mdi-close" variant="text" @click="showDetailDialog = false" />
+          </v-card-title>
+
+          <v-divider />
+
+          <v-card-text class="pt-4">
+            <v-row>
+              <v-col cols="12" md="6">
+                <div class="text-subtitle-2 mb-3 font-weight-bold">
+                  Costos por Categoría
+                </div>
+                <div v-for="category in costByCategory" :key="category.name" class="mb-2">
+                  <div class="d-flex justify-space-between align-center">
+                    <span class="text-body-2">{{ category.name }}</span>
+                    <span class="font-weight-medium">${{ formatCost(category.cost) }}</span>
+                  </div>
+                  <v-progress-linear
+                    :model-value="(category.cost / totalCost) * 100"
+                    :color="category.color"
+                    height="8"
+                    rounded
+                  ></v-progress-linear>
+                </div>
+              </v-col>
+
+              <v-col cols="12" md="6">
+                <div class="text-subtitle-2 mb-3 font-weight-bold">
+                  Análisis de Costos
+                </div>
+
+                <v-alert
+                  :type="getCostAnalysisType()"
+                  density="compact"
+                  variant="tonal"
+                  class="mb-3"
+                >
+                  <div class="text-body-2">
+                    <strong>{{ getCostAnalysisTitle() }}</strong><br>
+                    {{ getCostAnalysisMessage() }}
+                  </div>
+                </v-alert>
+
+                <div v-if="costRecommendations && costRecommendations.length > 0">
+                  <div class="text-body-2 font-weight-bold mb-2">
+                    💡 Recomendaciones para optimizar costos:
+                  </div>
+                  <ul class="text-body-2">
+                    <li v-for="rec in costRecommendations" :key="rec" class="mb-1">
+                      {{ rec }}
+                    </li>
+                  </ul>
+                </div>
+              </v-col>
+            </v-row>
+          </v-card-text>
+
+          <v-card-actions>
+            <v-spacer />
+            <v-btn color="primary" @click="showDetailDialog = false">Cerrar</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
     </v-card-text>
   </v-card>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { 
   calculateComponentCost, 
   calculateTotalCost, 
@@ -260,6 +243,9 @@ const props = defineProps({
     default: 'eastus'
   }
 })
+
+// Controla la visibilidad del modal de desglose de costos.
+const showDetailDialog = ref(false)
 
 const regionInfo = computed(() => {
   return regionPriceMultipliers[props.region] || { multiplier: 1.0, name: 'Unknown Region' }
@@ -691,6 +677,28 @@ const printReport = () => {
   printWindow.document.close()
   printWindow.print()
 }
+
+// Centraliza la ejecución de exportaciones para mantener la vista compacta.
+const exportReport = (format) => {
+  if (format === 'csv') {
+    downloadCSV()
+    return
+  }
+
+  if (format === 'excel') {
+    downloadExcel()
+    return
+  }
+
+  if (format === 'json') {
+    downloadJSON()
+    return
+  }
+
+  if (format === 'print') {
+    printReport()
+  }
+}
 </script>
 
 <style scoped>
@@ -702,7 +710,16 @@ const printReport = () => {
   border-bottom: none;
 }
 
-.v-expansion-panel-title {
-  font-size: 0.875rem;
+.compact-action-btn {
+  min-height: 74px;
+}
+
+.action-label {
+  display: inline-block;
+  font-size: 0.72rem;
+  line-height: 1.15;
+  text-align: center;
+  max-width: 100px;
+  white-space: normal;
 }
 </style>
