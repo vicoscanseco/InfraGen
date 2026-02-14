@@ -69,16 +69,13 @@
             {{ regionInfo.name }} (precio base)
           </div>
         </v-col>
-        <v-col cols="4" class="pa-0 text-right">
-          <v-chip 
-            color="primary" 
-            size="large" 
-            variant="elevated"
-            class="font-weight-bold"
-          >
-            <v-icon left size="16">mdi-currency-usd</v-icon>
-            {{ formatCost(totalCost) }}/mes
-          </v-chip>
+        <v-col cols="4" class="pa-0 text-right total-col">
+          <div class="total-value-wrap">
+            <div class="total-amount" :class="getTotalAmountClass()">
+              <v-icon size="16" class="mr-1">mdi-currency-usd</v-icon>${{ formatCost(totalCost) }}
+            </div>
+            <div class="text-caption text-grey-darken-1 mt-1">/mes</div>
+          </div>
         </v-col>
       </v-row>
       
@@ -408,6 +405,13 @@ const getCostAmountClass = (component) => {
   if (tone === 'grey') return 'cost-amount-zero'
   if (tone === 'green') return 'cost-amount-low'
   if (tone === 'orange') return 'cost-amount-medium'
+  return 'cost-amount-high'
+}
+
+const getTotalAmountClass = () => {
+  if (totalCost.value === 0) return 'cost-amount-zero'
+  if (totalCost.value < 20) return 'cost-amount-low'
+  if (totalCost.value < 100) return 'cost-amount-medium'
   return 'cost-amount-high'
 }
 
@@ -774,6 +778,25 @@ const exportReport = (format) => {
 
 .cost-value-wrap {
   min-width: 86px;
+}
+
+.total-value-wrap {
+  display: inline-block;
+  min-width: 110px;
+  text-align: right;
+}
+
+.total-col {
+  padding-right: 8px !important;
+}
+
+.total-amount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 98px;
+  font-weight: 700;
+  font-size: 1.1rem;
 }
 
 .cost-amount {

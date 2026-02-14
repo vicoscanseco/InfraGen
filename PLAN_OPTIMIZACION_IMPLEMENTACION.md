@@ -137,7 +137,5 @@
 
 ## Próximos pasos sugeridos
 
-1. Ejecutar despliegue real desde backend seguro (no desde frontend) usando Azure SDK/CLI.
-2. Enmascarar y gestionar secretos con Key Vault o variables seguras en CI/CD.
-3. Agregar historial de operaciones (what-if/deploy) y bitácora de resultados.
-4. Estandarizar componentes a TypeScript (`<script setup lang="ts">`) de forma gradual por lotes pequeños y con `vue-tsc` en CI (pendiente por ahora).
+1. Estandarizar componentes a TypeScript (`<script setup lang="ts">`) de forma gradual por lotes pequeños y con `vue-tsc` en CI (pendiente por ahora).
+2. 
