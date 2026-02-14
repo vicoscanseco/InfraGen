@@ -161,46 +161,38 @@
             <v-card variant="outlined">
               <v-card-title class="text-subtitle-1">Componentes disponibles</v-card-title>
               <v-divider />
-              <v-card-text class="pa-0 panel-scroll">
-                <div class="pa-2">
+              <v-card-text class="pa-2 available-panel">
+                <div class="available-components-grid">
                   <v-hover v-for="comp in availableComponents" :key="comp.value" v-slot="{ isHovering, props }">
                     <v-card
                       v-bind="props"
                       variant="outlined"
                       :elevation="isHovering ? 2 : 0"
-                      class="available-comp-card mb-2"
+                      class="available-comp-card"
                       :class="{ 'text-disabled': !canAddComponent(comp.value).allowed }"
                       tabindex="0"
+                      role="button"
+                      @click="canAddComponent(comp.value).allowed && addComponent(comp)"
+                      @keyup.enter="canAddComponent(comp.value).allowed && addComponent(comp)"
                     >
-                      <v-card-text class="py-2 px-3">
-                        <div class="d-flex align-center justify-space-between ga-2">
-                          <div class="d-flex align-center ga-2 flex-grow-1 min-w-0">
-                            <v-icon
-                              :color="canAddComponent(comp.value).allowed ? 'primary' : 'grey'"
-                              :icon="canAddComponent(comp.value).allowed ? 'mdi-check-circle' : 'mdi-lock'"
-                            />
-                            <div class="min-w-0">
-                              <div class="text-body-2 font-weight-medium text-truncate">{{ comp.label }}</div>
-                              <div class="text-caption text-medium-emphasis text-truncate">{{ comp.description }}</div>
-                            </div>
-                          </div>
-                          <v-tooltip
-                            :text="!canAddComponent(comp.value).allowed ? canAddComponent(comp.value).reason : ''"
-                            :disabled="canAddComponent(comp.value).allowed"
-                          >
-                            <template v-slot:activator="{ props: btnProps }">
-                              <v-btn
-                                v-bind="btnProps"
+                      <v-card-text class="py-3 px-2 text-center">
+                        <v-tooltip
+                          :text="!canAddComponent(comp.value).allowed ? canAddComponent(comp.value).reason : ''"
+                          :disabled="canAddComponent(comp.value).allowed"
+                        >
+                          <template v-slot:activator="{ props: tipProps }">
+                            <div v-bind="tipProps" class="d-flex flex-column align-center">
+                              <v-icon
+                                size="22"
+                                class="mb-1"
                                 :color="canAddComponent(comp.value).allowed ? 'primary' : 'grey'"
-                                :disabled="!canAddComponent(comp.value).allowed"
-                                size="small"
-                                @click="addComponent(comp)"
-                              >
-                                Agregar
-                              </v-btn>
-                            </template>
-                          </v-tooltip>
-                        </div>
+                                :icon="canAddComponent(comp.value).allowed ? 'mdi-check-circle' : 'mdi-lock'"
+                              />
+                              <div class="text-caption font-weight-bold text-truncate w-100">{{ comp.label }}</div>
+                              <div class="text-caption text-medium-emphasis">Agregar</div>
+                            </div>
+                          </template>
+                        </v-tooltip>
                       </v-card-text>
                     </v-card>
                   </v-hover>
@@ -1622,8 +1614,20 @@ const handleBicepImport = async (event) => {
   overflow-y: auto;
 }
 
+.available-panel {
+  max-height: none;
+  overflow: visible;
+}
+
+.available-components-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
 .available-comp-card {
   transition: transform 0.18s ease;
+  min-height: 92px;
 }
 
 .available-comp-card:hover,
@@ -1777,6 +1781,23 @@ const handleBicepImport = async (event) => {
 
   .compact-ui :deep(.v-list-item-subtitle) {
     font-size: 0.64rem;
+  }
+}
+
+@media (max-width: 1260px) {
+  .available-panel {
+    max-height: 360px;
+    overflow-y: auto;
+  }
+
+  .available-components-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .available-components-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>
