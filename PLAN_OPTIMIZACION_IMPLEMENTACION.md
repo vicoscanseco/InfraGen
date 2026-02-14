@@ -142,17 +142,20 @@
   - Conversión de tamaño SQL Database (GB → bytes).
   - Generación base de Bicep sin regresiones.
 
-2. Agregar validación automática del Bicep generado antes de exportar/desplegar, para detectar parámetros inválidos de forma temprana.
+2. Centralizar defaults y validaciones en un esquema único de configuración para evitar reglas duplicadas entre componentes.
 
-3. Centralizar defaults y validaciones en un esquema único de configuración para evitar reglas duplicadas entre componentes.
+3. Fortalecer el flujo de importación/exportación con pruebas de ida y vuelta (importar → editar → exportar) para asegurar que no se pierdan campos.
 
-4. Fortalecer el flujo de importación/exportación con pruebas de ida y vuelta (importar → editar → exportar) para asegurar que no se pierdan campos.
-
-5. Ejecutar una pasada de accesibilidad y UX fina:
+4. Ejecutar una pasada de accesibilidad y UX fina:
   - Mensajes de error por campo más claros.
   - Navegación por teclado/foco en modales.
   - Revisión final de contraste en tema oscuro.
 
-6. Documentar en README/guías operativas qué genera cada opción y recomendaciones por entorno (`dev`/`qa`/`prod`).
+5. Documentar en README/guías operativas qué genera cada opción y recomendaciones por entorno (`dev`/`qa`/`prod`).
 
-7. Estandarizar componentes a TypeScript (`<script setup lang="ts">`) de forma gradual por lotes pequeños y con `vue-tsc` en CI (pendiente por ahora).
+6. Estandarizar componentes a TypeScript (`<script setup lang="ts">`) de forma gradual por lotes pequeños y con `vue-tsc` en CI (pendiente por ahora).
+
+## Paso 2 — Validación automática del Bicep (Completado)
+
+- Se reutiliza `hasRequiredBicepSections` desde `src/utils/ruleValidators.js` para bloquear la exportación si la plantilla falta parámetros, recursos u outputs.
+- `AzureSelector.vue` ahora valida el contenido generado antes de calcular los comandos de despliegue y deja vacíos los campos cuando la plantilla no pasa la comprobación.

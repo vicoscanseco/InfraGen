@@ -1145,6 +1145,20 @@ const cancelConfiguration = () => {
   editingIndex.value = -1
 }
 
+const validateGeneratedBicep = (content) => {
+  if (!content || !content.trim()) {
+    errorMsg.value = 'El contenido generado está vacío. Revisa la configuración antes de exportar.'
+    return false
+  }
+
+  if (!hasRequiredBicepSections(content)) {
+    errorMsg.value = 'El Bicep generado no incluye todos los elementos mínimos (parametros, recursos, outputs).'
+    return false
+  }
+
+  return true
+}
+
 const generateBicep = () => {
   try {
     errorMsg.value = ''
@@ -1589,6 +1603,11 @@ const generateBicep = () => {
         content += '}\n\n'
       }
     })
+
+    // Validar que el Bicep generado cumpla con las secciones mínimas antes de continuar.
+    if (!validateGeneratedBicep(content)) {
+      return
+    }
 
     bicepContent.value = content
     
