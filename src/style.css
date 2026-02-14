@@ -4,18 +4,18 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  --surface-elev-1: #eceff4;
-  --surface-elev-2: #e5e9f0;
-  --surface-elev-3: #d8dee9;
+  --surface-elev-1: #ffffff;
+  --surface-elev-2: #f6f8fa;
+  --surface-elev-3: #eef2f6;
   --surface-shadow-1: 0 2px 8px rgba(0, 0, 0, 0.06);
   --surface-shadow-2: 0 4px 14px rgba(0, 0, 0, 0.08);
   --surface-shadow-3: 0 8px 20px rgba(0, 0, 0, 0.11);
 }
 
 .v-theme--dark {
-  --surface-elev-1: #3b4252;
-  --surface-elev-2: #434c5e;
-  --surface-elev-3: #4c566a;
+  --surface-elev-1: #161b22;
+  --surface-elev-2: #1f242d;
+  --surface-elev-3: #22272e;
   --surface-shadow-1: 0 2px 10px rgba(0, 0, 0, 0.35);
   --surface-shadow-2: 0 6px 16px rgba(0, 0, 0, 0.42);
   --surface-shadow-3: 0 10px 24px rgba(0, 0, 0, 0.5);
@@ -57,8 +57,8 @@ body {
 }
 
 .v-tooltip > .v-overlay__content {
-  background: rgba(59, 66, 82, 0.95) !important;
-  color: #eceff4 !important;
+  background: rgba(36, 41, 47, 0.95) !important;
+  color: #f6f8fa !important;
   border-radius: 4px !important;
   font-size: 0.875rem !important;
   padding: 8px 12px !important;
@@ -68,8 +68,8 @@ body {
 }
 
 .v-theme--dark .v-tooltip > .v-overlay__content {
-  background: rgba(216, 222, 233, 0.95) !important;
-  color: #2e3440 !important;
+  background: rgba(48, 54, 61, 0.95) !important;
+  color: #c9d1d9 !important;
 }
 
 /* Asegurar que los tooltips aparezcan sobre otros elementos */

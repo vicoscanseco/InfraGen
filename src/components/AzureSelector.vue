@@ -13,6 +13,7 @@
                 variant="text"
                 color="error"
                 size="small"
+                class="top-action-btn top-action-danger"
                 @click="clearLocalStorage"
               >
                 Limpiar
@@ -28,6 +29,7 @@
                 variant="text"
                 color="indigo"
                 size="small"
+                class="top-action-btn"
                 @click="openBicepImporter"
               >
                 Importar Bicep
@@ -43,6 +45,7 @@
                 variant="text"
                 color="indigo"
                 size="small"
+                class="top-action-btn"
                 :disabled="!bicepContent"
                 @click="openAzureDeploymentWindow"
               >
@@ -1851,6 +1854,18 @@ const handleBicepImport = async (event) => {
 
 .azure-admin-actions {
   padding: 10px 16px 14px;
+}
+
+:deep(.v-theme--dark .top-action-btn) {
+  color: #c9d1d9 !important;
+}
+
+:deep(.v-theme--dark .top-action-btn.top-action-danger) {
+  color: #ff7b72 !important;
+}
+
+:deep(.v-theme--dark .top-action-btn.v-btn--disabled) {
+  color: rgba(201, 209, 217, 0.45) !important;
 }
 
 .compact-ui :deep(.v-card--variant-outlined) {
