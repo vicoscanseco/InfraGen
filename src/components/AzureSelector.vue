@@ -181,11 +181,11 @@
                             <div v-bind="tipProps" class="d-flex flex-column align-center">
                               <v-icon
                                 size="22"
-                                class="mb-1"
+                                class="mb-1 available-comp-icon"
                                 :color="canAddComponent(comp.value).allowed ? 'primary' : 'grey'"
                                 :icon="getAvailableComponentIcon(comp.value)"
                               />
-                              <div class="text-caption font-weight-bold text-truncate w-100">{{ comp.label }}</div>
+                              <div class="text-caption font-weight-bold text-truncate w-100 available-comp-label">{{ comp.label }}</div>
                               <div class="text-caption text-medium-emphasis">Agregar</div>
                             </div>
                           </template>
@@ -1797,11 +1797,31 @@ const handleBicepImport = async (event) => {
   min-height: 92px;
 }
 
+.available-comp-icon {
+  transition: transform 0.16s ease;
+}
+
+.available-comp-label {
+  transition: letter-spacing 0.16s ease;
+}
+
 .available-comp-card:hover,
 .available-comp-card:focus-visible,
 .available-comp-card:focus-within {
   transform: translateY(-1px);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+.available-comp-card:hover .available-comp-icon,
+.available-comp-card:focus-visible .available-comp-icon,
+.available-comp-card:focus-within .available-comp-icon {
+  transform: translateY(-1px) scale(1.04);
+}
+
+.available-comp-card:hover .available-comp-label,
+.available-comp-card:focus-visible .available-comp-label,
+.available-comp-card:focus-within .available-comp-label {
+  letter-spacing: 0.01em;
 }
 
 :deep(.v-theme--dark .available-comp-card) {

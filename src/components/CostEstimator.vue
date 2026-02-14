@@ -747,11 +747,24 @@ const exportReport = (format) => {
   border-bottom: 1px solid rgba(0,0,0,0.06);
   border-radius: 10px;
   margin-bottom: 4px;
+  transition: background-color 0.18s ease, box-shadow 0.18s ease;
 }
 
 :deep(.v-theme--dark .cost-list-row) {
   border-bottom: 1px solid rgba(255,255,255,0.1);
   background: rgba(255, 255, 255, 0.02);
+}
+
+.cost-list-row:hover,
+.cost-list-row:focus-within {
+  background: rgba(9, 105, 218, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+:deep(.v-theme--dark .cost-list-row:hover),
+:deep(.v-theme--dark .cost-list-row:focus-within) {
+  background: rgba(88, 166, 255, 0.08);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.22);
 }
 
 .cost-list :deep(.v-list-item:last-child) {
@@ -767,6 +780,13 @@ const exportReport = (format) => {
   font-weight: 700;
   font-size: 0.95rem;
   line-height: 1;
+  transition: transform 0.16s ease, letter-spacing 0.16s ease;
+}
+
+.cost-list-row:hover .cost-amount,
+.cost-list-row:focus-within .cost-amount {
+  transform: translateY(-1px);
+  letter-spacing: 0.01em;
 }
 
 .cost-amount-low {
