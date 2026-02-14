@@ -1772,7 +1772,7 @@ const handleBicepImport = async (event) => {
 }
 
 .available-comp-card {
-  transition: transform 0.18s ease;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
   min-height: 92px;
 }
 
@@ -1780,6 +1780,19 @@ const handleBicepImport = async (event) => {
 .available-comp-card:focus-visible,
 .available-comp-card:focus-within {
   transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+:deep(.v-theme--dark .available-comp-card) {
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+:deep(.v-theme--dark .available-comp-card:hover),
+:deep(.v-theme--dark .available-comp-card:focus-visible),
+:deep(.v-theme--dark .available-comp-card:focus-within) {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+  border-color: rgba(255, 255, 255, 0.32) !important;
 }
 
 .cost-panel-scroll {
@@ -1812,6 +1825,10 @@ const handleBicepImport = async (event) => {
   border-radius: 10px;
 }
 
+:deep(.v-theme--dark .azure-login-form) {
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
 .azure-login-form :deep(.azure-login-input .v-field) {
   transition: box-shadow 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
 }
@@ -1838,6 +1855,22 @@ const handleBicepImport = async (event) => {
 
 .compact-ui :deep(.v-card--variant-outlined) {
   border-color: rgba(0, 0, 0, 0.14) !important;
+}
+
+:deep(.v-theme--dark .compact-ui .v-card--variant-outlined) {
+  border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+:deep(.v-theme--dark .compact-ui .text-medium-emphasis) {
+  color: rgba(255, 255, 255, 0.78) !important;
+}
+
+:deep(.v-theme--dark .compact-ui .text-grey-darken-1) {
+  color: rgba(255, 255, 255, 0.72) !important;
+}
+
+:deep(.v-theme--dark .compact-ui .text-grey-darken-2) {
+  color: rgba(255, 255, 255, 0.62) !important;
 }
 
 .compact-ui :deep(.text-h5) {

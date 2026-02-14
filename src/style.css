@@ -37,6 +37,11 @@ body {
   z-index: 2001 !important;
 }
 
+.v-theme--dark .v-tooltip > .v-overlay__content {
+  background: rgba(245, 245, 245, 0.94) !important;
+  color: #121212 !important;
+}
+
 /* Asegurar que los tooltips aparezcan sobre otros elementos */
 .v-overlay {
   z-index: 2000 !important;

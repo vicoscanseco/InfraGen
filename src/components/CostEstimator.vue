@@ -705,6 +705,10 @@ const exportReport = (format) => {
   border-bottom: 1px solid rgba(0,0,0,0.05);
 }
 
+:deep(.v-theme--dark .v-list-item) {
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
 .v-list-item:last-child {
   border-bottom: none;
 }
@@ -729,5 +733,26 @@ const exportReport = (format) => {
 
 .cost-note-soft :deep(.v-alert__content) {
   color: rgba(0, 0, 0, 0.68);
+}
+
+:deep(.v-theme--dark .cost-note-soft) {
+  background-color: rgba(78, 161, 243, 0.14) !important;
+  border-color: rgba(78, 161, 243, 0.35) !important;
+}
+
+:deep(.v-theme--dark .cost-note-soft .v-alert__content) {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+:deep(.v-theme--dark .text-medium-emphasis) {
+  color: rgba(255, 255, 255, 0.78) !important;
+}
+
+:deep(.v-theme--dark .text-grey-darken-1) {
+  color: rgba(255, 255, 255, 0.72) !important;
+}
+
+:deep(.v-theme--dark .text-grey-darken-2) {
+  color: rgba(255, 255, 255, 0.62) !important;
 }
 </style>
