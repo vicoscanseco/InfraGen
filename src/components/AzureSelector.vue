@@ -212,8 +212,8 @@
                     class="px-2"
                   >
                     <template v-slot:prepend>
-                      <v-avatar color="primary" size="small" variant="tonal">
-                        <v-icon color="primary" size="16">{{ getAvailableComponentIcon(item.value) }}</v-icon>
+                      <v-avatar :color="getComponentCategoryColor(item.value)" size="small">
+                        <v-icon color="white" size="16">{{ getAvailableComponentIcon(item.value) }}</v-icon>
                       </v-avatar>
                     </template>
                     <template v-slot:append>
@@ -933,6 +933,23 @@ const availableComponentIcons = {
 
 const getAvailableComponentIcon = (componentValue) => {
   return availableComponentIcons[componentValue] || 'mdi-cube-outline'
+}
+
+// Colores por categoría para mejorar lectura rápida en la lista de configurados.
+const getComponentCategoryColor = (componentValue) => {
+  const categoryColors = {
+    StorageAccount: 'green',
+    AppServicePlan: 'indigo',
+    AppService: 'blue',
+    ContainerApp: 'cyan',
+    SQLServer: 'deep-purple',
+    SQLDatabase: 'purple',
+    MonitoringAlerts: 'teal',
+    FunctionApp: 'light-blue',
+    CognitiveService: 'pink'
+  }
+
+  return categoryColors[componentValue] || 'primary'
 }
 
 

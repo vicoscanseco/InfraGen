@@ -8,14 +8,14 @@
     
     <v-card-text class="pa-4">
       <!-- Lista de componentes con costos -->
-      <v-list density="compact" class="pa-0">
+      <v-list density="compact" class="pa-0 cost-list">
         <v-list-item 
           v-for="component in components" 
           :key="component.id"
-          class="px-0"
+          class="px-2 py-1 cost-list-row"
         >
           <template v-slot:prepend>
-            <v-avatar color="primary" size="32">
+            <v-avatar :color="getComponentCategoryColor(component.type || component.value)" size="32">
               <v-icon color="white" size="16">{{ getConsistentComponentIcon(component.type || component.value) }}</v-icon>
             </v-avatar>
           </template>
@@ -29,18 +29,11 @@
           </v-list-item-subtitle>
           
           <template v-slot:append>
-            <div class="text-right">
-              <v-chip 
-                :color="getCostColor(component)" 
-                size="small" 
-                variant="flat"
-                class="font-weight-bold"
-              >
+            <div class="text-right cost-value-wrap">
+              <div class="cost-amount" :class="getCostAmountClass(component)">
                 ${{ formatCost(getComponentCost(component)) }}
-              </v-chip>
-              <div class="text-caption text-grey-darken-1 mt-1">
-                /mes
               </div>
+              <div class="text-caption text-grey-darken-1 mt-1">mensual</div>
             </div>
           </template>
         </v-list-item>
@@ -389,6 +382,35 @@ const getConsistentComponentIcon = (componentValueOrType) => {
   return consistentComponentIcons[type] || 'mdi-cube-outline'
 }
 
+const getComponentCategoryColor = (componentValueOrType) => {
+  const type = typeof componentValueOrType === 'string'
+    ? componentValueOrType
+    : (componentValueOrType.type || componentValueOrType.value)
+
+  const categoryColors = {
+    StorageAccount: 'green',
+    AppServicePlan: 'indigo',
+    AppService: 'blue',
+    ContainerApp: 'cyan',
+    SQLServer: 'deep-purple',
+    SQLDatabase: 'purple',
+    MonitoringAlerts: 'teal',
+    FunctionApp: 'light-blue',
+    CognitiveService: 'pink'
+  }
+
+  return categoryColors[type] || 'primary'
+}
+
+const getCostAmountClass = (component) => {
+  const tone = getCostColor(component)
+
+  if (tone === 'grey') return 'cost-amount-zero'
+  if (tone === 'green') return 'cost-amount-low'
+  if (tone === 'orange') return 'cost-amount-medium'
+  return 'cost-amount-high'
+}
+
 const getCostAnalysisType = () => {
   if (totalCost.value < 20) return 'success'
   if (totalCost.value < 100) return 'warning'
@@ -721,16 +743,62 @@ const exportReport = (format) => {
 </script>
 
 <style scoped>
-.v-list-item {
-  border-bottom: 1px solid rgba(0,0,0,0.05);
+.cost-list-row {
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  border-radius: 10px;
+  margin-bottom: 4px;
 }
 
-:deep(.v-theme--dark .v-list-item) {
+:deep(.v-theme--dark .cost-list-row) {
   border-bottom: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.02);
 }
 
-.v-list-item:last-child {
+.cost-list :deep(.v-list-item:last-child) {
   border-bottom: none;
+  margin-bottom: 0;
+}
+
+.cost-value-wrap {
+  min-width: 86px;
+}
+
+.cost-amount {
+  font-weight: 700;
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.cost-amount-low {
+  color: #1a7f37;
+}
+
+.cost-amount-medium {
+  color: #9a6700;
+}
+
+.cost-amount-high {
+  color: #cf222e;
+}
+
+.cost-amount-zero {
+  color: #6e7781;
+}
+
+:deep(.v-theme--dark .cost-amount-low) {
+  color: #3fb950;
+}
+
+:deep(.v-theme--dark .cost-amount-medium) {
+  color: #d29922;
+}
+
+:deep(.v-theme--dark .cost-amount-high) {
+  color: #f85149;
+}
+
+:deep(.v-theme--dark .cost-amount-zero) {
+  color: #8b949e;
 }
 
 .compact-action-btn {
