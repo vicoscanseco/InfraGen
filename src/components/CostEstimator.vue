@@ -16,7 +16,7 @@
         >
           <template v-slot:prepend>
             <v-avatar color="primary" size="32">
-              <v-icon color="white" size="16">{{ getComponentIcon(component.type || component.value) }}</v-icon>
+              <v-icon color="white" size="16">{{ getConsistentComponentIcon(component.type || component.value) }}</v-icon>
             </v-avatar>
           </template>
           
@@ -228,7 +228,6 @@ import {
   calculateComponentCost, 
   calculateTotalCost, 
   getPriceDescription, 
-  getComponentIcon,
   regionPriceMultipliers 
 } from '../utils/azurePricing.js'
 
@@ -367,6 +366,27 @@ const getComponentDisplayName = (componentValueOrType) => {
     'MonitoringAlerts': 'Application Insights'
   }
   return names[type] || type
+}
+
+// Mapa de iconos alineado al panel de "Componentes disponibles".
+const consistentComponentIcons = {
+  StorageAccount: 'mdi-database',
+  AppServicePlan: 'mdi-view-dashboard',
+  AppService: 'mdi-web',
+  ContainerApp: 'mdi-docker',
+  SQLServer: 'mdi-database-cog',
+  SQLDatabase: 'mdi-database-outline',
+  MonitoringAlerts: 'mdi-chart-line',
+  FunctionApp: 'mdi-function-variant',
+  CognitiveService: 'mdi-brain'
+}
+
+const getConsistentComponentIcon = (componentValueOrType) => {
+  const type = typeof componentValueOrType === 'string'
+    ? componentValueOrType
+    : (componentValueOrType.type || componentValueOrType.value)
+
+  return consistentComponentIcons[type] || 'mdi-cube-outline'
 }
 
 const getCostAnalysisType = () => {

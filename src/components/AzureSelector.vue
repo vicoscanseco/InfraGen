@@ -223,7 +223,7 @@
                             v-bind="props"
                             color="orange"
                             size="small"
-                            class="me-2"
+                            class="me-2 component-edit-btn"
                             @click="editComponent(index)"
                           >
                             Editar
@@ -236,6 +236,7 @@
                             v-bind="props"
                             color="red"
                             size="small"
+                            class="component-remove-btn"
                             @click="removeComponent(index)"
                           >
                             Quitar
@@ -1866,6 +1867,16 @@ const handleBicepImport = async (event) => {
 
 :deep(.v-theme--dark .top-action-btn.v-btn--disabled) {
   color: rgba(201, 209, 217, 0.45) !important;
+}
+
+:deep(.v-theme--dark .component-edit-btn) {
+  background-color: #d29922 !important;
+  color: #0d1117 !important;
+}
+
+:deep(.v-theme--dark .component-remove-btn) {
+  background-color: #f85149 !important;
+  color: #ffffff !important;
 }
 
 .compact-ui :deep(.v-card--variant-outlined) {
