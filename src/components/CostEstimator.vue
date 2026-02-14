@@ -72,9 +72,9 @@
         <v-col cols="4" class="pa-0 text-right total-col">
           <div class="total-value-wrap">
             <div class="total-amount" :class="getTotalAmountClass()">
-              <v-icon size="16" class="mr-1">mdi-currency-usd</v-icon>${{ formatCost(totalCost) }}
+              ${{ formatCost(totalCost) }}
             </div>
-            <div class="text-caption text-grey-darken-1 mt-1">/mes</div>
+            <div class="text-caption text-grey-darken-1 mt-1 font-weight-bold">mensual</div>
           </div>
         </v-col>
       </v-row>
@@ -784,10 +784,11 @@ const exportReport = (format) => {
   display: inline-block;
   min-width: 110px;
   text-align: right;
+  padding-right: 6px;
 }
 
 .total-col {
-  padding-right: 8px !important;
+  padding-right: 14px !important;
 }
 
 .total-amount {
