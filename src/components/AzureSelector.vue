@@ -554,6 +554,7 @@ import CostEstimator from './CostEstimator.vue'
 import AzureDeploymentManager from './AzureDeploymentManager.vue'
 import { useInfragenConfigPersistence } from '../utils/configPersistence'
 import { parseInfragenBicep } from '../utils/bicepImportParser'
+import { sanitizeAppName, syncEnvironmentToken, buildResourceGroupName } from '../utils/ruleValidators'
 
 // Cargar la vista de arquitectura bajo demanda para reducir el bundle inicial.
 const ArchitectureView = defineAsyncComponent(() => import('./ArchitectureView.vue'))
@@ -611,69 +612,20 @@ const infoMsg = ref('')
 const configDialog = ref(false)
 const currentComponent = ref(null)
 
-// Limpia el nombre de aplicación para usarlo en nombres de recursos.
-const sanitizeAppName = (value) => {
-  return String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '')
-}
-
-const escapeRegExp = (value) => {
-  return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-}
-
 // Ajusta un nombre de recurso cuando cambia el ambiente (dev/test/qa/prod).
-const syncEnvironmentToken = (value, oldEnv, newEnv) => {
-  if (typeof value !== 'string' || !value) return value
-  if (!oldEnv || !newEnv || oldEnv === newEnv) return value
-
-  let updated = value
-  const oldEscaped = escapeRegExp(oldEnv)
-  const envSuffixWithDash = new RegExp(`-${oldEscaped}(?=-asp$|-ca$|-cae$|-ain$|$)`, 'gi')
-  const envSuffixNoDash = new RegExp(`${oldEscaped}$`, 'gi')
-
-  if (oldEnv !== 'prod' && newEnv !== 'prod') {
-    updated = updated.replace(envSuffixWithDash, `-${newEnv}`)
-    updated = updated.replace(envSuffixNoDash, newEnv)
-    return updated
-  }
-
-  if (oldEnv !== 'prod' && newEnv === 'prod') {
-    updated = updated.replace(envSuffixWithDash, '')
-    updated = updated.replace(envSuffixNoDash, '')
-    return updated
-  }
-
-  const hasDashedName = updated.includes('-')
-  const hasKnownSuffix = /-(asp|ca|cae|ain)$/i.test(updated)
-  const noDashConventions = /^(rg|sta|func|cog|log)[a-z0-9]+$/i.test(updated)
-
-  if (hasKnownSuffix) {
-    return updated.replace(/-(asp|ca|cae|ain)$/i, `-${newEnv}-$1`)
-  }
-
-  if (noDashConventions) {
-    return `${updated}${newEnv}`
-  }
-
-  if (hasDashedName) {
-    return `${updated}-${newEnv}`
-  }
-
-  return `${updated}${newEnv}`
-}
+// Esta lógica ahora vive en ruleValidators para facilitar pruebas y reutilización.
 
 // Computed property para generar nombre de grupo de recursos
 const computedResourceGroupName = computed(() => {
   if (!appName.value || !location.value || !selectedEnv.value) return ''
   const currentLocation = locations.value.find(loc => loc.value === location.value)
   const shortName = currentLocation?.shortName || location.value.slice(0, 3)
-  const cleanAppName = sanitizeAppName(appName.value)
-  
-  // Para producción, no incluir environment
-  if (selectedEnv.value === 'prod') {
-    return 'rg' + shortName + cleanAppName
-  } else {
-    return 'rg' + shortName + cleanAppName + selectedEnv.value
-  }
+
+  return buildResourceGroupName({
+    appName: appName.value,
+    locationShort: shortName,
+    environment: selectedEnv.value
+  })
 })
 
 // Watch para actualizar el resourceGroup cuando cambie el computed
