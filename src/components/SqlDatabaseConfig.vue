@@ -207,20 +207,21 @@
         <v-col cols="12" md="6">
           <v-tooltip location="top">
             <template v-slot:activator="{ props }">
-              <v-text-field 
+              <v-select
                 v-bind="props"
-                v-model="localConfig.maxSizeBytes" 
-                label="Tamaño Máximo (bytes)" 
-                placeholder="Ej: 1073741824 (1GB)"
-                density="comfortable" 
+                v-model="localConfig.maxSizeGb"
+                :items="maxSizeGbOptions"
+                label="Tamaño Máximo (GB)"
+                item-title="label"
+                item-value="value"
+                density="comfortable"
                 variant="outlined"
-                hint="Tamaño máximo de la base de datos en bytes (opcional)"
+                hint="Selecciona el tamaño máximo en GB (opcional)"
                 persistent-hint
-                type="number"
-                @input="updateConfigField('maxSizeBytes', $event.target.value)"
+                @update:model-value="updateConfigField('maxSizeGb', $event)"
               />
             </template>
-            <span>Tamaño máximo de la base de datos en bytes. Por ejemplo: 1073741824 = 1GB, 2147483648 = 2GB. Si se deja vacío, usa el tamaño por defecto de la edición seleccionada</span>
+            <span>Tamaño máximo de la base de datos en GB. Si se deja vacío, usa el tamaño por defecto de la edición seleccionada</span>
           </v-tooltip>
         </v-col>
         <v-col cols="12" md="6">
@@ -268,6 +269,26 @@
 
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+
+// Factor de conversión para mantener compatibilidad con la propiedad maxSizeBytes.
+const BYTES_PER_GB = 1024 * 1024 * 1024
+
+// Convierte bytes a GB para mostrar correctamente valores importados.
+const bytesToGb = (bytes) => {
+  if (bytes === null || bytes === undefined || bytes === '') return null
+  const numericBytes = Number(bytes)
+  if (!Number.isFinite(numericBytes) || numericBytes <= 0) return null
+  const converted = numericBytes / BYTES_PER_GB
+  return Number.isInteger(converted) ? converted : Number(converted.toFixed(2))
+}
+
+// Normaliza el tamaño ingresado en GB antes de convertirlo a bytes.
+const normalizeMaxSizeGb = (value) => {
+  if (value === null || value === undefined || value === '') return null
+  const numericValue = Number(value)
+  if (!Number.isFinite(numericValue) || numericValue <= 0) return null
+  return numericValue
+}
 
 const editionOptions = [
   { label: 'Basic (Desarrollo/Testing)', value: 'Basic' },
@@ -319,6 +340,21 @@ const collationOptions = [
   { label: 'SQL_Latin1_General_CP1_CS_AS (Case Sensitive)', value: 'SQL_Latin1_General_CP1_CS_AS' }
 ]
 
+// Opciones de tamaño en GB para una selección rápida y clara en UI.
+const maxSizeGbOptions = [
+  { label: 'Predeterminado por edición', value: null },
+  { label: '1 GB', value: 1 },
+  { label: '2 GB', value: 2 },
+  { label: '5 GB', value: 5 },
+  { label: '10 GB', value: 10 },
+  { label: '20 GB', value: 20 },
+  { label: '50 GB', value: 50 },
+  { label: '100 GB', value: 100 },
+  { label: '200 GB', value: 200 },
+  { label: '500 GB', value: 500 },
+  { label: '1 TB (1024 GB)', value: 1024 }
+]
+
 const props = defineProps({
   config: {
     type: Object,
@@ -352,11 +388,12 @@ const localConfig = reactive({
   enableFirewallRules: true,
   enableThreatDetection: false,
   allowedIpRanges: '0.0.0.0-0.0.0.0',
-  maxSizeBytes: null,
+  maxSizeGb: null,
   readScale: 'Disabled',
   zoneRedundant: false,
   capacity: null,
-  ...props.config
+  ...props.config,
+  maxSizeGb: props.config.maxSizeGb ?? bytesToGb(props.config.maxSizeBytes)
 })
 
 // Usa el SQL Server configurado en el componente padre.
@@ -408,9 +445,13 @@ const rules = {
 
 // Emite la configuración completa con el mapeo requerido por Bicep.
 const updateConfig = (key, value) => {
+  const normalizedMaxSizeGb = normalizeMaxSizeGb(localConfig.maxSizeGb)
+  const maxSizeBytes = normalizedMaxSizeGb ? Math.round(normalizedMaxSizeGb * BYTES_PER_GB) : null
+
   const updatedConfig = {
     ...localConfig,
     [key]: value,
+    maxSizeBytes,
     name: computedDatabaseName.value,
     sqlServer: computedServerName.value,
     databaseName: computedDatabaseName.value,
@@ -418,6 +459,8 @@ const updateConfig = (key, value) => {
     sku: localConfig.serviceObjective || 'Basic',
     tier: localConfig.edition || 'Basic'
   }
+
+  delete updatedConfig.maxSizeGb
 
   emit('update:config', updatedConfig)
   emit('update:model-value', updatedConfig)
@@ -473,7 +516,8 @@ watch(() => props.config, (newConfig) => {
       enableFirewallRules: true,
       enableThreatDetection: false,
       allowedIpRanges: '0.0.0.0-0.0.0.0',
-      ...newConfig
+      ...newConfig,
+      maxSizeGb: newConfig.maxSizeGb ?? bytesToGb(newConfig.maxSizeBytes)
     })
   }
 }, { deep: true, immediate: true })
@@ -509,6 +553,9 @@ onMounted(() => {
 
     const fullConfig = {
       ...localConfig,
+      maxSizeBytes: normalizeMaxSizeGb(localConfig.maxSizeGb)
+        ? Math.round(normalizeMaxSizeGb(localConfig.maxSizeGb) * BYTES_PER_GB)
+        : null,
       name: computedDatabaseName.value,
       sqlServer: computedServerName.value,
       databaseName: computedDatabaseName.value,
@@ -516,6 +563,8 @@ onMounted(() => {
       sku: localConfig.serviceObjective || 'Basic',
       tier: localConfig.edition || 'Basic'
     }
+
+    delete fullConfig.maxSizeGb
 
     emit('update:config', fullConfig)
     emit('update:model-value', fullConfig)

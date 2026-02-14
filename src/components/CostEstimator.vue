@@ -20,7 +20,7 @@
             </v-avatar>
           </template>
           
-          <v-list-item-title class="font-weight-medium">
+          <v-list-item-title class="component-title font-weight-medium">
             {{ getComponentDisplayName(component.type || component.value) }}
           </v-list-item-title>
           
@@ -33,7 +33,7 @@
               <div class="cost-amount" :class="getCostAmountClass(component)">
                 ${{ formatCost(getComponentCost(component)) }}
               </div>
-              <div class="text-caption text-grey-darken-1 mt-1">mensual</div>
+              <div class="text-grey-darken-1 mt-1 period-label">mensual</div>
             </div>
           </template>
         </v-list-item>
@@ -74,7 +74,7 @@
             <div class="total-amount" :class="getTotalAmountClass()">
               ${{ formatCost(totalCost) }}
             </div>
-            <div class="text-caption text-grey-darken-1 mt-1 font-weight-bold">mensual</div>
+            <div class="text-grey-darken-1 mt-1 period-label">mensual</div>
           </div>
         </v-col>
       </v-row>
@@ -791,10 +791,26 @@ const exportReport = (format) => {
   min-width: 86px;
 }
 
+/* Mantiene el nombre del componente con altura y peso visual consistentes. */
+.component-title {
+  line-height: 1.15;
+}
+
 /* Texto secundario más compacto debajo del nombre del componente. */
 .component-subtitle {
   font-size: 0.66rem !important;
   line-height: 1.05;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Etiqueta de periodo unificada entre filas y total. */
+.period-label {
+  font-size: 0.66rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.01em;
 }
 
 .total-value-wrap {
