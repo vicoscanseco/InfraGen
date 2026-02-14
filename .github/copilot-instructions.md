@@ -82,7 +82,7 @@ InfraGen/
 3. **Environments**: Se usan nombres cortos
   - `Development` → `dev`
   - `Testing` → `test`
-  - `Staging` → `stage`
+  - `Calidad` → `qa`
   - `Production` → `prod`
 
 4. **Casos Especiales**:

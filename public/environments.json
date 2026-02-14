@@ -1,5 +1,5 @@
 [
   { "value": "dev", "label": "Desarrollo" },
-  { "value": "staging", "label": "Staging" },
+  { "value": "qa", "label": "Calidad" },
   { "value": "prod", "label": "Producción" }
 ]

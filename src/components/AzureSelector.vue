@@ -615,7 +615,7 @@ const escapeRegExp = (value) => {
   return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
-// Ajusta un nombre de recurso cuando cambia el ambiente (dev/test/stage/prod).
+// Ajusta un nombre de recurso cuando cambia el ambiente (dev/test/qa/prod).
 const syncEnvironmentToken = (value, oldEnv, newEnv) => {
   if (typeof value !== 'string' || !value) return value
   if (!oldEnv || !newEnv || oldEnv === newEnv) return value

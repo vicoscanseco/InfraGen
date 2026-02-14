@@ -7,7 +7,7 @@
     <v-card-text>
       <v-row dense class="mt-3">
         <v-col cols="12" md="6">
-          <v-tooltip text="Define el nombre base de tu App Service. Se combinará automáticamente con el entorno (dev, test, stage) para crear el nombre final único en Azure. En producción no se incluye el environment.">
+          <v-tooltip text="Define el nombre base de tu App Service. Se combinará automáticamente con el entorno (dev, test, qa) para crear el nombre final único en Azure. En producción no se incluye el environment.">
             <template v-slot:activator="{ props }">
               <v-text-field 
                 v-bind="props"

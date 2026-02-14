@@ -267,7 +267,7 @@ InfraGen sigue convenciones estrictas y consistentes para garantizar nombres ún
 3. **Environments**: Se usan nombres cortos
    - `Development` → `dev`
    - `Testing` → `test`
-   - `Staging` → `stage`
+  - `Calidad` → `qa`
    - `Production` → `prod`
 
 4. **Casos Especiales**:
@@ -645,7 +645,7 @@ npm run build
 
 1. **Información Básica** (Obligatorio):
    - Nombre de aplicación
-   - Seleccionar ambiente (Development, Testing, Staging, Production)
+  - Seleccionar ambiente (Development, Testing, Calidad, Production)
    - Elegir ubicación Azure
 
 2. **Configurar Resource Group** (Obligatorio):
@@ -684,7 +684,7 @@ npm run build
 Edita `src/data/environments.json` para agregar nuevos entornos:
 
 ```json
-["Development", "Testing", "Staging", "Production", "CustomEnv"]
+["Development", "Testing", "Calidad", "Production", "CustomEnv"]
 ```
 
 ### Regiones Adicionales

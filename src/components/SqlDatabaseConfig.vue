@@ -22,7 +22,7 @@
                 @input="updateDatabaseBaseName($event.target.value)"
               />
             </template>
-            <span>Nombre base de la base de datos. Se generará el nombre completo agregando prefijo 'db-' y sufijo del entorno (dev/test/stage). En producción no se incluye el environment. Solo letras, números, guiones y guiones bajos</span>
+            <span>Nombre base de la base de datos. Se generará el nombre completo agregando prefijo 'db-' y sufijo del entorno (dev/test/qa). En producción no se incluye el environment. Solo letras, números, guiones y guiones bajos</span>
           </v-tooltip>
           <v-chip 
             v-if="computedDatabaseName"
