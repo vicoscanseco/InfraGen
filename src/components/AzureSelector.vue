@@ -134,12 +134,6 @@
                       </template>
                     </v-tooltip>
 
-                    <div class="mt-2" v-if="computedResourceGroupName">
-                      <v-chip color="blue" variant="outlined" size="small">
-                        <v-icon left>mdi-eye</v-icon>
-                        Preview: {{ computedResourceGroupName }}
-                      </v-chip>
-                    </div>
                   </v-col>
                 </v-row>
 
@@ -186,7 +180,7 @@
                                 size="22"
                                 class="mb-1"
                                 :color="canAddComponent(comp.value).allowed ? 'primary' : 'grey'"
-                                :icon="canAddComponent(comp.value).allowed ? 'mdi-check-circle' : 'mdi-lock'"
+                                :icon="getAvailableComponentIcon(comp.value)"
                               />
                               <div class="text-caption font-weight-bold text-truncate w-100">{{ comp.label }}</div>
                               <div class="text-caption text-medium-emphasis">Agregar</div>
@@ -612,12 +606,17 @@ const infoMsg = ref('')
 const configDialog = ref(false)
 const currentComponent = ref(null)
 
+// Limpia el nombre de aplicación para usarlo en nombres de recursos.
+const sanitizeAppName = (value) => {
+  return String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '')
+}
+
 // Computed property para generar nombre de grupo de recursos
 const computedResourceGroupName = computed(() => {
   if (!appName.value || !location.value || !selectedEnv.value) return ''
   const currentLocation = locations.value.find(loc => loc.value === location.value)
   const shortName = currentLocation?.shortName || location.value.slice(0, 3)
-  const cleanAppName = appName.value.toLowerCase().replace(/[^a-z0-9]/g, '')
+  const cleanAppName = sanitizeAppName(appName.value)
   
   // Para producción, no incluir environment
   if (selectedEnv.value === 'prod') {
@@ -630,6 +629,51 @@ const computedResourceGroupName = computed(() => {
 // Watch para actualizar el resourceGroup cuando cambie el computed
 watch(computedResourceGroupName, (newName) => {
   resourceGroup.value = newName
+})
+
+// Mantiene sincronizados los nombres/referencias de componentes al cambiar el nombre de la app.
+watch(appName, (newAppName, oldAppName) => {
+  const oldToken = sanitizeAppName(oldAppName)
+  const newToken = sanitizeAppName(newAppName)
+
+  if (!oldToken || !newToken || oldToken === newToken || configuredComponents.value.length === 0) {
+    return
+  }
+
+  const fieldsToSync = [
+    'name',
+    'appServicePlan',
+    'appServicePlanReference',
+    'plan',
+    'planName',
+    'sqlServer',
+    'sqlServerReference',
+    'server',
+    'serverName',
+    'storageAccountName',
+    'applicationInsightsName',
+    'containerEnvironmentName',
+    'workspaceName',
+    'logAnalyticsName'
+  ]
+
+  configuredComponents.value = configuredComponents.value.map(component => {
+    const updatedConfig = { ...component.config }
+
+    fieldsToSync.forEach((field) => {
+      const currentValue = updatedConfig[field]
+      if (typeof currentValue !== 'string' || !currentValue) {
+        return
+      }
+
+      updatedConfig[field] = currentValue.replace(new RegExp(oldToken, 'gi'), newToken)
+    })
+
+    return {
+      ...component,
+      config: updatedConfig
+    }
+  })
 })
 
 // Cargar datos iniciales
@@ -784,6 +828,21 @@ const availableComponents = [
   { value: 'SQLDatabase', label: 'SQL Database', description: 'Base de datos SQL' },
   { value: 'MonitoringAlerts', label: 'Application Insights', description: 'Monitoreo y telemetría' }
 ]
+
+// Íconos visuales para cada tarjeta de componente disponible.
+const availableComponentIcons = {
+  StorageAccount: 'mdi-database',
+  AppServicePlan: 'mdi-view-dashboard',
+  AppService: 'mdi-web',
+  ContainerApp: 'mdi-docker',
+  SQLServer: 'mdi-database-cog',
+  SQLDatabase: 'mdi-database-outline',
+  MonitoringAlerts: 'mdi-chart-line'
+}
+
+const getAvailableComponentIcon = (componentValue) => {
+  return availableComponentIcons[componentValue] || 'mdi-cube-outline'
+}
 
 
 const currentConfig = ref({})
