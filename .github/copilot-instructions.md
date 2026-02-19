@@ -132,6 +132,7 @@ Application Insights: mywebapp-webapp-ain (sin environment)
 
 - Para generar código de bicep utiliza el skill `bicep-generator`: `.github/skills/bicep-generator/SKILL.md`.
 - Para generar código de Vue.js utiliza el skill `vue-best-practices`: `.github/skills/vue-best-practices/SKILL.md`.
+- Para operaciones Git (ramas, commits, PRs, releases, tags) utiliza el skill `git-flow`: `.agents/skills/git-flow/SKILL.md`.
 
 # Referencias
 
