@@ -17,6 +17,14 @@ Guía de flujo de trabajo Git para los repositorios. Define convenciones de rama
     - **Windows**: Usar Git Bash y ejecutar `git flow init -d` para configurar.
     - **macOS/Linux**: Instalar vía Homebrew (`brew install git-flow`) o gestor de paquetes correspondiente.
 2. **branches**: Se debe validar que el repositorio siga el modelo de ramas definido (main, develop, feature/, fix/, hotfix/, release/, chore/).
+  - En caso de detectar ramas fuera de este modelo, se debe alertar al usuario y sugerir renombrar o eliminar ramas no conformes.
+  - Se deben seguir las convenciones de nombrado para cada tipo de rama (ej: `feature/agregar-login`, `hotfix/fix-crash`).
+  # Validar conformidad de ramas con git-flow
+  git for-each-ref --format='%(refname:short)' refs/heads/ | while read branch; do
+    if ! [[ "$branch" =~ ^(main|develop|feature/|fix/|hotfix/|release/|chore/).*$ ]]; then
+      echo "⚠️  Rama no conforme con git-flow: $branch"
+    fi
+  done
 
 
 ## Ramas Principales
