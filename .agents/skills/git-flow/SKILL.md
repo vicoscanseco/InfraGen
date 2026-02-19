@@ -42,6 +42,19 @@ Guía de flujo de trabajo Git para los repositorios. Define convenciones de rama
 
 ## Trabajando con ramas
 
+### Inicializar repositorio con git-flow
+- Al clonar el repositorio por primera vez, se debe inicializar git-flow para configurar las ramas principales y convenciones.
+- Solicitar al usuario que indique el tipo de proyecto (web, móvil, backend) para ajustar las convenciones de nombrado si es necesario (ej: `feature/agregar-login-web` vs `feature/agregar-login-backend`).
+- Con la informacion del tipo de proyecto se debera de inizializar el proyecto con los archivos:
+   - `README.md` con instrucciones específicas para ese tipo de proyecto, para ellos le puedes pedir al usuario que te de una breve descripción del proyecto y sus objetivos para personalizar el README.
+   - `.gitignore` con las exclusiones comunes para ese tipo de proyecto. Si no queda claro el tipo de proyecto, le puedes pedir al usuario que te indique las tecnologías principales que va a usar (ej: Node.js, Python, Java) para generar un `.gitignore` adecuado.
+
+
+#### Comando para inicializar git-flow con configuración por defecto:
+```bash
+git flow init -d
+```
+
 ### Inicializar `feature/` — Nueva funcionalidad
 - **Origen:** `develop`
 - **Destino (PR):** `develop`
@@ -60,6 +73,25 @@ git flow feature start agregar-cognitive-service-config
 - No se ejecutan comandos de git-flow para finalizar, se hace merge manualmente desde la interfaz de Azure DevOps para asegurar revisión de código y cumplimiento de estándares.
 - **Nota:** Debes avisarle al usuario de esto para que no intente finalizar con `git flow feature finish` y se le explique el proceso correcto de revisión y merge.
 
+### Inicializar `hotfix/` — Corrección urgente
+- **Origen:** `main` 
+- **Destino (PR):** `main` y `develop`
+- **Naming:** `hotfix/<descripcion-breve-en-kebab-case>`
+#### Ejemplo:
+```bash
+# Crear hotfix branch
+git checkout main
+git pull origin main
+git flow hotfix start fix-crash
+```
+### Finalizar `hotfix/` — Merge a main y develop
+- Al finalizar un hotfix, se debe hacer merge a `main` para corregir el problema en producción, y luego a `develop` para mantener la corrección en el código base.
+- **Nota:** Al igual que con features, se debe realizar el merge manualmente desde la interfaz de Azure DevOps para asegurar revisión de código y cumplimiento de estándares.
 
 
 
+
+
+## Referencias
+- [Git Flow Workflow](https://nvie.com/posts/a-successful-git-branching-model/)
+- [GitIgnore Templates](https://github.com/github/gitignore)
