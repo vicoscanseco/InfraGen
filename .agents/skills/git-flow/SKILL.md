@@ -56,13 +56,10 @@ git flow feature start agregar-cognitive-service-config
 ```
 
 ### Finalizar `feature/` — Merge a develop
-- **Origen:** `feature/`
-- **Destino (PR):** `develop` 
-- **Crear PR:** Sí, con descripción detallada de la funcionalidad y pruebas realizadas.
+- Si el feature esta terminado y probado entonces se le informa al Lider de Proyecto para que revise el código y apruebe el PR.
+- No se ejecutan comandos de git-flow para finalizar, se hace merge manualmente desde la interfaz de Azure DevOps para asegurar revisión de código y cumplimiento de estándares.
+- **Nota:** Debes avisarle al usuario de esto para que no intente finalizar con `git flow feature finish` y se le explique el proceso correcto de revisión y merge.
 
-#### Ejemplo:
-```bash
-# Finalizar feature branch
-git flow feature finish agregar-cognitive-service-config
-```
+
+
 
