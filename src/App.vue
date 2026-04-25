@@ -1,9 +1,12 @@
 
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useTheme } from 'vuetify'
 import AzureSelector from './components/AzureSelector.vue'
+import SettingsPanel from './components/SettingsPanel.vue'
+
+const showSettings = ref(false)
 
 const theme = useTheme()
 
@@ -32,6 +35,17 @@ onMounted(() => {
     <v-app-bar color="primary">
       <v-toolbar-title>InfraGen v2.0</v-toolbar-title>
       <v-spacer />
+      <v-tooltip text="Configuración Azure DevOps">
+        <template #activator="{ props }">
+          <v-btn
+            v-bind="props"
+            icon="mdi-cog"
+            variant="text"
+            color="white"
+            @click="showSettings = true"
+          />
+        </template>
+      </v-tooltip>
       <v-tooltip :text="isDarkTheme ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'">
         <template #activator="{ props }">
           <v-btn
@@ -48,6 +62,8 @@ onMounted(() => {
       <!-- Mantener un único flujo canónico para reducir complejidad operativa. -->
       <AzureSelector />
     </v-main>
+
+    <SettingsPanel v-model="showSettings" />
   </v-app>
 </template>
 

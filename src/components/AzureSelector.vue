@@ -387,10 +387,25 @@
                 <v-icon left>mdi-content-copy</v-icon>
                 Copiar
               </v-btn>
-              <v-btn color="success" size="small" @click="downloadBicep">
+              <v-btn color="success" size="small" class="me-2" @click="downloadBicep">
                 <v-icon left>mdi-download</v-icon>
                 Descargar
               </v-btn>
+              <v-tooltip :text="adoSettingsConfigured ? 'Guardar en repositorio Azure DevOps' : 'Configura Azure DevOps en Settings primero'">
+                <template #activator="{ props }">
+                  <v-btn
+                    v-bind="props"
+                    color="indigo"
+                    size="small"
+                    :loading="pushingToAdo"
+                    :disabled="!adoSettingsConfigured"
+                    @click="pushToAzureDevOps"
+                  >
+                    <v-icon left>mdi-source-repository</v-icon>
+                    Azure DevOps
+                  </v-btn>
+                </template>
+              </v-tooltip>
             </v-card-title>
             <v-divider class="mb-2" />
             <div class="code-container">
@@ -552,7 +567,8 @@
 import { ref, computed, onMounted, watch, defineAsyncComponent } from 'vue'
 import CostEstimator from './CostEstimator.vue'
 import AzureDeploymentManager from './AzureDeploymentManager.vue'
-import { useInfragenConfigPersistence } from '../utils/configPersistence'
+import { useInfragenConfigPersistence, loadAdoSettings } from '../utils/configPersistence'
+import { pushFiles } from '../utils/azureDevOpsService'
 import { parseInfragenBicep } from '../utils/bicepImportParser'
 import { sanitizeAppName, syncEnvironmentToken, buildResourceGroupName, hasRequiredBicepSections } from '../utils/ruleValidators'
 
@@ -1616,10 +1632,10 @@ const generateBicep = () => {
     commands += `az group create --name ${resourceGroup.value} --location ${location.value}\n\n`
     
     commands += '# 2. Validar despliegue (What-If)\n'
-    commands += `az deployment group what-if --resource-group ${resourceGroup.value} --template-file infra.bicep\n\n`
+    commands += `az deployment group what-if --resource-group ${resourceGroup.value} --template-file main.bicep\n\n`
     
     commands += '# 3. Ejecutar despliegue\n'
-    commands += `az deployment group create --resource-group ${resourceGroup.value} --template-file infra.bicep`
+    commands += `az deployment group create --resource-group ${resourceGroup.value} --template-file main.bicep`
     
     deploymentCommands.value = commands
 
@@ -1641,8 +1657,90 @@ const downloadBicep = () => {
   const blob = new Blob([bicepContent.value], { type: 'text/plain' })
   const link = document.createElement('a')
   link.href = URL.createObjectURL(blob)
-  link.download = 'infra.bicep'
+  link.download = 'main.bicep'
   link.click()
+}
+
+const pushingToAdo = ref(false)
+const adoSettingsConfigured = ref(false)
+
+// localStorage no es reactivo: se refresca al abrir el dialog de resultado
+watch(showGeneratedInfraDialog, (open) => {
+  if (open) {
+    const s = loadAdoSettings()
+    adoSettingsConfigured.value = !!(s?.organization && s?.project && s?.repository && s?.pat)
+  }
+})
+
+const buildReadmeContent = (sanitizedApp) => {
+  const envLabel = selectedEnv.value || 'dev'
+  const locationLabel = location.value || ''
+  const rgName = resourceGroup.value || `rg-${sanitizedApp}`
+  const componentList = configuredComponents.value.map(c => {
+    const name = c.config?.name ? ` — \`${c.config.name}\`` : ''
+    return `- ${c.label || c.value}${name}`
+  }).join('\n') || '- (sin componentes)'
+
+  return `# ${appName.value || sanitizedApp}
+
+Infraestructura generada con [InfraGen](https://infragen.dev) para Azure.
+
+## Configuración
+
+| Campo | Valor |
+|-------|-------|
+| Aplicación | \`${sanitizedApp}\` |
+| Ambiente | \`${envLabel}\` |
+| Región | \`${locationLabel}\` |
+| Resource Group | \`${rgName}\` |
+
+## Componentes
+
+${componentList}
+
+## Despliegue
+
+### Requisitos
+- [Azure CLI](https://docs.microsoft.com/cli/azure/install-azure-cli) instalado
+- Sesión activa: \`az login\`
+
+### Pasos
+
+\`\`\`bash
+${deploymentCommands.value || `# 1. Crear grupo de recursos\naz group create --name ${rgName} --location ${locationLabel}\n\n# 2. Validar despliegue\naz deployment group what-if --resource-group ${rgName} --template-file ${sanitizedApp}.bicep\n\n# 3. Ejecutar despliegue\naz deployment group create --resource-group ${rgName} --template-file ${sanitizedApp}.bicep`}
+\`\`\`
+
+---
+*Generado por InfraGen*
+`
+}
+
+const pushToAzureDevOps = async () => {
+  const settings = loadAdoSettings()
+  if (!settings) {
+    showNotification('Configura Azure DevOps en el panel de Settings antes de continuar.', 'warning', 'mdi-cog')
+    return
+  }
+
+  const sanitizedApp = sanitizeAppName(appName.value) || 'infragen'
+  const branch = `feature/${sanitizedApp}`
+  const fileName = (settings.filePath || 'main.bicep').split('/').pop()
+  const folder = `${sanitizedApp}/${selectedEnv.value || 'dev'}`
+
+  const files = [
+    { path: `${folder}/${fileName}`, content: bicepContent.value },
+    { path: `${folder}/README.md`, content: buildReadmeContent(sanitizedApp) }
+  ]
+
+  pushingToAdo.value = true
+  const result = await pushFiles({ ...settings, branch }, files)
+  pushingToAdo.value = false
+
+  if (result.ok) {
+    showNotification(result.message, 'success', 'mdi-source-repository')
+  } else {
+    showNotification(result.message, 'error', 'mdi-alert-circle')
+  }
 }
 
 const copyToClipboard = () => {
@@ -1669,9 +1767,9 @@ const buildDeploymentCommands = (groupName, deployLocation) => {
   let commands = '# 1. Crear grupo de recursos (si no existe)\n'
   commands += `az group create --name ${groupName} --location ${deployLocation}\n\n`
   commands += '# 2. Validar despliegue (What-If)\n'
-  commands += `az deployment group what-if --resource-group ${groupName} --template-file infra.bicep\n\n`
+  commands += `az deployment group what-if --resource-group ${groupName} --template-file main.bicep\n\n`
   commands += '# 3. Ejecutar despliegue\n'
-  commands += `az deployment group create --resource-group ${groupName} --template-file infra.bicep`
+  commands += `az deployment group create --resource-group ${groupName} --template-file main.bicep`
 
   return commands
 }

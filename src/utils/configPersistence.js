@@ -1,5 +1,26 @@
 import { ref, watch, onBeforeUnmount } from 'vue'
 
+const ADO_STORAGE_KEY = 'infragen-ado-settings'
+
+/** Carga la configuración de Azure DevOps desde localStorage. */
+export const loadAdoSettings = () => {
+  try {
+    const raw = localStorage.getItem(ADO_STORAGE_KEY)
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+
+/** Persiste la configuración de Azure DevOps en localStorage. */
+export const saveAdoSettings = (settings) => {
+  try {
+    localStorage.setItem(ADO_STORAGE_KEY, JSON.stringify(settings))
+  } catch (error) {
+    console.error('Error guardando ADO settings:', error)
+  }
+}
+
 export const useInfragenConfigPersistence = ({
   appName,
   selectedEnv,
