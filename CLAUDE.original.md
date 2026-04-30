@@ -2,10 +2,10 @@
 
 ## Reglas generales
 
-1. Responde en español.
-2. Sigue mejores prácticas y estilo del repo.
-3. Comentarios concisos en código generado.
-4. Nombres descriptivos en variables y funciones.
+1. Siempre responde en español.
+2. Sigue las mejores prácticas y el estilo de código del repositorio.
+3. Incluye comentarios claros y concisos en el código generado.
+4. Usa nombres de variables y funciones descriptivos.
 
 ## Comandos de desarrollo
 
@@ -55,11 +55,11 @@ InfraGen/
 ## Tecnologías
 
 - **Vue 3.5**: Composition API (`<script setup>`)
-- **Vuetify 3.9**: Material Design
-- **vue-flow 1.46**: Diagramas interactivos
-- **Vite 7**: Build tool, lazy-loading de configuradores
+- **Vuetify 3.9**: Componentes Material Design
+- **vue-flow 1.46**: Diagramas de arquitectura interactivos
+- **Vite 7**: Build tool con lazy-loading de configuradores
 - **Vitest 4**: Tests unitarios
-- **Azure Bicep**: IaC generada
+- **Azure Bicep**: Infraestructura como código generada
 
 ## Convenciones de naming Azure
 
@@ -79,13 +79,13 @@ InfraGen/
 | Log Analytics | `log{loc}{app}{env}` | `logeusmyappdev` | `logeusmyappdev` |
 
 **Reglas clave:**
-- **Producción**: sin sufijo de environment en mayoría de recursos
-- **App Names**: solo letras y números minúsculas (`"My App"` → `myapp`)
+- **Producción**: sin sufijo de environment en la mayoría de recursos
+- **App Names**: solo letras y números en minúsculas (`"My App"` → `myapp`)
 - **Locations (short)**: `East US` → `eus`, `West Europe` → `weu`, `Southeast Asia` → `sea`, `Mexico Central` → `mxc`
 - **Environments (short)**: `Development` → `dev`, `Testing` → `test`, `Calidad` → `qa`, `Production` → `prod`
 - **Storage Account**: sin guiones, sin location (limitación Azure)
 
-## Skills
+## Skills disponibles
 
 - **Bicep**: `.github/skills/bicep-generator/SKILL.md`
 - **Vue.js**: `.github/skills/vue-best-practices/SKILL.md`
@@ -93,6 +93,6 @@ InfraGen/
 
 ## Referencias
 
-- Agentes: [agents/AGENTS.md](agents/AGENTS.md)
+- Definiciones de agentes: [agents/AGENTS.md](agents/AGENTS.md)
 - Roadmap: [nextFeatures.md](nextFeatures.md)
 - Changelog: [CHANGELOG.md](CHANGELOG.md)
