@@ -170,15 +170,21 @@ const emit = defineEmits(['update', 'update:config'])
 const { appServiceNumber } = toRefs(props)
 
 const runtimeStackOptions = [
+  { label: '.NET 10.0', value: 'DOTNETCORE|10.0' },
+  { label: '.NET 9.0', value: 'DOTNETCORE|9.0' },
   { label: '.NET 8.0', value: 'DOTNETCORE|8.0' },
   { label: '.NET 6.0', value: 'DOTNETCORE|6.0' },
   { label: '.NET Framework 4.8', value: 'ASPNET|4.8' },
+  { label: 'Node.js 22 LTS', value: 'NODE|22-lts' },
   { label: 'Node.js 20 LTS', value: 'NODE|20-lts' },
   { label: 'Node.js 18 LTS', value: 'NODE|18-lts' },
+  { label: 'Python 3.12', value: 'PYTHON|3.12' },
   { label: 'Python 3.11', value: 'PYTHON|3.11' },
   { label: 'Python 3.10', value: 'PYTHON|3.10' },
+  { label: 'Java 21', value: 'JAVA|21-java21' },
   { label: 'Java 17', value: 'JAVA|17-java17' },
   { label: 'Java 11', value: 'JAVA|11-java11' },
+  { label: 'PHP 8.3', value: 'PHP|8.3' },
   { label: 'PHP 8.2', value: 'PHP|8.2' }
 ]
 

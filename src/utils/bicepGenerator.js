@@ -24,6 +24,8 @@ export const buildBicepContent = ({
     content += line + '\n'
   }
 
+  append('targetScope = \'subscription\'')
+  append()
   append('// ============================================================================')
   append(`//  AppName: ${appName}`)
   append(`//  ResourceGroup: ${resourceGroupName || ''}`)
@@ -44,6 +46,9 @@ export const buildBicepContent = ({
   append("@description('Ubicación de los recursos')")
   append(`param location string = '${location}'`)
   append()
+  append("@description('Nombre del Resource Group')")
+  append(`param resourceGroupName string = '${resourceGroupName || ''}'`)
+  append()
   append("@description('Tags comunes para todos los recursos')")
   append('param tags object = {')
   append('  project: appName')
@@ -54,8 +59,12 @@ export const buildBicepContent = ({
   append('param componentTags object = {}')
   append()
 
-  append('var location = location')
-  append('var tags = tags')
+  append('// Resource Group')
+  append(`resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {`)
+  append('  name: resourceGroupName')
+  append('  location: location')
+  append('  tags: tags')
+  append('}')
   append()
 
   configuredComponents.forEach((item) => {
@@ -65,6 +74,7 @@ export const buildBicepContent = ({
       if (!cfg.name) throw new Error('StorageAccount configuration is missing a name')
       append(`// Storage Account ${cfg.name}`)
       append(`resource storageAccount_${cfg.name.replace(/[^a-zA-Z0-9]/g, '')} 'Microsoft.Storage/storageAccounts@2023-01-01' = {`)
+      append('  scope: rg')
       append(`  name: '${cfg.name}'`)
       append('  location: location')
       append('  sku: {')
@@ -89,6 +99,7 @@ export const buildBicepContent = ({
       if (!cfg.name) throw new Error('AppServicePlan configuration is missing a name')
       append(`// App Service Plan ${cfg.name}`)
       append(`resource appServicePlan_${cfg.name.replace(/[^a-zA-Z0-9]/g, '')} 'Microsoft.Web/serverfarms@2023-06-01' = {`)
+      append('  scope: rg')
       append(`  name: '${cfg.name}'`)
       append('  location: location')
       append('  sku: {')
@@ -111,6 +122,7 @@ export const buildBicepContent = ({
       if (!cfg.name) throw new Error('AppService configuration is missing a name')
       append(`// App Service ${cfg.name}`)
       append(`resource appService_${cfg.name.replace(/[^a-zA-Z0-9]/g, '')} 'Microsoft.Web/sites@2023-02-01' = {`)
+      append('  scope: rg')
       append(`  name: '${cfg.name}'`)
       append('  location: location')
       if (cfg.appServicePlan) {
@@ -156,6 +168,7 @@ export const buildBicepContent = ({
       if (!cfg.name) throw new Error('SQLServer configuration is missing a name')
       append(`// SQL Server ${cfg.name}`)
       append(`resource sqlServer_${cfg.name.replace(/[^a-zA-Z0-9]/g, '')} 'Microsoft.Sql/servers@2023-02-01' = {`)
+      append('  scope: rg')
       append(`  name: '${cfg.name}'`)
       append('  location: location')
       append('  properties: {')
@@ -217,6 +230,7 @@ export const buildBicepContent = ({
       const envName = cfg.containerAppEnvironment || `${appName}-${selectedEnv}-cae`
       append(`// Container Apps Environment ${envName}`)
       append(`resource containerAppEnvironment_${envName.replace(/[^a-zA-Z0-9]/g, '')} 'Microsoft.App/managedEnvironments@2023-05-01' = {`)
+      append('  scope: rg')
       append(`  name: '${envName}'`)
       append('  location: location')
       append('  properties: {')
@@ -227,6 +241,7 @@ export const buildBicepContent = ({
       append()
       append(`// Container App ${cfg.name}`)
       append(`resource containerApp_${cfg.name.replace(/[^a-zA-Z0-9]/g, '')} 'Microsoft.App/containerApps@2023-05-01' = {`)
+      append('  scope: rg')
       append(`  name: '${cfg.name}'`)
       append('  location: location')
       append('  dependsOn: [')
@@ -289,6 +304,7 @@ export const buildBicepContent = ({
       if (!cfg.name) throw new Error('MonitoringAlerts configuration is missing a name')
       append(`// Application Insights ${cfg.name}`)
       append(`resource applicationInsights_${cfg.name.replace(/[^a-zA-Z0-9]/g, '')} 'Microsoft.Insights/components@2020-02-02' = {`)
+      append('  scope: rg')
       append(`  name: '${cfg.name}'`)
       append('  location: location')
       append("  kind: 'web'")
