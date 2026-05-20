@@ -5,8 +5,14 @@ import { ref, computed, onMounted } from 'vue'
 import { useTheme } from 'vuetify'
 import AzureSelector from './components/AzureSelector.vue'
 import SettingsPanel from './components/SettingsPanel.vue'
+import { createAppTour } from './utils/appTour.js'
 
 const showSettings = ref(false)
+
+function startTour() {
+  const tour = createAppTour()
+  tour.drive()
+}
 
 const theme = useTheme()
 
@@ -35,6 +41,17 @@ onMounted(() => {
     <v-app-bar color="primary">
       <v-toolbar-title>InfraGen v2.0</v-toolbar-title>
       <v-spacer />
+      <v-tooltip text="Ver tutorial de uso">
+        <template #activator="{ props }">
+          <v-btn
+            v-bind="props"
+            icon="mdi-help-circle-outline"
+            variant="text"
+            color="white"
+            @click="startTour"
+          />
+        </template>
+      </v-tooltip>
       <v-tooltip text="Configuración Azure DevOps">
         <template #activator="{ props }">
           <v-btn

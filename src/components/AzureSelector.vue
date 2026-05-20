@@ -4,7 +4,7 @@
       <v-card-title class="d-flex justify-space-between align-center">
         <span class="text-h5 flex-grow-1 text-center pl-10">Generador de Infraestructura</span>
 
-        <div class="d-flex align-center ga-2">
+        <div id="tour-action-buttons" class="d-flex align-center ga-2">
           <v-tooltip text="Limpiar configuración guardada y reiniciar formulario">
             <template v-slot:activator="{ props }">
               <v-btn
@@ -67,7 +67,7 @@
 
         <v-row dense class="layout-two-columns">
           <v-col cols="12" lg="5">
-            <v-card variant="outlined" class="mb-3 surface-elev-2">
+            <v-card id="tour-base-config" variant="outlined" class="mb-3 surface-elev-2">
               <v-card-title class="text-subtitle-1">Configuración base</v-card-title>
               <v-divider />
               <v-card-text class="pb-2">
@@ -155,7 +155,7 @@
               </v-card-text>
             </v-card>
 
-            <v-card variant="outlined" class="surface-elev-2">
+            <v-card id="tour-available-components" variant="outlined" class="surface-elev-2">
               <v-card-title class="text-subtitle-1">Componentes disponibles</v-card-title>
               <v-divider />
               <v-card-text class="pa-2 available-panel">
@@ -200,7 +200,7 @@
           </v-col>
 
           <v-col cols="12" lg="4">
-            <v-card variant="outlined" class="mb-3 surface-elev-2">
+            <v-card id="tour-configured-components" variant="outlined" class="mb-3 surface-elev-2">
               <v-card-title class="text-subtitle-1">Componentes configurados</v-card-title>
               <v-divider />
               <v-card-text class="pa-0 panel-scroll">
@@ -256,7 +256,7 @@
               </v-card-text>
             </v-card>
 
-            <v-row class="mb-2" dense>
+            <v-row id="tour-generate-buttons" class="mb-2" dense>
               <v-col cols="12">
                 <v-tooltip text="Genera el código Bicep para desplegar tu infraestructura en Azure. Requiere al menos un componente configurado.">
                   <template v-slot:activator="{ props }">
@@ -296,7 +296,7 @@
           </v-col>
 
           <v-col cols="12" lg="3">
-            <v-card variant="outlined" class="mb-3 surface-elev-2">
+            <v-card id="tour-cost-estimator" variant="outlined" class="mb-3 surface-elev-2">
               <v-card-title class="text-subtitle-1">Estimación de costos</v-card-title>
               <v-divider />
               <v-card-text class="pa-2 cost-panel-scroll">
