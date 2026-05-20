@@ -28,9 +28,9 @@ const nodes = computed(() => {
       id: String(idx + 1),
       // Usar un VNode para el label si hay nombre generado
       label: generatedName
-        ? h('div', [
-            h('div', comp.label),
-            h('div', { style: 'font-size: 13px; color: #666; margin-top: 2px;' }, generatedName)
+        ? h('div', { style: 'text-align: center; padding: 2px 4px;' }, [
+            h('div', { style: 'font-size: 11px; font-weight: 600; color: #444; text-transform: uppercase; letter-spacing: 0.5px;' }, comp.label),
+            h('div', { style: 'font-size: 13px; color: #1a1a1a; margin-top: 2px;' }, generatedName)
           ])
         : comp.label,
       type: 'default',
