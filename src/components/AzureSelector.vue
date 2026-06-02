@@ -1896,8 +1896,9 @@ const handleBicepImport = async (event) => {
 }
 
 .available-comp-card {
-  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
   min-height: 92px;
+  cursor: pointer;
 }
 
 .available-comp-icon {
@@ -1911,8 +1912,8 @@ const handleBicepImport = async (event) => {
 .available-comp-card:hover,
 .available-comp-card:focus-visible,
 .available-comp-card:focus-within {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px) scale(1.015);
+  box-shadow: 0 6px 18px rgba(3, 105, 161, 0.15), 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 .available-comp-card:hover .available-comp-icon,
@@ -1935,8 +1936,9 @@ const handleBicepImport = async (event) => {
 :deep(.v-theme--dark .available-comp-card:hover),
 :deep(.v-theme--dark .available-comp-card:focus-visible),
 :deep(.v-theme--dark .available-comp-card:focus-within) {
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
-  border-color: rgba(255, 255, 255, 0.32) !important;
+  box-shadow: 0 6px 24px rgba(14, 165, 233, 0.2), 0 2px 8px rgba(0, 0, 0, 0.4);
+  border-color: rgba(14, 165, 233, 0.4) !important;
+  background-color: rgba(14, 165, 233, 0.05) !important;
 }
 
 .configured-comp-row {
@@ -2070,6 +2072,9 @@ const handleBicepImport = async (event) => {
 
 .compact-ui :deep(.text-h5) {
   font-size: 1.45rem !important;
+  font-family: 'Oxanium', sans-serif !important;
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }
 
 .compact-ui :deep(.v-card-title) {

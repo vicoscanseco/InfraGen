@@ -1,26 +1,45 @@
-/* Estilos base globales compatibles con Vuetify. */
+/* ============================================================
+   InfraGen — Global Styles
+   Aesthetic: Azure Command Center
+   Fonts: Oxanium (display) · DM Sans (body) · JetBrains Mono (code)
+   ============================================================ */
+
 :root {
+  /* Fonts */
+  --font-display: 'Oxanium', system-ui, sans-serif;
+  --font-body: 'DM Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Consolas', 'Monaco', monospace;
+
+  /* Grid texture */
+  --grid-size: 36px;
+  --grid-color: rgba(3, 105, 161, 0.055);
+
+  /* Surface elevations — light */
+  --surface-elev-1: #ffffff;
+  --surface-elev-2: #f4f8fc;
+  --surface-elev-3: #eaf0f7;
+  --surface-shadow-1: 0 2px 10px rgba(3, 105, 161, 0.07), 0 1px 3px rgba(0, 0, 0, 0.04);
+  --surface-shadow-2: 0 4px 18px rgba(3, 105, 161, 0.09), 0 2px 6px rgba(0, 0, 0, 0.05);
+  --surface-shadow-3: 0 8px 28px rgba(3, 105, 161, 0.12), 0 4px 10px rgba(0, 0, 0, 0.07);
+
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  --surface-elev-1: #ffffff;
-  --surface-elev-2: #f6f8fa;
-  --surface-elev-3: #eef2f6;
-  --surface-shadow-1: 0 2px 8px rgba(0, 0, 0, 0.06);
-  --surface-shadow-2: 0 4px 14px rgba(0, 0, 0, 0.08);
-  --surface-shadow-3: 0 8px 20px rgba(0, 0, 0, 0.11);
 }
 
 .v-theme--dark {
-  --surface-elev-1: #161b22;
-  --surface-elev-2: #1f242d;
-  --surface-elev-3: #22272e;
-  --surface-shadow-1: 0 2px 10px rgba(0, 0, 0, 0.35);
-  --surface-shadow-2: 0 6px 16px rgba(0, 0, 0, 0.42);
-  --surface-shadow-3: 0 10px 24px rgba(0, 0, 0, 0.5);
+  --grid-color: rgba(14, 165, 233, 0.038);
+
+  --surface-elev-1: #0c1525;
+  --surface-elev-2: #111e32;
+  --surface-elev-3: #162038;
+  --surface-shadow-1: 0 2px 14px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(14, 165, 233, 0.06);
+  --surface-shadow-2: 0 6px 22px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(14, 165, 233, 0.08);
+  --surface-shadow-3: 0 10px 32px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(14, 165, 233, 0.1);
 }
 
+/* Surface elevation helpers */
 .surface-elev-1 {
   background-color: var(--surface-elev-1) !important;
   box-shadow: var(--surface-shadow-1) !important;
@@ -36,6 +55,9 @@
   box-shadow: var(--surface-shadow-3) !important;
 }
 
+/* ============================================================
+   Base
+   ============================================================ */
 body {
   margin: 0;
   min-width: 320px;
@@ -47,7 +69,51 @@ body {
   min-height: 100vh;
 }
 
-/* Estilos para asegurar que los tooltips funcionen correctamente */
+/* ============================================================
+   Typography — Apply custom fonts to Vuetify
+   ============================================================ */
+.v-application {
+  font-family: var(--font-body) !important;
+}
+
+/* Display font for titles and headers */
+.v-toolbar-title .v-toolbar-title__placeholder,
+.v-card-title,
+.text-h4,
+.text-h5,
+.text-h6 {
+  font-family: var(--font-display) !important;
+  letter-spacing: 0.01em;
+}
+
+/* Mono for code and technical labels */
+.font-mono,
+code,
+pre,
+.code-block {
+  font-family: var(--font-mono) !important;
+}
+
+/* Tabular numbers for costs/stats */
+.v-list-item-subtitle,
+.text-caption {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   Blueprint Grid Background
+   ============================================================ */
+.v-application__wrap {
+  background-image:
+    linear-gradient(var(--grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+  background-size: var(--grid-size) var(--grid-size);
+  background-attachment: fixed;
+}
+
+/* ============================================================
+   Vuetify Tooltip Overrides
+   ============================================================ */
 .v-overlay--absolute {
   position: absolute;
 }
@@ -57,26 +123,105 @@ body {
 }
 
 .v-tooltip > .v-overlay__content {
-  background: rgba(36, 41, 47, 0.95) !important;
-  color: #f6f8fa !important;
-  border-radius: 4px !important;
-  font-size: 0.875rem !important;
-  padding: 8px 12px !important;
+  background: rgba(10, 24, 48, 0.95) !important;
+  color: #e0f2fe !important;
+  border: 1px solid rgba(14, 165, 233, 0.2) !important;
+  border-radius: 6px !important;
+  font-family: var(--font-body) !important;
+  font-size: 0.82rem !important;
+  padding: 7px 12px !important;
   max-width: 300px !important;
   word-wrap: break-word !important;
   z-index: 2001 !important;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
 }
 
 .v-theme--dark .v-tooltip > .v-overlay__content {
-  background: rgba(48, 54, 61, 0.95) !important;
-  color: #c9d1d9 !important;
+  background: rgba(6, 18, 40, 0.96) !important;
+  color: #bae6fd !important;
+  border-color: rgba(14, 165, 233, 0.25) !important;
 }
 
-/* Asegurar que los tooltips aparezcan sobre otros elementos */
 .v-overlay {
   z-index: 2000 !important;
 }
 
 .v-tooltip .v-overlay__content {
   z-index: 2001 !important;
+}
+
+/* ============================================================
+   Enhanced Outlined Cards — light border accent in dark mode
+   ============================================================ */
+.v-theme--dark .v-card--variant-outlined {
+  border-color: rgba(14, 165, 233, 0.14) !important;
+  background-color: rgba(12, 21, 37, 0.6) !important;
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+/* ============================================================
+   Scrollbar Styling
+   ============================================================ */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(14, 165, 233, 0.25);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(14, 165, 233, 0.45);
+}
+
+.v-theme--light ::-webkit-scrollbar-thumb {
+  background: rgba(3, 105, 161, 0.2);
+}
+
+.v-theme--light ::-webkit-scrollbar-thumb:hover {
+  background: rgba(3, 105, 161, 0.38);
+}
+
+/* ============================================================
+   Page Load Animation
+   ============================================================ */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.v-main > * {
+  animation: fadeInUp 0.35s ease both;
+}
+
+/* ============================================================
+   Enhanced V-Select & V-TextField in dark mode
+   ============================================================ */
+.v-theme--dark .v-field--variant-outlined .v-field__outline {
+  --v-field-border-opacity: 0.22;
+}
+
+.v-theme--dark .v-field--variant-outlined.v-field--focused .v-field__outline {
+  --v-field-border-opacity: 0.9;
+}
+
+/* ============================================================
+   V-Alert dark mode polish
+   ============================================================ */
+.v-theme--dark .v-alert {
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
