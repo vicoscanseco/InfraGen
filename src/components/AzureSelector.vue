@@ -2072,9 +2072,6 @@ const handleBicepImport = async (event) => {
 
 .compact-ui :deep(.text-h5) {
   font-size: 1.45rem !important;
-  font-family: 'Oxanium', sans-serif !important;
-  font-weight: 700;
-  letter-spacing: 0.04em;
 }
 
 .compact-ui :deep(.v-card-title) {
