@@ -61,6 +61,7 @@
           ref="bicepFileInput"
           type="file"
           accept=".bicep,.txt"
+          multiple
           class="d-none"
           @change="handleBicepImport"
         >
@@ -408,9 +409,17 @@
               </v-tooltip>
             </v-card-title>
             <v-divider class="mb-2" />
+            <div class="text-caption text-medium-emphasis px-4 pt-2 pb-1 font-weight-medium">main.bicep</div>
             <div class="code-container">
               <pre class="code-block"><code>{{ bicepContent }}</code></pre>
             </div>
+            <template v-if="bicepResourcesContent">
+              <v-divider class="mt-2" />
+              <div class="text-caption text-medium-emphasis px-4 pt-2 pb-1 font-weight-medium">resources.bicep</div>
+              <div class="code-container">
+                <pre class="code-block"><code>{{ bicepResourcesContent }}</code></pre>
+              </div>
+            </template>
           </v-card>
 
           <v-card v-if="deploymentCommands" variant="outlined">
@@ -622,6 +631,7 @@ const azureAuthError = ref('')
 // Estado del componente
 const configuredComponents = ref([])
 const bicepContent = ref('')
+const bicepResourcesContent = ref('')
 const deploymentCommands = ref('')
 const errorMsg = ref('')
 const infoMsg = ref('')
@@ -1179,6 +1189,7 @@ const generateBicep = () => {
   try {
     errorMsg.value = ''
     bicepContent.value = ''
+    bicepResourcesContent.value = ''
     deploymentCommands.value = ''
     
     if (!appName.value || !location.value || configuredComponents.value.length === 0) {
@@ -1236,419 +1247,410 @@ const generateBicep = () => {
     content += '  tags: tags\n'
     content += '}\n\n'
 
-    // Recursos dentro del grupo de recursos
-    content += '// ============================================================================\n'
-    content += '// RECURSOS DE LA INFRAESTRUCTURA\n'
-    content += '// ============================================================================\n\n'
+    // Módulo de recursos en el RG
+    content += '// RG-scoped resources via module\n'
+    content += 'module resources \'resources.bicep\' = {\n'
+    content += '  name: \'' + appName.value + '-resources\'\n'
+    content += '  scope: rg\n'
+    content += '  params: {\n'
+    content += '    location: location\n'
+    content += '    tags: tags\n'
+    content += '  }\n'
+    content += '}\n'
+
+    let resourcesContent = 'param location string\n'
+    resourcesContent += 'param tags object\n\n'
 
     configuredComponents.value.forEach(item => {
       const cfg = item.config
-      
+
       if (item.value === 'StorageAccount') {
         if (!cfg.name) throw new Error('StorageAccount configuration is missing a name')
-        content += '// Storage Account ' + cfg.name + '\n'
-        content += 'resource storageAccount_' + cfg.name + ' \'Microsoft.Storage/storageAccounts@2022-09-01\' = {\n'
-        content += '  scope: rg\n'
-        content += '  name: \'' + cfg.name + '\'\n'
-        content += '  location: location\n'
-        content += '  sku: {\n'
-        content += '    name: \'' + (cfg.sku || 'Standard_LRS') + '\'\n'
-        content += '  }\n'
-        content += '  kind: \'' + (cfg.kind || 'StorageV2') + '\'\n'
-        content += '  properties: {\n'
-        content += '    accessTier: \'' + (cfg.accessTier || 'Cool') + '\'\n'
-        content += '    supportsHttpsTrafficOnly: ' + (cfg.httpsOnly !== false) + '\n'
-        content += '    allowBlobPublicAccess: ' + (cfg.enableBlobPublicAccess === true) + '\n'
-        content += '    minimumTlsVersion: \'TLS1_2\'\n'
-        content += '  }\n'
-        content += '  tags: tags\n'
-        content += '}\n\n'
+        resourcesContent += '// Storage Account ' + cfg.name + '\n'
+        resourcesContent += 'resource storageAccount_' + cfg.name + ' \'Microsoft.Storage/storageAccounts@2022-09-01\' = {\n'
+        resourcesContent += '  name: \'' + cfg.name + '\'\n'
+        resourcesContent += '  location: location\n'
+        resourcesContent += '  sku: {\n'
+        resourcesContent += '    name: \'' + (cfg.sku || 'Standard_LRS') + '\'\n'
+        resourcesContent += '  }\n'
+        resourcesContent += '  kind: \'' + (cfg.kind || 'StorageV2') + '\'\n'
+        resourcesContent += '  properties: {\n'
+        resourcesContent += '    accessTier: \'' + (cfg.accessTier || 'Cool') + '\'\n'
+        resourcesContent += '    supportsHttpsTrafficOnly: ' + (cfg.httpsOnly !== false) + '\n'
+        resourcesContent += '    allowBlobPublicAccess: ' + (cfg.enableBlobPublicAccess === true) + '\n'
+        resourcesContent += '    minimumTlsVersion: \'TLS1_2\'\n'
+        resourcesContent += '  }\n'
+        resourcesContent += '  tags: tags\n'
+        resourcesContent += '}\n\n'
       }
-      
+
       if (item.value === 'AppServicePlan') {
         if (!cfg.name) {
           throw new Error('App Service Plan requiere un nombre válido')
         }
-        content += '// App Service Plan ' + cfg.name + '\n'
-        content += 'resource appServicePlan_' + cfg.name.replace(/[^a-zA-Z0-9]/g, '') + ' \'Microsoft.Web/serverfarms@2022-03-01\' = {\n'
-        content += '  scope: rg\n'
-        content += '  name: \'' + cfg.name + '\'\n'
-        content += '  location: location\n'
-        content += '  sku: {\n'
-        content += '    name: \'' + (cfg.sku || 'B1') + '\'\n'
-        content += '  }\n'
-        content += '  kind: \'' + (cfg.os === 'Windows' ? 'app' : 'linux') + '\'\n'
-        content += '  properties: {\n'
-        content += '    reserved: ' + (cfg.os !== 'Windows') + '\n'
-        content += '    perSiteScaling: ' + (cfg.perSiteScaling === true) + '\n'
+        resourcesContent += '// App Service Plan ' + cfg.name + '\n'
+        resourcesContent += 'resource appServicePlan_' + cfg.name.replace(/[^a-zA-Z0-9]/g, '') + ' \'Microsoft.Web/serverfarms@2022-03-01\' = {\n'
+        resourcesContent += '  name: \'' + cfg.name + '\'\n'
+        resourcesContent += '  location: location\n'
+        resourcesContent += '  sku: {\n'
+        resourcesContent += '    name: \'' + (cfg.sku || 'B1') + '\'\n'
+        resourcesContent += '  }\n'
+        resourcesContent += '  kind: \'' + (cfg.os === 'Windows' ? 'app' : 'linux') + '\'\n'
+        resourcesContent += '  properties: {\n'
+        resourcesContent += '    reserved: ' + (cfg.os !== 'Windows') + '\n'
+        resourcesContent += '    perSiteScaling: ' + (cfg.perSiteScaling === true) + '\n'
         if (cfg.zoneRedundant && cfg.sku && cfg.sku.startsWith('P')) {
-          content += '    zoneRedundant: ' + cfg.zoneRedundant + '\n'
+          resourcesContent += '    zoneRedundant: ' + cfg.zoneRedundant + '\n'
         }
         if (cfg.maximumElasticWorkerCount && ['P1v2', 'P2v2', 'P3v2', 'P1v3', 'P2v3', 'P3v3'].includes(cfg.sku)) {
-          content += '    maximumElasticWorkerCount: ' + cfg.maximumElasticWorkerCount + '\n'
+          resourcesContent += '    maximumElasticWorkerCount: ' + cfg.maximumElasticWorkerCount + '\n'
         }
-        content += '  }\n'
-        content += '  tags: tags\n'
-        content += '}\n\n'
+        resourcesContent += '  }\n'
+        resourcesContent += '  tags: tags\n'
+        resourcesContent += '}\n\n'
       }
-      
+
       if (item.value === 'AppService') {
         if (!cfg.name) {
           throw new Error('App Service requiere un nombre válido')
         }
-        content += '// App Service ' + cfg.name + '\n'
-        content += 'resource appService_' + cfg.name.replace(/[^a-zA-Z0-9]/g, '') + ' \'Microsoft.Web/sites@2022-03-01\' = {\n'
-        content += '  scope: rg\n'
-        content += '  name: \'' + cfg.name + '\'\n'
-        content += '  location: location\n'
-        content += '  kind: \'' + (cfg.kind || 'app') + '\'\n'
+        resourcesContent += '// App Service ' + cfg.name + '\n'
+        resourcesContent += 'resource appService_' + cfg.name.replace(/[^a-zA-Z0-9]/g, '') + ' \'Microsoft.Web/sites@2022-03-01\' = {\n'
+        resourcesContent += '  name: \'' + cfg.name + '\'\n'
+        resourcesContent += '  location: location\n'
+        resourcesContent += '  kind: \'' + (cfg.kind || 'app') + '\'\n'
         if (cfg.appServicePlan) {
-          content += '  dependsOn: [\n'
-          content += '    appServicePlan_' + cfg.appServicePlan.replace(/[^a-zA-Z0-9]/g, '') + '\n'
-          content += '  ]\n'
+          resourcesContent += '  dependsOn: [\n'
+          resourcesContent += '    appServicePlan_' + cfg.appServicePlan.replace(/[^a-zA-Z0-9]/g, '') + '\n'
+          resourcesContent += '  ]\n'
         }
-        content += '  properties: {\n'
+        resourcesContent += '  properties: {\n'
         if (cfg.appServicePlan) {
-          content += '    serverFarmId: appServicePlan_' + cfg.appServicePlan.replace(/[^a-zA-Z0-9]/g, '') + '.id\n'
+          resourcesContent += '    serverFarmId: appServicePlan_' + cfg.appServicePlan.replace(/[^a-zA-Z0-9]/g, '') + '.id\n'
         }
-        content += '    siteConfig: {\n'
-        content += '      appSettings: [\n'
+        resourcesContent += '    siteConfig: {\n'
+        resourcesContent += '      appSettings: [\n'
         if (cfg.appSettings && cfg.appSettings.length > 0) {
           cfg.appSettings.forEach(setting => {
-            content += '        {\n'
-            content += '          name: \'' + setting.name + '\'\n'
-            content += '          value: \'' + setting.value + '\'\n'
-            content += '        }\n'
+            resourcesContent += '        {\n'
+            resourcesContent += '          name: \'' + setting.name + '\'\n'
+            resourcesContent += '          value: \'' + setting.value + '\'\n'
+            resourcesContent += '        }\n'
           })
         }
-        content += '      ]\n'
+        resourcesContent += '      ]\n'
         if (cfg.ftpsState) {
-          content += '      ftpsState: \'' + cfg.ftpsState + '\'\n'
+          resourcesContent += '      ftpsState: \'' + cfg.ftpsState + '\'\n'
         }
         if (cfg.minTlsVersion) {
-          content += '      minTlsVersion: \'' + cfg.minTlsVersion + '\'\n'
+          resourcesContent += '      minTlsVersion: \'' + cfg.minTlsVersion + '\'\n'
         }
         if (cfg.http20Enabled) {
-          content += '      http20Enabled: ' + cfg.http20Enabled + '\n'
+          resourcesContent += '      http20Enabled: ' + cfg.http20Enabled + '\n'
         }
         if (cfg.alwaysOn !== undefined) {
-          content += '      alwaysOn: ' + cfg.alwaysOn + '\n'
+          resourcesContent += '      alwaysOn: ' + cfg.alwaysOn + '\n'
         }
-        // Runtime Stack configuration
         if (cfg.runtimeStack) {
-          // Determine if the App Service Plan is Linux or Windows
           const appServicePlanComponent = configuredComponents.value.find(comp => comp.value === 'AppServicePlan')
           const isLinux = appServicePlanComponent && appServicePlanComponent.config.os === 'Linux'
-          
+
           if (isLinux) {
-            content += '      linuxFxVersion: \'' + cfg.runtimeStack + '\'\n'
+            resourcesContent += '      linuxFxVersion: \'' + cfg.runtimeStack + '\'\n'
           } else {
-            // For Windows, we need to handle different runtime stacks differently
             if (cfg.runtimeStack.startsWith('DOTNETCORE')) {
-              content += '      netFrameworkVersion: \'v8.0\'\n'
+              resourcesContent += '      netFrameworkVersion: \'v8.0\'\n'
             } else if (cfg.runtimeStack.startsWith('ASPNET')) {
               const version = cfg.runtimeStack.split('|')[1] || '4.8'
-              content += '      netFrameworkVersion: \'v' + version + '\'\n'
+              resourcesContent += '      netFrameworkVersion: \'v' + version + '\'\n'
             } else if (cfg.runtimeStack.startsWith('NODE')) {
               const version = cfg.runtimeStack.split('|')[1] || '20-lts'
-              content += '      nodeVersion: \'' + version + '\'\n'
+              resourcesContent += '      nodeVersion: \'' + version + '\'\n'
             } else if (cfg.runtimeStack.startsWith('PYTHON')) {
               const version = cfg.runtimeStack.split('|')[1] || '3.11'
-              content += '      pythonVersion: \'' + version + '\'\n'
+              resourcesContent += '      pythonVersion: \'' + version + '\'\n'
             } else if (cfg.runtimeStack.startsWith('JAVA')) {
               const version = cfg.runtimeStack.split('|')[1] || '17-java17'
-              content += '      javaVersion: \'' + version + '\'\n'
+              resourcesContent += '      javaVersion: \'' + version + '\'\n'
             } else if (cfg.runtimeStack.startsWith('PHP')) {
               const version = cfg.runtimeStack.split('|')[1] || '8.2'
-              content += '      phpVersion: \'' + version + '\'\n'
+              resourcesContent += '      phpVersion: \'' + version + '\'\n'
             }
           }
         }
-        content += '    }\n'
-        content += '    httpsOnly: ' + (cfg.httpsOnly !== false) + '\n'
-        content += '    clientAffinityEnabled: ' + (cfg.clientAffinityEnabled !== false) + '\n'
-        content += '  }\n'
-        content += '  tags: tags\n'
-        content += '}\n\n'
+        resourcesContent += '    }\n'
+        resourcesContent += '    httpsOnly: ' + (cfg.httpsOnly !== false) + '\n'
+        resourcesContent += '    clientAffinityEnabled: ' + (cfg.clientAffinityEnabled !== false) + '\n'
+        resourcesContent += '  }\n'
+        resourcesContent += '  tags: tags\n'
+        resourcesContent += '}\n\n'
       }
 
       if (item.value === 'FunctionApp') {
         if (!cfg.name) throw new Error('FunctionApp configuration is missing a name')
-        
+
         // 1. Storage Account for Function App
         const funcStorageName = cfg.storageAccountName || ('sta' + cfg.name.replace(/[^a-z0-9]/g, ''))
-        content += '// Storage Account for Function App ' + cfg.name + '\n'
-        content += 'resource storageAccount_' + funcStorageName + ' \'Microsoft.Storage/storageAccounts@2022-09-01\' = {\n'
-        content += '  scope: rg\n'
-        content += '  name: \'' + funcStorageName + '\'\n'
-        content += '  location: location\n'
-        content += '  sku: {\n'
-        content += '    name: \'Standard_LRS\'\n'
-        content += '  }\n'
-        content += '  kind: \'StorageV2\'\n'
-        content += '  properties: {\n'
-        content += '    supportsHttpsTrafficOnly: true\n'
-        content += '    minimumTlsVersion: \'TLS1_2\'\n'
-        content += '  }\n'
-        content += '  tags: tags\n'
-        content += '}\n\n'
+        resourcesContent += '// Storage Account for Function App ' + cfg.name + '\n'
+        resourcesContent += 'resource storageAccount_' + funcStorageName + ' \'Microsoft.Storage/storageAccounts@2022-09-01\' = {\n'
+        resourcesContent += '  name: \'' + funcStorageName + '\'\n'
+        resourcesContent += '  location: location\n'
+        resourcesContent += '  sku: {\n'
+        resourcesContent += '    name: \'Standard_LRS\'\n'
+        resourcesContent += '  }\n'
+        resourcesContent += '  kind: \'StorageV2\'\n'
+        resourcesContent += '  properties: {\n'
+        resourcesContent += '    supportsHttpsTrafficOnly: true\n'
+        resourcesContent += '    minimumTlsVersion: \'TLS1_2\'\n'
+        resourcesContent += '  }\n'
+        resourcesContent += '  tags: tags\n'
+        resourcesContent += '}\n\n'
 
         // 2. App Service Plan for Function App
         const funcPlanName = cfg.appServicePlanName || (cfg.name + '-plan')
-        content += '// App Service Plan for Function App ' + cfg.name + '\n'
-        content += 'resource appServicePlan_' + funcPlanName.replace(/[^a-zA-Z0-9]/g, '') + ' \'Microsoft.Web/serverfarms@2022-03-01\' = {\n'
-        content += '  scope: rg\n'
-        content += '  name: \'' + funcPlanName + '\'\n'
-        content += '  location: location\n'
-        content += '  sku: {\n'
-        content += '    name: \'' + (cfg.sku || 'Y1') + '\'\n'
-        content += '    tier: \'' + (cfg.hostingPlan === 'Consumption' ? 'Dynamic' : (cfg.hostingPlan === 'Premium' ? 'ElasticPremium' : 'Standard')) + '\'\n'
-        content += '  }\n'
-        content += '  properties: {\n'
-        content += '    reserved: ' + (cfg.operatingSystem === 'Linux') + '\n'
-        content += '  }\n'
-        content += '  tags: tags\n'
-        content += '}\n\n'
+        resourcesContent += '// App Service Plan for Function App ' + cfg.name + '\n'
+        resourcesContent += 'resource appServicePlan_' + funcPlanName.replace(/[^a-zA-Z0-9]/g, '') + ' \'Microsoft.Web/serverfarms@2022-03-01\' = {\n'
+        resourcesContent += '  name: \'' + funcPlanName + '\'\n'
+        resourcesContent += '  location: location\n'
+        resourcesContent += '  sku: {\n'
+        resourcesContent += '    name: \'' + (cfg.sku || 'Y1') + '\'\n'
+        resourcesContent += '    tier: \'' + (cfg.hostingPlan === 'Consumption' ? 'Dynamic' : (cfg.hostingPlan === 'Premium' ? 'ElasticPremium' : 'Standard')) + '\'\n'
+        resourcesContent += '  }\n'
+        resourcesContent += '  properties: {\n'
+        resourcesContent += '    reserved: ' + (cfg.operatingSystem === 'Linux') + '\n'
+        resourcesContent += '  }\n'
+        resourcesContent += '  tags: tags\n'
+        resourcesContent += '}\n\n'
 
         // 3. Function App Resource
-        content += '// Function App ' + cfg.name + '\n'
-        content += 'resource functionApp_' + cfg.name.replace(/[^a-zA-Z0-9]/g, '') + ' \'Microsoft.Web/sites@2022-03-01\' = {\n'
-        content += '  scope: rg\n'
-        content += '  name: \'' + cfg.name + '\'\n'
-        content += '  location: location\n'
-        content += '  kind: \'' + (cfg.operatingSystem === 'Linux' ? 'functionapp,linux' : 'functionapp') + '\'\n'
-        content += '  identity: {\n'
-        content += '    type: \'SystemAssigned\'\n'
-        content += '  }\n'
-        content += '  properties: {\n'
-        content += '    serverFarmId: appServicePlan_' + funcPlanName.replace(/[^a-zA-Z0-9]/g, '') + '.id\n'
-        content += '    siteConfig: {\n'
-        content += '      appSettings: [\n'
-        content += '        {\n'
-        content += '          name: \'AzureWebJobsStorage\'\n'
-        content += '          value: \'DefaultEndpointsProtocol=https;AccountName=${storageAccount_' + funcStorageName + '.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${storageAccount_' + funcStorageName + '.listKeys().keys[0].value}\'\n'
-        content += '        }\n'
-        content += '        {\n'
-        content += '          name: \'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING\'\n'
-        content += '          value: \'DefaultEndpointsProtocol=https;AccountName=${storageAccount_' + funcStorageName + '.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${storageAccount_' + funcStorageName + '.listKeys().keys[0].value}\'\n'
-        content += '        }\n'
-        content += '        {\n'
-        content += '          name: \'WEBSITE_CONTENTSHARE\'\n'
-        content += '          value: toLower(\'' + cfg.name + '\')\n'
-        content += '        }\n'
-        content += '        {\n'
-        content += '          name: \'FUNCTIONS_EXTENSION_VERSION\'\n'
-        content += '          value: \'~4\'\n'
-        content += '        }\n'
-        content += '        {\n'
-        content += '          name: \'FUNCTIONS_WORKER_RUNTIME\'\n'
-        content += '          value: \'' + (cfg.runtimeStack ? cfg.runtimeStack.split('|')[0].toLowerCase().replace('-isolated', '') : 'dotnet') + '\'\n'
-        content += '        }\n'
+        resourcesContent += '// Function App ' + cfg.name + '\n'
+        resourcesContent += 'resource functionApp_' + cfg.name.replace(/[^a-zA-Z0-9]/g, '') + ' \'Microsoft.Web/sites@2022-03-01\' = {\n'
+        resourcesContent += '  name: \'' + cfg.name + '\'\n'
+        resourcesContent += '  location: location\n'
+        resourcesContent += '  kind: \'' + (cfg.operatingSystem === 'Linux' ? 'functionapp,linux' : 'functionapp') + '\'\n'
+        resourcesContent += '  identity: {\n'
+        resourcesContent += '    type: \'SystemAssigned\'\n'
+        resourcesContent += '  }\n'
+        resourcesContent += '  properties: {\n'
+        resourcesContent += '    serverFarmId: appServicePlan_' + funcPlanName.replace(/[^a-zA-Z0-9]/g, '') + '.id\n'
+        resourcesContent += '    siteConfig: {\n'
+        resourcesContent += '      appSettings: [\n'
+        resourcesContent += '        {\n'
+        resourcesContent += '          name: \'AzureWebJobsStorage\'\n'
+        resourcesContent += '          value: \'DefaultEndpointsProtocol=https;AccountName=${storageAccount_' + funcStorageName + '.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${storageAccount_' + funcStorageName + '.listKeys().keys[0].value}\'\n'
+        resourcesContent += '        }\n'
+        resourcesContent += '        {\n'
+        resourcesContent += '          name: \'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING\'\n'
+        resourcesContent += '          value: \'DefaultEndpointsProtocol=https;AccountName=${storageAccount_' + funcStorageName + '.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${storageAccount_' + funcStorageName + '.listKeys().keys[0].value}\'\n'
+        resourcesContent += '        }\n'
+        resourcesContent += '        {\n'
+        resourcesContent += '          name: \'WEBSITE_CONTENTSHARE\'\n'
+        resourcesContent += '          value: toLower(\'' + cfg.name + '\')\n'
+        resourcesContent += '        }\n'
+        resourcesContent += '        {\n'
+        resourcesContent += '          name: \'FUNCTIONS_EXTENSION_VERSION\'\n'
+        resourcesContent += '          value: \'~4\'\n'
+        resourcesContent += '        }\n'
+        resourcesContent += '        {\n'
+        resourcesContent += '          name: \'FUNCTIONS_WORKER_RUNTIME\'\n'
+        resourcesContent += '          value: \'' + (cfg.runtimeStack ? cfg.runtimeStack.split('|')[0].toLowerCase().replace('-isolated', '') : 'dotnet') + '\'\n'
+        resourcesContent += '        }\n'
         if (cfg.enableApplicationInsights) {
-             content += '        {\n'
-             content += '          name: \'APPINSIGHTS_INSTRUMENTATIONKEY\'\n'
-             content += '          value: applicationInsights_' + cfg.name.replace(/[^a-zA-Z0-9]/g, '') + '.properties.InstrumentationKey\n'
-             content += '        }\n'
+          resourcesContent += '        {\n'
+          resourcesContent += '          name: \'APPINSIGHTS_INSTRUMENTATIONKEY\'\n'
+          resourcesContent += '          value: applicationInsights_' + cfg.name.replace(/[^a-zA-Z0-9]/g, '') + '.properties.InstrumentationKey\n'
+          resourcesContent += '        }\n'
         }
-        content += '      ]\n'
-        content += '      ftpsState: \'FtpsOnly\'\n'
-        content += '      minTlsVersion: \'1.2\'\n'
+        resourcesContent += '      ]\n'
+        resourcesContent += '      ftpsState: \'FtpsOnly\'\n'
+        resourcesContent += '      minTlsVersion: \'1.2\'\n'
         if (cfg.operatingSystem === 'Linux') {
-             content += '      linuxFxVersion: \'' + (cfg.runtimeStack || 'DOTNET-ISOLATED|8.0') + '\'\n'
+          resourcesContent += '      linuxFxVersion: \'' + (cfg.runtimeStack || 'DOTNET-ISOLATED|8.0') + '\'\n'
         } else {
-             content += '      netFrameworkVersion: \'v8.0\'\n'
+          resourcesContent += '      netFrameworkVersion: \'v8.0\'\n'
         }
-        content += '    }\n'
-        content += '    httpsOnly: ' + (cfg.httpsOnly !== false) + '\n'
-        content += '  }\n'
-        content += '  tags: tags\n'
-        content += '}\n\n'
+        resourcesContent += '    }\n'
+        resourcesContent += '    httpsOnly: ' + (cfg.httpsOnly !== false) + '\n'
+        resourcesContent += '  }\n'
+        resourcesContent += '  tags: tags\n'
+        resourcesContent += '}\n\n'
         if (!cfg.name) throw new Error('CognitiveService configuration is missing a name')
-        content += '// Cognitive Service ' + cfg.name + '\n'
-        content += 'resource cognitiveService_' + cfg.name.replace(/[^a-zA-Z0-9]/g, '') + ' \'Microsoft.CognitiveServices/accounts@2023-05-01\' = {\n'
-        content += '  scope: rg\n'
-        content += '  name: \'' + cfg.name + '\'\n'
-        content += '  location: location\n'
-        content += '  sku: {\n'
-        content += '    name: \'' + (cfg.sku || 'S0') + '\'\n'
-        content += '  }\n'
-        content += '  kind: \'' + (cfg.kind || 'OpenAI') + '\'\n'
-        content += '  properties: {\n'
-        content += '    apiProperties: {}\n'
+        resourcesContent += '// Cognitive Service ' + cfg.name + '\n'
+        resourcesContent += 'resource cognitiveService_' + cfg.name.replace(/[^a-zA-Z0-9]/g, '') + ' \'Microsoft.CognitiveServices/accounts@2023-05-01\' = {\n'
+        resourcesContent += '  name: \'' + cfg.name + '\'\n'
+        resourcesContent += '  location: location\n'
+        resourcesContent += '  sku: {\n'
+        resourcesContent += '    name: \'' + (cfg.sku || 'S0') + '\'\n'
+        resourcesContent += '  }\n'
+        resourcesContent += '  kind: \'' + (cfg.kind || 'OpenAI') + '\'\n'
+        resourcesContent += '  properties: {\n'
+        resourcesContent += '    apiProperties: {}\n'
         if (cfg.customSubDomainName) {
-          content += '    customSubDomainName: \'' + cfg.customSubDomainName + '\'\n'
+          resourcesContent += '    customSubDomainName: \'' + cfg.customSubDomainName + '\'\n'
         }
-        content += '    publicNetworkAccess: \'' + (cfg.publicNetworkAccess || 'Enabled') + '\'\n'
-        content += '  }\n'
-        content += '  tags: tags\n'
-        content += '}\n\n'
+        resourcesContent += '    publicNetworkAccess: \'' + (cfg.publicNetworkAccess || 'Enabled') + '\'\n'
+        resourcesContent += '  }\n'
+        resourcesContent += '  tags: tags\n'
+        resourcesContent += '}\n\n'
       }
-      
+
       if (item.value === 'SQLServer') {
         if (!cfg.name) throw new Error('SQLServer configuration is missing a name')
-        content += '// SQL Server ' + cfg.name + '\n'
-        content += 'resource sqlServer_' + cfg.name.replace(/[^a-zA-Z0-9]/g, '') + ' \'Microsoft.Sql/servers@2022-05-01-preview\' = {\n'
-        content += '  scope: rg\n'
-        content += '  name: \'' + cfg.name + '\'\n'
-        content += '  location: location\n'
-        content += '  properties: {\n'
-        content += '    administratorLogin: \'' + (cfg.adminUsername || 'sqladmin') + '\'\n'
-        content += '    administratorLoginPassword: \'' + (cfg.adminPassword || 'P@ssw0rd123!') + '\'\n'
-        content += '    version: \'' + (cfg.version || '12.0') + '\'\n'
-        content += '    minimalTlsVersion: \'' + (cfg.minimalTlsVersion || '1.2') + '\'\n'
-        content += '    publicNetworkAccess: \'' + (cfg.publicNetworkAccess || 'Enabled') + '\'\n'
-        content += '  }\n'
-        content += '  tags: tags\n'
-        content += '}\n\n'
+        resourcesContent += '// SQL Server ' + cfg.name + '\n'
+        resourcesContent += 'resource sqlServer_' + cfg.name.replace(/[^a-zA-Z0-9]/g, '') + ' \'Microsoft.Sql/servers@2022-05-01-preview\' = {\n'
+        resourcesContent += '  name: \'' + cfg.name + '\'\n'
+        resourcesContent += '  location: location\n'
+        resourcesContent += '  properties: {\n'
+        resourcesContent += '    administratorLogin: \'' + (cfg.adminUsername || 'sqladmin') + '\'\n'
+        resourcesContent += '    administratorLoginPassword: \'' + (cfg.adminPassword || 'P@ssw0rd123!') + '\'\n'
+        resourcesContent += '    version: \'' + (cfg.version || '12.0') + '\'\n'
+        resourcesContent += '    minimalTlsVersion: \'' + (cfg.minimalTlsVersion || '1.2') + '\'\n'
+        resourcesContent += '    publicNetworkAccess: \'' + (cfg.publicNetworkAccess || 'Enabled') + '\'\n'
+        resourcesContent += '  }\n'
+        resourcesContent += '  tags: tags\n'
+        resourcesContent += '}\n\n'
       }
-      
+
       if (item.value === 'SQLDatabase') {
         if (!cfg.name) throw new Error('SQLDatabase configuration is missing a name')
-        content += '// SQL Database ' + cfg.name + '\n'
-        content += 'resource sqlDatabase_' + cfg.name.replace(/[^a-zA-Z0-9]/g, '') + ' \'Microsoft.Sql/servers/databases@2022-05-01-preview\' = {\n'
+        resourcesContent += '// SQL Database ' + cfg.name + '\n'
+        resourcesContent += 'resource sqlDatabase_' + cfg.name.replace(/[^a-zA-Z0-9]/g, '') + ' \'Microsoft.Sql/servers/databases@2022-05-01-preview\' = {\n'
         if (cfg.sqlServer) {
-          content += '  parent: sqlServer_' + cfg.sqlServer.replace(/[^a-zA-Z0-9]/g, '') + '\n'
+          resourcesContent += '  parent: sqlServer_' + cfg.sqlServer.replace(/[^a-zA-Z0-9]/g, '') + '\n'
         }
-        content += '  name: \'' + cfg.name + '\'\n'
-        content += '  location: location\n'
-        content += '  sku: {\n'
-        content += '    name: \'' + (cfg.sku || 'Basic') + '\'\n'
-        content += '    tier: \'' + (cfg.tier || 'Basic') + '\'\n'
+        resourcesContent += '  name: \'' + cfg.name + '\'\n'
+        resourcesContent += '  location: location\n'
+        resourcesContent += '  sku: {\n'
+        resourcesContent += '    name: \'' + (cfg.sku || 'Basic') + '\'\n'
+        resourcesContent += '    tier: \'' + (cfg.tier || 'Basic') + '\'\n'
         if (cfg.capacity) {
-          content += '    capacity: ' + cfg.capacity + '\n'
+          resourcesContent += '    capacity: ' + cfg.capacity + '\n'
         }
-        content += '  }\n'
-        content += '  properties: {\n'
+        resourcesContent += '  }\n'
+        resourcesContent += '  properties: {\n'
         if (cfg.collation) {
-          content += '    collation: \'' + cfg.collation + '\'\n'
+          resourcesContent += '    collation: \'' + cfg.collation + '\'\n'
         }
         if (cfg.maxSizeBytes) {
-          content += '    maxSizeBytes: ' + cfg.maxSizeBytes + '\n'
+          resourcesContent += '    maxSizeBytes: ' + cfg.maxSizeBytes + '\n'
         }
         if (cfg.readScale) {
-          content += '    readScale: \'' + cfg.readScale + '\'\n'
+          resourcesContent += '    readScale: \'' + cfg.readScale + '\'\n'
         }
         if (cfg.zoneRedundant !== undefined) {
-          content += '    zoneRedundant: ' + cfg.zoneRedundant + '\n'
+          resourcesContent += '    zoneRedundant: ' + cfg.zoneRedundant + '\n'
         }
         if (cfg.enableThreatDetection !== undefined) {
-          content += '    threatDetectionSettings: {\n'
-          content += '      state: \'' + (cfg.enableThreatDetection ? 'Enabled' : 'Disabled') + '\'\n'
-          content += '    }\n'
+          resourcesContent += '    threatDetectionSettings: {\n'
+          resourcesContent += '      state: \'' + (cfg.enableThreatDetection ? 'Enabled' : 'Disabled') + '\'\n'
+          resourcesContent += '    }\n'
         }
-        content += '  }\n'
-        content += '  tags: tags\n'
-        content += '}\n\n'
+        resourcesContent += '  }\n'
+        resourcesContent += '  tags: tags\n'
+        resourcesContent += '}\n\n'
       }
-      
+
       if (item.value === 'ContainerApp') {
         if (!cfg.name) throw new Error('ContainerApp configuration is missing a name')
-        
-        // Container Apps Environment
+
         const envName = cfg.containerAppEnvironment || (appName.value + '-' + selectedEnv.value + '-cae')
-        content += '// Container Apps Environment ' + envName + '\n'
-        content += 'resource containerAppEnvironment_' + envName.replace(/[^a-zA-Z0-9]/g, '') + ' \'Microsoft.App/managedEnvironments@2023-05-01\' = {\n'
-        content += '  scope: rg\n'
-        content += '  name: \'' + envName + '\'\n'
-        content += '  location: location\n'
-        content += '  properties: {\n'
-        content += '    zoneRedundant: false\n'
-        content += '  }\n'
-        content += '  tags: tags\n'
-        content += '}\n\n'
-        
-        // Container App
-        content += '// Container App ' + cfg.name + '\n'
-        content += 'resource containerApp_' + cfg.name.replace(/[^a-zA-Z0-9]/g, '') + ' \'Microsoft.App/containerApps@2023-05-01\' = {\n'
-        content += '  scope: rg\n'
-        content += '  name: \'' + cfg.name + '\'\n'
-        content += '  location: location\n'
-        content += '  dependsOn: [\n'
-        content += '    containerAppEnvironment_' + envName.replace(/[^a-zA-Z0-9]/g, '') + '\n'
-        content += '  ]\n'
-        content += '  properties: {\n'
-        content += '    managedEnvironmentId: containerAppEnvironment_' + envName.replace(/[^a-zA-Z0-9]/g, '') + '.id\n'
-        content += '    configuration: {\n'
+        resourcesContent += '// Container Apps Environment ' + envName + '\n'
+        resourcesContent += 'resource containerAppEnvironment_' + envName.replace(/[^a-zA-Z0-9]/g, '') + ' \'Microsoft.App/managedEnvironments@2023-05-01\' = {\n'
+        resourcesContent += '  name: \'' + envName + '\'\n'
+        resourcesContent += '  location: location\n'
+        resourcesContent += '  properties: {\n'
+        resourcesContent += '    zoneRedundant: false\n'
+        resourcesContent += '  }\n'
+        resourcesContent += '  tags: tags\n'
+        resourcesContent += '}\n\n'
+
+        resourcesContent += '// Container App ' + cfg.name + '\n'
+        resourcesContent += 'resource containerApp_' + cfg.name.replace(/[^a-zA-Z0-9]/g, '') + ' \'Microsoft.App/containerApps@2023-05-01\' = {\n'
+        resourcesContent += '  name: \'' + cfg.name + '\'\n'
+        resourcesContent += '  location: location\n'
+        resourcesContent += '  dependsOn: [\n'
+        resourcesContent += '    containerAppEnvironment_' + envName.replace(/[^a-zA-Z0-9]/g, '') + '\n'
+        resourcesContent += '  ]\n'
+        resourcesContent += '  properties: {\n'
+        resourcesContent += '    managedEnvironmentId: containerAppEnvironment_' + envName.replace(/[^a-zA-Z0-9]/g, '') + '.id\n'
+        resourcesContent += '    configuration: {\n'
         if (cfg.enableIngress) {
-          content += '      ingress: {\n'
-          content += '        external: true\n'
-          content += '        targetPort: ' + (cfg.targetPort || 80) + '\n'
-          content += '        allowInsecure: ' + (cfg.allowInsecure || false) + '\n'
-          content += '        traffic: [\n'
-          content += '          {\n'
-          content += '            weight: 100\n'
-          content += '            latestRevision: true\n'
-          content += '          }\n'
-          content += '        ]\n'
-          content += '      }\n'
+          resourcesContent += '      ingress: {\n'
+          resourcesContent += '        external: true\n'
+          resourcesContent += '        targetPort: ' + (cfg.targetPort || 80) + '\n'
+          resourcesContent += '        allowInsecure: ' + (cfg.allowInsecure || false) + '\n'
+          resourcesContent += '        traffic: [\n'
+          resourcesContent += '          {\n'
+          resourcesContent += '            weight: 100\n'
+          resourcesContent += '            latestRevision: true\n'
+          resourcesContent += '          }\n'
+          resourcesContent += '        ]\n'
+          resourcesContent += '      }\n'
         }
-        content += '      secrets: []\n'
-        content += '    }\n'
-        content += '    template: {\n'
-        content += '      containers: [\n'
-        content += '        {\n'
-        content += '          name: \'' + cfg.name.toLowerCase().replace(/[^a-z0-9-]/g, '-') + '\'\n'
-        content += '          image: \'' + (cfg.containerImage || 'ubuntu:latest') + '\'\n'
-        content += '          resources: {\n'
-        content += '            cpu: ' + (cfg.cpu || '0.25') + '\n'
-        content += '            memory: \'' + (cfg.memory || '0.5Gi') + '\'\n'
-        content += '          }\n'
+        resourcesContent += '      secrets: []\n'
+        resourcesContent += '    }\n'
+        resourcesContent += '    template: {\n'
+        resourcesContent += '      containers: [\n'
+        resourcesContent += '        {\n'
+        resourcesContent += '          name: \'' + cfg.name.toLowerCase().replace(/[^a-z0-9-]/g, '-') + '\'\n'
+        resourcesContent += '          image: \'' + (cfg.containerImage || 'ubuntu:latest') + '\'\n'
+        resourcesContent += '          resources: {\n'
+        resourcesContent += '            cpu: ' + (cfg.cpu || '0.25') + '\n'
+        resourcesContent += '            memory: \'' + (cfg.memory || '0.5Gi') + '\'\n'
+        resourcesContent += '          }\n'
         if (cfg.environmentVariables && cfg.environmentVariables.length > 0) {
-          content += '          env: [\n'
+          resourcesContent += '          env: [\n'
           cfg.environmentVariables.forEach(envVar => {
             if (envVar.name && envVar.value) {
-              content += '            {\n'
-              content += '              name: \'' + envVar.name + '\'\n'
-              content += '              value: \'' + envVar.value + '\'\n'
-              content += '            }\n'
+              resourcesContent += '            {\n'
+              resourcesContent += '              name: \'' + envVar.name + '\'\n'
+              resourcesContent += '              value: \'' + envVar.value + '\'\n'
+              resourcesContent += '            }\n'
             }
           })
-          content += '          ]\n'
+          resourcesContent += '          ]\n'
         }
-        content += '        }\n'
-        content += '      ]\n'
-        content += '      scale: {\n'
-        content += '        minReplicas: ' + (cfg.minReplicas || 0) + '\n'
-        content += '        maxReplicas: ' + (cfg.maxReplicas || 10) + '\n'
-        content += '      }\n'
-        content += '    }\n'
-        content += '  }\n'
-        content += '  tags: tags\n'
-        content += '}\n\n'
+        resourcesContent += '        }\n'
+        resourcesContent += '      ]\n'
+        resourcesContent += '      scale: {\n'
+        resourcesContent += '        minReplicas: ' + (cfg.minReplicas || 0) + '\n'
+        resourcesContent += '        maxReplicas: ' + (cfg.maxReplicas || 10) + '\n'
+        resourcesContent += '      }\n'
+        resourcesContent += '    }\n'
+        resourcesContent += '  }\n'
+        resourcesContent += '  tags: tags\n'
+        resourcesContent += '}\n\n'
       }
-      
+
       if (item.value === 'MonitoringAlerts') {
         if (!cfg.name) throw new Error('MonitoringAlerts configuration is missing a name')
-        content += '// Application Insights ' + cfg.name + '\n'
-        content += 'resource applicationInsights_' + cfg.name.replace(/[^a-zA-Z0-9]/g, '') + ' \'Microsoft.Insights/components@2020-02-02\' = {\n'
-        content += '  scope: rg\n'
-        content += '  name: \'' + cfg.name + '\'\n'
-        content += '  location: location\n'
-        content += '  kind: \'web\'\n'
-        content += '  properties: {\n'
-        content += '    Application_Type: \'web\'\n'
-        content += '    publicNetworkAccessForIngestion: \'' + (cfg.publicNetworkAccessForIngestion || 'Enabled') + '\'\n'
-        content += '    publicNetworkAccessForQuery: \'' + (cfg.publicNetworkAccessForQuery || 'Enabled') + '\'\n'
-        content += '  }\n'
-        content += '  tags: tags\n'
-        content += '}\n\n'
+        resourcesContent += '// Application Insights ' + cfg.name + '\n'
+        resourcesContent += 'resource applicationInsights_' + cfg.name.replace(/[^a-zA-Z0-9]/g, '') + ' \'Microsoft.Insights/components@2020-02-02\' = {\n'
+        resourcesContent += '  name: \'' + cfg.name + '\'\n'
+        resourcesContent += '  location: location\n'
+        resourcesContent += '  kind: \'web\'\n'
+        resourcesContent += '  properties: {\n'
+        resourcesContent += '    Application_Type: \'web\'\n'
+        resourcesContent += '    publicNetworkAccessForIngestion: \'' + (cfg.publicNetworkAccessForIngestion || 'Enabled') + '\'\n'
+        resourcesContent += '    publicNetworkAccessForQuery: \'' + (cfg.publicNetworkAccessForQuery || 'Enabled') + '\'\n'
+        resourcesContent += '  }\n'
+        resourcesContent += '  tags: tags\n'
+        resourcesContent += '}\n\n'
       }
     })
 
-    // Validar que el Bicep generado cumpla con las secciones mínimas antes de continuar.
     if (!validateGeneratedBicep(content)) {
       return
     }
 
     bicepContent.value = content
-    
-    // Generar comandos de despliegue (subscription scope)
+    bicepResourcesContent.value = resourcesContent
+
     let commands = '# 1. Validar despliegue (What-If)\n'
     commands += `az deployment sub what-if --location ${location.value} --template-file main.bicep\n\n`
-
     commands += '# 2. Ejecutar despliegue\n'
     commands += `az deployment sub create --location ${location.value} --template-file main.bicep`
-    
+
     deploymentCommands.value = commands
 
   } catch (error) {
@@ -1666,11 +1668,17 @@ const openGeneratedInfraDialog = () => {
 }
 
 const downloadBicep = () => {
-  const blob = new Blob([bicepContent.value], { type: 'text/plain' })
-  const link = document.createElement('a')
-  link.href = URL.createObjectURL(blob)
-  link.download = 'main.bicep'
-  link.click()
+  const downloadFile = (content, filename) => {
+    const blob = new Blob([content], { type: 'text/plain' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = filename
+    link.click()
+  }
+  downloadFile(bicepContent.value, 'main.bicep')
+  if (bicepResourcesContent.value) {
+    downloadFile(bicepResourcesContent.value, 'resources.bicep')
+  }
 }
 
 const pushingToAdo = ref(false)
@@ -1740,7 +1748,8 @@ const pushToAzureDevOps = async () => {
   const folder = `${sanitizedApp}/${selectedEnv.value || 'dev'}`
 
   const files = [
-    { path: `${folder}/${fileName}`, content: bicepContent.value },
+    { path: `${folder}/main.bicep`, content: bicepContent.value },
+    { path: `${folder}/resources.bicep`, content: bicepResourcesContent.value },
     { path: `${folder}/README.md`, content: buildReadmeContent(sanitizedApp) }
   ]
 
@@ -1806,17 +1815,34 @@ const handleBicepImport = async (event) => {
     errorMsg.value = ''
     infoMsg.value = ''
 
-    const file = event.target?.files?.[0]
-    if (!file) return
+    const files = Array.from(event.target?.files || [])
+    if (!files.length) return
 
-    const bicepSource = await file.text()
-    const imported = parseInfragenBicep(bicepSource)
+    const readFile = (f) => f.text()
+    const contents = await Promise.all(files.map(readFile))
+
+    let mainContent = ''
+    let resourcesContent = ''
+
+    files.forEach((f, i) => {
+      const name = f.name.toLowerCase()
+      if (name === 'resources.bicep') {
+        resourcesContent = contents[i]
+      } else {
+        mainContent = contents[i]
+      }
+    })
+
+    if (!mainContent) mainContent = contents[0]
+
+    const imported = parseInfragenBicep(mainContent, resourcesContent)
 
     appName.value = imported.appName || ''
     selectedEnv.value = imported.environment || 'dev'
     location.value = imported.location || location.value
     configuredComponents.value = toConfiguredComponents(imported.components)
-    bicepContent.value = bicepSource
+    bicepContent.value = mainContent
+    bicepResourcesContent.value = resourcesContent
 
     if (imported.resourceGroupName) {
       resourceGroup.value = imported.resourceGroupName
