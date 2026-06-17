@@ -92,7 +92,7 @@ const extractResources = (bicepContent) => {
 
 const toComponent = (value, config) => ({ value, config })
 
-export const parseInfragenBicep = (bicepContent) => {
+export const parseInfragenBicep = (bicepContent, resourcesContent = '') => {
   if (!bicepContent || typeof bicepContent !== 'string') {
     throw new Error('El archivo Bicep está vacío o no es válido.')
   }
@@ -111,7 +111,9 @@ export const parseInfragenBicep = (bicepContent) => {
 
   const resourceGroupName = extractString(bicepContent, /\/\/\s+ResourceGroup:\s*(.+)/)
 
-  const resources = extractResources(bicepContent)
+  // Si hay resources.bicep separado, leer recursos de ahí; si no, del archivo principal
+  const resourceSource = resourcesContent || bicepContent
+  const resources = extractResources(resourceSource)
   const symbolToName = new Map()
 
   resources.forEach(resource => {
