@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Edit(~/.claude/skills/archify/**)",
+      "Bash(node renderers/architecture/render-architecture.mjs infragen.architecture.json infragen.html)"
+    ]
+  }
+}
