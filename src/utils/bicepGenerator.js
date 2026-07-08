@@ -125,37 +125,43 @@ export const buildBicepContent = ({
       append('  scope: rg')
       append(`  name: '${cfg.name}'`)
       append('  location: location')
-      if (cfg.appServicePlan) {
+      // Bloque properties único: serverFarmId, httpsOnly y siteConfig anidados correctamente
+      const validAppSettings = (cfg.appSettings || []).filter(s => s.name && s.value)
+      const hasSiteConfig = cfg.netFrameworkVersion || cfg.linuxFxVersion || cfg.minTlsVersion || cfg.ftpsState || validAppSettings.length > 0
+      if (cfg.appServicePlan || cfg.httpsOnly !== undefined || hasSiteConfig) {
         append('  properties: {')
-        append(`    serverFarmId: appServicePlan_${cfg.appServicePlan.replace(/[^a-zA-Z0-9]/g, '')}.id`)
-        append('  }')
-      }
-      if (cfg.httpsOnly !== undefined) {
-        append(`  httpsOnly: ${cfg.httpsOnly}`)
-      }
-      if (cfg.netFrameworkVersion) {
-        append(`  netFrameworkVersion: '${cfg.netFrameworkVersion}'`)
-      }
-      if (cfg.linuxFxVersion) {
-        append(`  linuxFxVersion: '${cfg.linuxFxVersion}'`)
-      }
-      if (cfg.minTlsVersion) {
-        append(`  minTlsVersion: '${cfg.minTlsVersion}'`)
-      }
-      if (cfg.ftpsState) {
-        append(`  ftpsState: '${cfg.ftpsState}'`)
-      }
-      if (cfg.appSettings && cfg.appSettings.length > 0) {
-        append('  properties: {')
-        append('    siteConfig: {')
-        append('      appSettings: [')
-        cfg.appSettings.forEach(setting => {
-          if (setting.name && setting.value) {
-            append(`        { name: '${setting.name}' value: '${setting.value}' }`)
+        if (cfg.appServicePlan) {
+          append(`    serverFarmId: appServicePlan_${cfg.appServicePlan.replace(/[^a-zA-Z0-9]/g, '')}.id`)
+        }
+        if (cfg.httpsOnly !== undefined) {
+          append(`    httpsOnly: ${cfg.httpsOnly}`)
+        }
+        if (hasSiteConfig) {
+          append('    siteConfig: {')
+          if (cfg.netFrameworkVersion) {
+            append(`      netFrameworkVersion: '${cfg.netFrameworkVersion}'`)
           }
-        })
-        append('      ]')
-        append('    }')
+          if (cfg.linuxFxVersion) {
+            append(`      linuxFxVersion: '${cfg.linuxFxVersion}'`)
+          }
+          if (cfg.minTlsVersion) {
+            append(`      minTlsVersion: '${cfg.minTlsVersion}'`)
+          }
+          if (cfg.ftpsState) {
+            append(`      ftpsState: '${cfg.ftpsState}'`)
+          }
+          if (validAppSettings.length > 0) {
+            append('      appSettings: [')
+            validAppSettings.forEach(setting => {
+              append('        {')
+              append(`          name: '${setting.name}'`)
+              append(`          value: '${setting.value}'`)
+              append('        }')
+            })
+            append('      ]')
+          }
+          append('    }')
+        }
         append('  }')
       }
       append('  tags: tags')

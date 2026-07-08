@@ -139,6 +139,62 @@
           </v-tooltip>
         </v-col>
       </v-row>
+
+      <!-- Variables de Entorno (App Settings) -->
+      <v-row dense>
+        <v-col cols="12">
+          <v-label class="mb-2 font-weight-bold">Variables de Entorno</v-label>
+          <v-tooltip text="Configura variables de entorno (App Settings) que necesita tu aplicación. Evita incluir secretos aquí, usa Key Vault para información sensible.">
+            <template v-slot:activator="{ props }">
+              <div v-bind="props">
+                <v-row
+                  v-for="(setting, index) in localConfig.appSettings"
+                  :key="`appsetting-${index}`"
+                  dense
+                  class="align-center mb-2"
+                >
+                  <v-col cols="5">
+                    <v-text-field
+                      v-model="setting.name"
+                      label="Nombre"
+                      density="compact"
+                      variant="outlined"
+                      placeholder="Ej: API_URL"
+                      @input="updateAppSetting(index, 'name', $event.target.value)"
+                    />
+                  </v-col>
+                  <v-col cols="5">
+                    <v-text-field
+                      v-model="setting.value"
+                      label="Valor"
+                      density="compact"
+                      variant="outlined"
+                      placeholder="Ej: https://api.midominio.com"
+                      @input="updateAppSetting(index, 'value', $event.target.value)"
+                    />
+                  </v-col>
+                  <v-col cols="2" class="text-center">
+                    <v-btn
+                      color="red"
+                      size="small"
+                      icon="mdi-delete"
+                      @click="removeAppSetting(index)"
+                    />
+                  </v-col>
+                </v-row>
+                <v-btn
+                  color="primary"
+                  size="small"
+                  prepend-icon="mdi-plus"
+                  @click="addAppSetting"
+                >
+                  Agregar Variable
+                </v-btn>
+              </div>
+            </template>
+          </v-tooltip>
+        </v-col>
+      </v-row>
     </v-card-text>
   </v-card>
 </template>
@@ -206,6 +262,7 @@ const localConfig = reactive({
   alwaysOn: false,
   clientAffinityEnabled: false,
   publicNetworkAccess: true,
+  appSettings: [],
   ...props.config
 })
 
@@ -232,6 +289,22 @@ const updateConfig = (key, value) => {
 
 const updateAppBaseName = (value) => {
   localAppBaseName.value = value
+}
+
+// Gestión de variables de entorno (App Settings)
+const addAppSetting = () => {
+  localConfig.appSettings.push({ name: '', value: '' })
+  updateConfig('appSettings', [...localConfig.appSettings])
+}
+
+const removeAppSetting = (index) => {
+  localConfig.appSettings.splice(index, 1)
+  updateConfig('appSettings', [...localConfig.appSettings])
+}
+
+const updateAppSetting = (index, field, value) => {
+  localConfig.appSettings[index][field] = value
+  updateConfig('appSettings', [...localConfig.appSettings])
 }
 
 watch(localAppBaseName, () => {
