@@ -195,6 +195,72 @@
           </v-tooltip>
         </v-col>
       </v-row>
+
+      <!-- Connection Strings -->
+      <v-row dense>
+        <v-col cols="12">
+          <v-label class="mb-2 font-weight-bold">Connection Strings</v-label>
+          <v-tooltip text="Configura las cadenas de conexión (Connection Strings) que necesita tu aplicación, por ejemplo hacia bases de datos. Evita incluir secretos aquí, usa Key Vault para información sensible.">
+            <template v-slot:activator="{ props }">
+              <div v-bind="props">
+                <v-row
+                  v-for="(conn, index) in localConfig.connectionStrings"
+                  :key="`connectionstring-${index}`"
+                  dense
+                  class="align-center mb-2"
+                >
+                  <v-col cols="4">
+                    <v-text-field
+                      v-model="conn.name"
+                      label="Nombre"
+                      density="compact"
+                      variant="outlined"
+                      placeholder="Ej: DefaultConnection"
+                      @input="updateConnectionString(index, 'name', $event.target.value)"
+                    />
+                  </v-col>
+                  <v-col cols="4">
+                    <v-text-field
+                      v-model="conn.value"
+                      label="Connection String"
+                      density="compact"
+                      variant="outlined"
+                      placeholder="Ej: Server=tcp:...;Database=...;"
+                      @input="updateConnectionString(index, 'value', $event.target.value)"
+                    />
+                  </v-col>
+                  <v-col cols="3">
+                    <v-select
+                      v-model="conn.type"
+                      :items="connectionStringTypeOptions"
+                      label="Tipo"
+                      density="compact"
+                      variant="outlined"
+                      @update:model-value="updateConnectionString(index, 'type', $event)"
+                    />
+                  </v-col>
+                  <v-col cols="1" class="text-center">
+                    <v-btn
+                      color="red"
+                      size="small"
+                      icon="mdi-delete"
+                      @click="removeConnectionString(index)"
+                    />
+                  </v-col>
+                </v-row>
+                <v-btn
+                  color="primary"
+                  size="small"
+                  prepend-icon="mdi-plus"
+                  @click="addConnectionString"
+                >
+                  Agregar Connection String
+                </v-btn>
+              </div>
+            </template>
+          </v-tooltip>
+        </v-col>
+      </v-row>
     </v-card-text>
   </v-card>
 </template>
@@ -244,6 +310,20 @@ const runtimeStackOptions = [
   { label: 'PHP 8.2', value: 'PHP|8.2' }
 ]
 
+const connectionStringTypeOptions = [
+  'SQLAzure',
+  'SQLServer',
+  'MySql',
+  'PostgreSQL',
+  'Custom',
+  'NotificationHub',
+  'ServiceBus',
+  'EventHub',
+  'ApiHub',
+  'DocDb',
+  'RedisCache'
+]
+
 const rules = {
   required: value => !!value || 'Este campo es obligatorio',
   appServiceNameFormat: value => {
@@ -263,6 +343,7 @@ const localConfig = reactive({
   clientAffinityEnabled: false,
   publicNetworkAccess: true,
   appSettings: [],
+  connectionStrings: [],
   ...props.config
 })
 
@@ -307,6 +388,22 @@ const updateAppSetting = (index, field, value) => {
   updateConfig('appSettings', [...localConfig.appSettings])
 }
 
+// Gestión de connection strings
+const addConnectionString = () => {
+  localConfig.connectionStrings.push({ name: '', value: '', type: 'SQLAzure' })
+  updateConfig('connectionStrings', [...localConfig.connectionStrings])
+}
+
+const removeConnectionString = (index) => {
+  localConfig.connectionStrings.splice(index, 1)
+  updateConfig('connectionStrings', [...localConfig.connectionStrings])
+}
+
+const updateConnectionString = (index, field, value) => {
+  localConfig.connectionStrings[index][field] = value
+  updateConfig('connectionStrings', [...localConfig.connectionStrings])
+}
+
 watch(localAppBaseName, () => {
   updateConfig('name', computedAppName.value)
 })
@@ -326,6 +423,8 @@ watch(() => props.config, (newConfig) => {
     alwaysOn: false,
     clientAffinityEnabled: false,
     publicNetworkAccess: true,
+    appSettings: [],
+    connectionStrings: [],
     ...newConfig
   })
 }, { deep: true, immediate: true })

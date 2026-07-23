@@ -28,6 +28,19 @@ const parseObjectNameValueList = (text) => {
   return result
 }
 
+const parseConnectionStringsList = (text) => {
+  const result = []
+  const regex = /\{\s*name:\s*'([^']+)'\s*connectionString:\s*'([^']*)'\s*type:\s*'([^']*)'\s*\}/gms
+  let match = regex.exec(text)
+
+  while (match) {
+    result.push({ name: match[1], value: match[2], type: match[3] })
+    match = regex.exec(text)
+  }
+
+  return result
+}
+
 const extractBlock = (content, openBraceIndex) => {
   let depth = 0
   let inString = false
@@ -183,6 +196,9 @@ export const parseInfragenBicep = (bicepContent, resourcesContent = '') => {
 
       const appSettings = parseObjectNameValueList(resource.body)
       if (appSettings.length > 0) config.appSettings = appSettings
+
+      const connectionStrings = parseConnectionStringsList(resource.body)
+      if (connectionStrings.length > 0) config.connectionStrings = connectionStrings
 
       if (config.name) components.push(toComponent('AppService', config))
       return

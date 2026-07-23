@@ -127,7 +127,8 @@ export const buildBicepContent = ({
       append('  location: location')
       // Bloque properties único: serverFarmId, httpsOnly y siteConfig anidados correctamente
       const validAppSettings = (cfg.appSettings || []).filter(s => s.name && s.value)
-      const hasSiteConfig = cfg.netFrameworkVersion || cfg.linuxFxVersion || cfg.minTlsVersion || cfg.ftpsState || validAppSettings.length > 0
+      const validConnectionStrings = (cfg.connectionStrings || []).filter(c => c.name && c.value)
+      const hasSiteConfig = cfg.netFrameworkVersion || cfg.linuxFxVersion || cfg.minTlsVersion || cfg.ftpsState || validAppSettings.length > 0 || validConnectionStrings.length > 0
       if (cfg.appServicePlan || cfg.httpsOnly !== undefined || hasSiteConfig) {
         append('  properties: {')
         if (cfg.appServicePlan) {
@@ -156,6 +157,17 @@ export const buildBicepContent = ({
               append('        {')
               append(`          name: '${setting.name}'`)
               append(`          value: '${setting.value}'`)
+              append('        }')
+            })
+            append('      ]')
+          }
+          if (validConnectionStrings.length > 0) {
+            append('      connectionStrings: [')
+            validConnectionStrings.forEach(conn => {
+              append('        {')
+              append(`          name: '${conn.name}'`)
+              append(`          connectionString: '${conn.value}'`)
+              append(`          type: '${conn.type || 'SQLAzure'}'`)
               append('        }')
             })
             append('      ]')

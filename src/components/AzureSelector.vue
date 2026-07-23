@@ -1378,6 +1378,18 @@ const generateBicep = () => {
             }
           }
         }
+        const validConnectionStrings = (cfg.connectionStrings || []).filter(c => c.name && c.value)
+        if (validConnectionStrings.length > 0) {
+          resourcesContent += '      connectionStrings: [\n'
+          validConnectionStrings.forEach(conn => {
+            resourcesContent += '        {\n'
+            resourcesContent += '          name: \'' + conn.name + '\'\n'
+            resourcesContent += '          connectionString: \'' + conn.value + '\'\n'
+            resourcesContent += '          type: \'' + (conn.type || 'SQLAzure') + '\'\n'
+            resourcesContent += '        }\n'
+          })
+          resourcesContent += '      ]\n'
+        }
         resourcesContent += '    }\n'
         resourcesContent += '    httpsOnly: ' + (cfg.httpsOnly !== false) + '\n'
         resourcesContent += '    clientAffinityEnabled: ' + (cfg.clientAffinityEnabled !== false) + '\n'
