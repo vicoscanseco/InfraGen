@@ -336,6 +336,7 @@ const serviceObjectiveOptions = {
 const collationOptions = [
   { label: 'SQL_Latin1_General_CP1_CI_AS (Predeterminado)', value: 'SQL_Latin1_General_CP1_CI_AS' },
   { label: 'Spanish_Modern_Sort_CI_AS', value: 'Spanish_Modern_Sort_CI_AS' },
+  { label: 'Modern_Spanish_CI_AS', value: 'Modern_Spanish_CI_AS' },
   { label: 'Latin1_General_CI_AS', value: 'Latin1_General_CI_AS' },
   { label: 'SQL_Latin1_General_CP1_CS_AS (Case Sensitive)', value: 'SQL_Latin1_General_CP1_CS_AS' }
 ]
