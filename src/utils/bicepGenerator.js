@@ -3,7 +3,8 @@ export const buildBicepContent = ({
   selectedEnv,
   location,
   resourceGroupName,
-  configuredComponents
+  configuredComponents,
+  isNewResourceGroup = true
 }) => {
   if (!appName || !location || !Array.isArray(configuredComponents) || configuredComponents.length === 0) {
     throw new Error('Información insuficiente para generar el Bicep. Verifica que exista al menos un componente configurado y los datos básicos.');
@@ -59,12 +60,19 @@ export const buildBicepContent = ({
   append('param componentTags object = {}')
   append()
 
-  append('// Resource Group')
-  append(`resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {`)
-  append('  name: resourceGroupName')
-  append('  location: location')
-  append('  tags: tags')
-  append('}')
+  if (isNewResourceGroup) {
+    append('// Resource Group (nuevo)')
+    append(`resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {`)
+    append('  name: resourceGroupName')
+    append('  location: location')
+    append('  tags: tags')
+    append('}')
+  } else {
+    append('// Resource Group (existente, no se crea)')
+    append(`resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' existing = {`)
+    append('  name: resourceGroupName')
+    append('}')
+  }
   append()
 
   configuredComponents.forEach((item) => {

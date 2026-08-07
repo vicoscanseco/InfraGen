@@ -124,6 +124,8 @@ export const parseInfragenBicep = (bicepContent, resourcesContent = '') => {
 
   const resourceGroupName = extractString(bicepContent, /\/\/\s+ResourceGroup:\s*(.+)/)
 
+  const isNewResourceGroup = !/resource\s+rg\s+'Microsoft\.Resources\/resourceGroups[^']*'\s+existing\s*=/.test(bicepContent)
+
   // Si hay resources.bicep separado, leer recursos de ahí; si no, del archivo principal
   const resourceSource = resourcesContent || bicepContent
   const resources = extractResources(resourceSource)
@@ -292,6 +294,7 @@ export const parseInfragenBicep = (bicepContent, resourcesContent = '') => {
     environment: environment || 'dev',
     location,
     resourceGroupName,
+    isNewResourceGroup,
     components
   }
 }

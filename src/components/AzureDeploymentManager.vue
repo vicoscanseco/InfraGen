@@ -162,6 +162,10 @@ const props = defineProps({
     type: String,
     default: ''
   },
+  defaultResourceGroupMode: {
+    type: String,
+    default: 'existing'
+  },
   defaultLocation: {
     type: String,
     default: 'eastus'
@@ -184,15 +188,22 @@ const subscriptionId = ref('')
 const tenantId = ref('')
 const clientId = ref('')
 const clientSecret = ref('')
-const resourceGroupMode = ref('existing')
+const resourceGroupMode = ref(props.defaultResourceGroupMode || 'existing')
 const existingResourceGroupName = ref(props.defaultResourceGroup || '')
-const newResourceGroupName = ref('')
+const newResourceGroupName = ref(props.defaultResourceGroup || '')
 const location = ref(props.defaultLocation || 'eastus')
 const templateFileName = ref('infra.bicep')
+
+watch(() => props.defaultResourceGroupMode, (newValue) => {
+  resourceGroupMode.value = newValue || 'existing'
+})
 
 watch(() => props.defaultResourceGroup, (newValue) => {
   if (!existingResourceGroupName.value) {
     existingResourceGroupName.value = newValue || ''
+  }
+  if (!newResourceGroupName.value) {
+    newResourceGroupName.value = newValue || ''
   }
 })
 

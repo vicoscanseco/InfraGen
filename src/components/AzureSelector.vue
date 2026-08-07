@@ -141,6 +141,25 @@
                   </v-col>
                 </v-row>
 
+                <v-row dense>
+                  <v-col cols="12" md="6" class="d-flex align-center">
+                    <v-tooltip text="Indica si el grupo de recursos ya existe en Azure o si debe crearse durante el despliegue. Si ya existe, el Bicep no intentará crearlo (evita el error de RG duplicado).">
+                      <template v-slot:activator="{ props }">
+                        <v-switch
+                          v-bind="props"
+                          v-model="isNewResourceGroup"
+                          :label="isNewResourceGroup ? 'Crear grupo de recursos nuevo' : 'Usar grupo de recursos existente'"
+                          color="primary"
+                          density="compact"
+                          hide-details
+                          inset
+                          class="rg-mode-switch"
+                        />
+                      </template>
+                    </v-tooltip>
+                  </v-col>
+                </v-row>
+
                 <v-row v-if="!isBasicInfoComplete" dense class="mt-2">
                   <v-col cols="12">
                     <v-alert
@@ -534,6 +553,7 @@
             <AzureDeploymentManager
               :bicep-content="bicepContent"
               :default-resource-group="resourceGroup"
+              :default-resource-group-mode="isNewResourceGroup ? 'new' : 'existing'"
               :default-location="location"
             />
           </v-card-text>
@@ -612,6 +632,7 @@ const locations = ref([])
 const selectedEnv = ref('dev')
 const appName = ref('')
 const resourceGroup = ref('')
+const isNewResourceGroup = ref(true)
 const location = ref('mexicocentral')
 const showArchDialog = ref(false)
 const showGeneratedInfraDialog = ref(false)
@@ -1240,12 +1261,19 @@ const generateBicep = () => {
     content += '}\n\n'
 
     // Resource Group
-    content += '// Resource Group\n'
-    content += 'resource rg \'Microsoft.Resources/resourceGroups@2021-04-01\' = {\n'
-    content += '  name: resourceGroupName\n'
-    content += '  location: location\n'
-    content += '  tags: tags\n'
-    content += '}\n\n'
+    if (isNewResourceGroup.value) {
+      content += '// Resource Group (nuevo)\n'
+      content += 'resource rg \'Microsoft.Resources/resourceGroups@2021-04-01\' = {\n'
+      content += '  name: resourceGroupName\n'
+      content += '  location: location\n'
+      content += '  tags: tags\n'
+      content += '}\n\n'
+    } else {
+      content += '// Resource Group (existente, no se crea)\n'
+      content += 'resource rg \'Microsoft.Resources/resourceGroups@2021-04-01\' existing = {\n'
+      content += '  name: resourceGroupName\n'
+      content += '}\n\n'
+    }
 
     // Módulo de recursos en el RG
     content += '// RG-scoped resources via module\n'
@@ -1859,6 +1887,7 @@ const handleBicepImport = async (event) => {
     if (imported.resourceGroupName) {
       resourceGroup.value = imported.resourceGroupName
     }
+    isNewResourceGroup.value = imported.isNewResourceGroup !== false
 
     deploymentCommands.value = buildDeploymentCommands(
       imported.resourceGroupName || resourceGroup.value,
@@ -1885,6 +1914,26 @@ const handleBicepImport = async (event) => {
 .text-disabled {
   opacity: 0.6;
 }
+
+.rg-mode-switch :deep(.v-selection-control) {
+  min-height: 28px;
+}
+
+.rg-mode-switch :deep(.v-switch__track) {
+  width: 32px;
+  height: 16px;
+}
+
+.rg-mode-switch :deep(.v-switch__thumb) {
+  width: 12px;
+  height: 12px;
+}
+
+.rg-mode-switch :deep(.v-label) {
+  font-size: 0.8125rem;
+  opacity: 1;
+}
+
 
 .code-container {
   background-color: #1e1e1e;
